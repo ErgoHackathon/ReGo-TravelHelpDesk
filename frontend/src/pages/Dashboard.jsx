@@ -16,22 +16,38 @@ import {
   Toolbar,
   IconButton,
   Menu,
-  MenuItem
+  MenuItem,
+  Badge
 } from '@mui/material';
 import {
   Flight,
   Logout,
   AccountCircle,
   ArrowForward,
-  CheckCircle
+  CheckCircle,
+  Notifications
 } from '@mui/icons-material';
 import { logout } from '../features/authSlice';
 import { toast } from 'react-toastify';
+import { useQuery } from '@tanstack/react-query';
+import api from '../services/api';
 
 const Dashboard = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { user } = useSelector((state) => state.auth);
+
+  const { data: notifications = [] } = useQuery(['notifications'], async () => {
+    try {
+      const res = await api.get('/notifications');
+      return res.data.data;
+    } catch (e) {
+      return [];
+    }
+  }, { enabled: !!user });
+
+  const unreadCount = (notifications || []).filter(n => !n.is_read && (!n.userId || n.userId === user?.id)).length;
+
   const [anchorEl, setAnchorEl] = React.useState(null);
 
   const handleMenu = (event) => {
@@ -83,6 +99,12 @@ const Dashboard = () => {
           </Typography>
           
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <IconButton component={Link} to="/notifications" color="inherit">
+              <Badge badgeContent={unreadCount} color="error">
+                <Notifications />
+              </Badge>
+            </IconButton>
+
             <Typography variant="body2">
               {user?.firstName} {user?.lastName}
             </Typography>
