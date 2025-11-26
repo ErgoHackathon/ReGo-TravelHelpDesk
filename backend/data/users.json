@@ -1,0 +1,29 @@
+[
+  {
+    "id": "u-admin-1",
+    "name": "Admin User",
+    "email": "admin@rego.com",
+    "password": "admin123",
+    "role": "admin",
+    "avatar": "/static/admin.png",
+    "createdAt": "2025-11-26T14:44:20.475Z"
+  },
+  {
+    "id": "u-agent-1",
+    "name": "Agent Alice",
+    "email": "agent@rego.com",
+    "password": "agent123",
+    "role": "agent",
+    "avatar": "/static/agent.png",
+    "createdAt": "2025-11-26T14:44:20.482Z"
+  },
+  {
+    "id": "u-user-1",
+    "name": "John Traveler",
+    "email": "user@rego.com",
+    "password": "user123",
+    "role": "user",
+    "avatar": "/static/user.png",
+    "createdAt": "2025-11-26T14:44:20.482Z"
+  }
+]

@@ -19,6 +19,11 @@ const FAQ_FILE = path.join(DATA_DIR, 'faqs.json');
 const NOTIF_FILE = path.join(DATA_DIR, 'notifications.json');
 const TRAVEL_FILE = path.join(DATA_DIR, 'travelInfo.json');
 
+// Helper: load/write travel related files
+const TRAVEL_REQ_FILE = path.join(DATA_DIR, 'travel_requests.json');
+const APPROVALS_FILE = path.join(DATA_DIR, 'approvals.json');
+const DOCUMENTS_FILE = path.join(DATA_DIR, 'documents.json');
+
 function readJSON(filePath) {
   if (!fs.existsSync(filePath)) return null;
   const content = fs.readFileSync(filePath, 'utf8');
@@ -27,6 +32,47 @@ function readJSON(filePath) {
 
 function writeJSON(filePath, data) {
   fs.writeFileSync(filePath, JSON.stringify(data, null, 2), 'utf8');
+}
+
+function readSafe(filePath) {
+  return readJSON(filePath) || [];
+}
+
+function saveJSON(filePath, data) {
+  writeJSON(filePath, data);
+}
+
+// Build approval chain based on rules
+function buildApprovalChain(request) {
+  // simple rule: international OR estimated_cost > 50000 -> 4 levels else 2 levels
+  const users = readSafe(USERS_FILE);
+  const manager = users.find(u => u.role === 'agent') || users[0]; // use agent as manager in seed
+  const avp = users.find(u => u.role === 'admin') || users[0];
+  const svp = users[0];
+  const chro = users[0];
+
+  const chain = [];
+  // level 1 - manager
+  chain.push({ approval_id: uuidv4(), request_id: request.id, approver_id: manager.id, approval_level: 1, status: 'PENDING', comments: null, created_at: new Date().toISOString() });
+
+  // decide further levels
+  const cost = Number(request.estimated_cost || 0);
+  if (request.travel_type === 'international' || cost > 50000) {
+    chain.push({ approval_id: uuidv4(), request_id: request.id, approver_id: avp.id, approval_level: 2, status: 'PENDING', created_at: new Date().toISOString() });
+    chain.push({ approval_id: uuidv4(), request_id: request.id, approver_id: svp.id, approval_level: 3, status: 'PENDING', created_at: new Date().toISOString() });
+    chain.push({ approval_id: uuidv4(), request_id: request.id, approver_id: chro.id, approval_level: 4, status: 'PENDING', created_at: new Date().toISOString() });
+  } else {
+    chain.push({ approval_id: uuidv4(), request_id: request.id, approver_id: avp.id, approval_level: 2, status: 'PENDING', created_at: new Date().toISOString() });
+  }
+
+  return chain;
+}
+
+// Utility: notify (adds to notifications.json)
+function pushNotification(notification) {
+  const notifs = readSafe(NOTIF_FILE);
+  notifs.unshift({ id: uuidv4(), ...notification, createdAt: new Date().toISOString() });
+  saveJSON(NOTIF_FILE, notifs);
 }
 
 // Utility: Simple "JWT-like" token (not secure) - store userId
@@ -175,6 +221,176 @@ app.put('/api/v1/auth/profile', requireAuth, (req, res) => {
   users[idx] = { ...users[idx], ...req.body };
   writeJSON(USERS_FILE, users);
   res.json({ success: true, data: { ...users[idx], password: undefined } });
+});
+
+// Travel requests endpoints
+app.post('/api/v1/travel-requests', requireAuth, (req, res) => {
+  const reqs = readSafe(TRAVEL_REQ_FILE);
+  const body = req.body;
+  const travelReq = {
+    id: uuidv4(),
+    userId: req.user.id,
+    request_number: `REQ-${Date.now()}`,
+    travel_type: body.travel_type || 'domestic',
+    purpose: body.purpose || '',
+    destination_country: body.destination_country || '',
+    destination_city: body.destination_city || '',
+    departure_date: body.departure_date || null,
+    return_date: body.return_date || null,
+    estimated_cost: body.estimated_cost || 0,
+    currency: body.currency || 'INR',
+    status: 'SUBMITTED',
+    current_approver_id: null,
+    created_at: new Date().toISOString()
+  };
+
+  // create approval chain
+  const approvals = readSafe(APPROVALS_FILE);
+  const chain = buildApprovalChain(travelReq);
+  // set current approver to first
+  travelReq.current_approver_id = chain.length ? chain[0].approver_id : null;
+
+  // persist
+  reqs.unshift(travelReq);
+  approvals.unshift(...chain);
+  saveJSON(TRAVEL_REQ_FILE, reqs);
+  saveJSON(APPROVALS_FILE, approvals);
+
+  // notify first approver
+  if (travelReq.current_approver_id) {
+    pushNotification({ message: `New travel request ${travelReq.request_number} requires your approval`, userId: travelReq.current_approver_id });
+  }
+
+  return res.status(201).json({ success: true, data: { requestId: travelReq.id } });
+});
+
+app.get('/api/v1/travel-requests', requireAuth, (req, res) => {
+  const reqs = readSafe(TRAVEL_REQ_FILE);
+  if (req.user.role === 'user') {
+    return res.json({ success: true, data: reqs.filter(r => r.userId === req.user.id) });
+  }
+  if (req.user.role === 'agent') {
+    // agents see all
+    return res.json({ success: true, data: reqs });
+  }
+  // default: admin see all
+  return res.json({ success: true, data: reqs });
+});
+
+app.get('/api/v1/travel-requests/:id', requireAuth, (req, res) => {
+  const reqs = readSafe(TRAVEL_REQ_FILE);
+  const travel = reqs.find(t => t.id === req.params.id);
+  if (!travel) return res.status(404).json({ success: false, error: { message: 'Request not found' } });
+  // check ownership or role
+  if (req.user.role === 'user' && travel.userId !== req.user.id) return res.status(403).json({ success: false, error: { message: 'Forbidden' } });
+  // include approvals and documents
+  const approvals = readSafe(APPROVALS_FILE).filter(a => a.request_id === travel.id);
+  const documents = readSafe(DOCUMENTS_FILE).filter(d => d.request_id === travel.id);
+  return res.json({ success: true, data: { ...travel, approvals, documents } });
+});
+
+// Upload document metadata (no file storage) and simulate OCR
+app.post('/api/v1/travel-requests/:id/documents', requireAuth, (req, res) => {
+  const documents = readSafe(DOCUMENTS_FILE);
+  const reqs = readSafe(TRAVEL_REQ_FILE);
+  const travel = reqs.find(t => t.id === req.params.id);
+  if (!travel) return res.status(404).json({ success: false, error: { message: 'Request not found' } });
+  if (req.user.id !== travel.userId && req.user.role !== 'agent' && req.user.role !== 'admin') return res.status(403).json({ success: false, error: { message: 'Forbidden' } });
+
+  const body = req.body; // expect { fileName, document_type, fileSize }
+  const doc = {
+    document_id: uuidv4(),
+    request_id: travel.id,
+    uploaded_by: req.user.id,
+    document_type: body.document_type || 'passport',
+    file_name: body.fileName || 'file.pdf',
+    file_size_bytes: body.fileSize || 0,
+    mime_type: body.mimeType || 'application/pdf',
+    blob_storage_url: '',
+    ocr_status: 'COMPLETED',
+    ocr_extracted_data: { name: 'John Doe' },
+    ocr_confidence_score: Math.round(Math.random() * 40) + 60, // 60-100
+    ocr_processed_at: new Date().toISOString(),
+    verification_status: 'PENDING',
+    uploaded_at: new Date().toISOString()
+  };
+
+  documents.unshift(doc);
+  saveJSON(DOCUMENTS_FILE, documents);
+
+  // if high confidence auto-verify
+  if (doc.ocr_confidence_score >= 70) {
+    doc.verification_status = 'VERIFIED';
+    pushNotification({ message: `Document ${doc.file_name} auto-verified for request ${travel.request_number}`, userId: travel.userId });
+  } else {
+    pushNotification({ message: `Document ${doc.file_name} requires manual verification`, userId: travel.userId });
+  }
+
+  return res.json({ success: true, data: doc });
+});
+
+// Approve endpoint
+app.post('/api/v1/travel-requests/:id/approve', requireAuth, (req, res) => {
+  const approvals = readSafe(APPROVALS_FILE);
+  const reqs = readSafe(TRAVEL_REQ_FILE);
+  const travel = reqs.find(t => t.id === req.params.id);
+  if (!travel) return res.status(404).json({ success: false, error: { message: 'Request not found' } });
+
+  const approverEntries = approvals.filter(a => a.request_id === travel.id).sort((a,b) => a.approval_level - b.approval_level);
+  const pending = approverEntries.find(a => a.status === 'PENDING');
+  if (!pending) return res.status(400).json({ success: false, error: { message: 'No pending approvals' } });
+  // ensure requester is the approver
+  if (pending.approver_id !== req.user.id && req.user.role !== 'admin') return res.status(403).json({ success: false, error: { message: 'Forbidden' } });
+
+  const action = req.body.action || 'approve'; // approve or reject
+  const comment = req.body.comment || '';
+  // update this approval
+  const idx = approvals.findIndex(a => a.approval_id === pending.approval_id);
+  approvals[idx].status = action === 'approve' ? 'APPROVED' : 'REJECTED';
+  approvals[idx].comments = comment;
+  approvals[idx].reviewed_at = new Date().toISOString();
+
+  // if rejected -> mark travel rejected
+  if (action !== 'approve') {
+    travel.status = 'REJECTED';
+    travel.updated_at = new Date().toISOString();
+    saveJSON(TRAVEL_REQ_FILE, reqs);
+    saveJSON(APPROVALS_FILE, approvals);
+    pushNotification({ message: `Travel request ${travel.request_number} was rejected`, userId: travel.userId });
+    return res.json({ success: true, data: { status: 'REJECTED' } });
+  }
+
+  // approved: find next pending
+  const next = approverEntries.find(a => a.status === 'PENDING');
+  if (next) {
+    // set current approver
+    travel.current_approver_id = next.approver_id;
+    travel.updated_at = new Date().toISOString();
+    // notify next
+    pushNotification({ message: `Travel request ${travel.request_number} requires your approval`, userId: next.approver_id });
+  } else {
+    // no more pending -> fully approved
+    travel.status = 'APPROVED';
+    travel.approved_at = new Date().toISOString();
+    travel.current_approver_id = null;
+    pushNotification({ message: `Travel request ${travel.request_number} has been approved`, userId: travel.userId });
+  }
+
+  saveJSON(TRAVEL_REQ_FILE, reqs);
+  saveJSON(APPROVALS_FILE, approvals);
+
+  return res.json({ success: true, data: { status: travel.status } });
+});
+
+app.get('/api/v1/approvals', requireAuth, (req, res) => {
+  const approvals = readSafe(APPROVALS_FILE);
+  if (req.user.role === 'user') {
+    // show approvals related to user's requests
+    const reqs = readSafe(TRAVEL_REQ_FILE).filter(r => r.userId === req.user.id).map(r => r.id);
+    return res.json({ success: true, data: approvals.filter(a => reqs.includes(a.request_id) && a.status === 'PENDING') });
+  }
+  // for approvers, show pending assigned to them
+  return res.json({ success: true, data: approvals.filter(a => a.approver_id === req.user.id && a.status === 'PENDING') });
 });
 
 // Seed endpoint (dev only)

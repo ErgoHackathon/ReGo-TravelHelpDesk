@@ -1,0 +1,34 @@
+[
+  {
+    "id": "t-1",
+    "title": "Flight delay compensation",
+    "description": "My flight was delayed 6 hours and I need assistance",
+    "category": "Compensation",
+    "status": "open",
+    "userId": "u-user-1",
+    "createdAt": "2025-11-26T14:44:20.482Z",
+    "updates": [
+      {
+        "by": "u-agent-1",
+        "message": "We are looking into it",
+        "ts": "2025-11-26T14:44:20.482Z"
+      }
+    ]
+  },
+  {
+    "id": "t-2",
+    "title": "Lost baggage assistance",
+    "description": "My baggage did not arrive",
+    "category": "Baggage",
+    "status": "in-progress",
+    "userId": "u-user-1",
+    "createdAt": "2025-11-26T14:44:20.482Z",
+    "updates": [
+      {
+        "by": "u-agent-1",
+        "message": "Please provide baggage tag",
+        "ts": "2025-11-26T14:44:20.482Z"
+      }
+    ]
+  }
+]

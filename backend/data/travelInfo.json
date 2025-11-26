@@ -1,0 +1,12 @@
+[
+  {
+    "id": "tr-1",
+    "country": "France",
+    "advisory": "Check visa requirements before travel"
+  },
+  {
+    "id": "tr-2",
+    "country": "India",
+    "advisory": "Carry valid ID and health documents"
+  }
+]
