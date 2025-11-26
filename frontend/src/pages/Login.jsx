@@ -76,6 +76,17 @@ const Login = () => {
     }
   };
 
+  // Quick demo login for seeded accounts
+  const quickLogin = async (email, password) => {
+    try {
+      await dispatch(login({ email, password })).unwrap();
+      toast.success('Login successful!');
+      navigate('/dashboard');
+    } catch (err) {
+      // noop
+    }
+  };
+
   const handleTogglePassword = () => {
     setShowPassword(!showPassword);
   };
@@ -231,14 +242,22 @@ const Login = () => {
           }}
         >
           <Typography variant="caption" color="text.secondary" display="block">
-            <strong>Demo Credentials (for testing):</strong>
+            <strong>Seeded demo accounts (click to quick-login):</strong>
           </Typography>
           <Typography variant="caption" color="text.secondary" display="block">
-            Email: demo@company.com
+            Admin: admin@rego.com / admin123
           </Typography>
           <Typography variant="caption" color="text.secondary" display="block">
-            Password: Demo123!
+            Agent: agent@rego.com / agent123
           </Typography>
+          <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 1 }}>
+            User: user@rego.com / user123
+          </Typography>
+          <Box sx={{ display: 'flex', gap: 1, mt: 1 }}>
+            <Button size="small" variant="outlined" onClick={() => quickLogin('admin@rego.com', 'admin123')}>Admin</Button>
+            <Button size="small" variant="outlined" onClick={() => quickLogin('agent@rego.com', 'agent123')}>Agent</Button>
+            <Button size="small" variant="outlined" onClick={() => quickLogin('user@rego.com', 'user123')}>User</Button>
+          </Box>
         </Paper>
       </Container>
     </Box>
