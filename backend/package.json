@@ -1,0 +1,17 @@
+{
+  "name": "rego-backend-mock",
+  "version": "1.0.0",
+  "description": "Mock backend for ReGo TravelHelpDesk (Express + JSON data)",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "seed": "node seed.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.18.2",
+    "body-parser": "^1.20.2",
+    "nodemon": "^3.0.1",
+    "uuid": "^9.0.0"
+  }
+}

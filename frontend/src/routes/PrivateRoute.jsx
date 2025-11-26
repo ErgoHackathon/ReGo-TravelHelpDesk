@@ -2,6 +2,7 @@ import React from 'react';
 import { Navigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { CircularProgress, Box } from '@mui/material';
+import authService from '../services/authService';
 
 /**
  * PrivateRoute Component
@@ -9,7 +10,7 @@ import { CircularProgress, Box } from '@mui/material';
  * Redirects to login if user is not authenticated
  */
 const PrivateRoute = ({ children }) => {
-  const { isAuthenticated, loading } = useSelector((state) => state.auth);
+  const { loading } = useSelector((state) => state.auth);
 
   // Show loading spinner while checking authentication
   if (loading) {
@@ -27,8 +28,9 @@ const PrivateRoute = ({ children }) => {
     );
   }
 
+  const isAuth = authService.isAuthenticated();
   // Redirect to login if not authenticated
-  if (!isAuthenticated) {
+  if (!isAuth) {
     return <Navigate to="/login" replace />;
   }
 

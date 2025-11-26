@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import {
   Container,
@@ -186,9 +186,7 @@ const Dashboard = () => {
                 <Typography variant="body2" color="text.secondary" paragraph>
                   Create and manage your travel requests with ease.
                 </Typography>
-                <Typography variant="caption" color="info.main">
-                  Coming in Stage 3
-                </Typography>
+                <Button component={Link} to="/tickets" variant="contained" size="small">Open Tickets</Button>
               </CardContent>
             </Card>
           </Grid>
@@ -202,9 +200,7 @@ const Dashboard = () => {
                 <Typography variant="body2" color="text.secondary" paragraph>
                   Review and approve travel requests from your team.
                 </Typography>
-                <Typography variant="caption" color="info.main">
-                  Coming in Stage 4
-                </Typography>
+                <Button component={Link} to="/faqs" variant="contained" size="small">FAQs</Button>
               </CardContent>
             </Card>
           </Grid>
@@ -218,9 +214,7 @@ const Dashboard = () => {
                 <Typography variant="body2" color="text.secondary" paragraph>
                   Submit and track your travel expenses and reimbursements.
                 </Typography>
-                <Typography variant="caption" color="info.main">
-                  Coming in Stage 6
-                </Typography>
+                <Button component={Link} to="/notifications" variant="contained" size="small">Notifications</Button>
               </CardContent>
             </Card>
           </Grid>

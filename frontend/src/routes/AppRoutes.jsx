@@ -4,6 +4,10 @@ import Login from '../pages/Login';
 import Register from '../pages/Register';
 import Dashboard from '../pages/Dashboard';
 import PrivateRoute from './PrivateRoute';
+import Tickets from '../pages/Tickets';
+import FAQs from '../pages/FAQs';
+import Notifications from '../pages/Notifications';
+import Profile from '../pages/Profile';
 
 // Main routing component
 function AppRoutes() {
@@ -20,6 +24,42 @@ function AppRoutes() {
         element={
           <PrivateRoute>
             <Dashboard />
+          </PrivateRoute>
+        }
+      />
+
+      <Route
+        path="/tickets"
+        element={
+          <PrivateRoute>
+            <Tickets />
+          </PrivateRoute>
+        }
+      />
+
+      <Route
+        path="/faqs"
+        element={
+          <PrivateRoute>
+            <FAQs />
+          </PrivateRoute>
+        }
+      />
+
+      <Route
+        path="/notifications"
+        element={
+          <PrivateRoute>
+            <Notifications />
+          </PrivateRoute>
+        }
+      />
+
+      <Route
+        path="/profile"
+        element={
+          <PrivateRoute>
+            <Profile />
           </PrivateRoute>
         }
       />

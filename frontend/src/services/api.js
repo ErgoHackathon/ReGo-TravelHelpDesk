@@ -43,7 +43,7 @@ api.interceptors.response.use(
         
         if (refreshToken) {
           const response = await axios.post(
-            `${process.env.REACT_APP_API_URL}/auth/refresh`,
+            `${process.env.REACT_APP_API_URL || 'http://localhost:8080/api/v1'}/auth/refresh`,
             { refreshToken }
           );
 

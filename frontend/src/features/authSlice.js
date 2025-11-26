@@ -151,6 +151,9 @@ const authSlice = createSlice({
         state.token = action.payload.token;
         state.isAuthenticated = true;
         state.registerError = null;
+        // persist
+        localStorage.setItem('user', JSON.stringify(action.payload.user));
+        localStorage.setItem('accessToken', action.payload.token);
       })
       .addCase(register.rejected, (state, action) => {
         state.loading = false;
@@ -168,6 +171,10 @@ const authSlice = createSlice({
         state.token = action.payload.token;
         state.isAuthenticated = true;
         state.loginError = null;
+        // persist
+        localStorage.setItem('user', JSON.stringify(action.payload.user));
+        localStorage.setItem('accessToken', action.payload.token);
+        localStorage.setItem('refreshToken', action.payload.refreshToken || '');
       })
       .addCase(login.rejected, (state, action) => {
         state.loading = false;
@@ -199,7 +206,8 @@ const authSlice = createSlice({
       })
       .addCase(getProfile.fulfilled, (state, action) => {
         state.loading = false;
-        state.user = action.payload;
+        state.user = action.payload; // keep existing behavior
+        localStorage.setItem('user', JSON.stringify(action.payload));
       })
       .addCase(getProfile.rejected, (state, action) => {
         state.loading = false;
