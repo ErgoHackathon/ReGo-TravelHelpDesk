@@ -208,6 +208,13 @@ app.get('/api/v1/users', requireAuth, (req, res) => {
   res.json({ success: true, data: users.map((u) => ({ ...u, password: undefined })) });
 });
 
+// Public simple users list (id & name) used by frontend to map ids to names
+app.get('/api/v1/users/simple', (req, res) => {
+  const users = readSafe(USERS_FILE);
+  const simple = users.map(u => ({ id: u.id, name: u.name || `${u.firstName || ''} ${u.lastName || ''}`.trim() }));
+  res.json({ success: true, data: simple });
+});
+
 // Profile
 app.get('/api/v1/auth/profile', requireAuth, (req, res) => {
   const user = req.user;
@@ -391,6 +398,17 @@ app.get('/api/v1/approvals', requireAuth, (req, res) => {
   }
   // for approvers, show pending assigned to them
   return res.json({ success: true, data: approvals.filter(a => a.approver_id === req.user.id && a.status === 'PENDING') });
+});
+
+// Mark notification as read
+app.post('/api/v1/notifications/:id/read', requireAuth, (req, res) => {
+  const notifs = readSafe(NOTIF_FILE);
+  const idx = notifs.findIndex(n => n.id === req.params.id);
+  if (idx === -1) return res.status(404).json({ success: false, error: { message: 'Notification not found' } });
+  notifs[idx].is_read = true;
+  notifs[idx].read_at = new Date().toISOString();
+  saveJSON(NOTIF_FILE, notifs);
+  res.json({ success: true });
 });
 
 // Seed endpoint (dev only)

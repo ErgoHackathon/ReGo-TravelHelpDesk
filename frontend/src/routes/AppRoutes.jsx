@@ -8,6 +8,11 @@ import Tickets from '../pages/Tickets';
 import FAQs from '../pages/FAQs';
 import Notifications from '../pages/Notifications';
 import Profile from '../pages/Profile';
+import TravelRequests from '../pages/TravelRequests';
+import TravelRequestDetail from '../pages/TravelRequestDetail';
+import CreateRequest from '../pages/CreateRequest';
+import Approvals from '../pages/Approvals';
+import NotificationsCenter from '../pages/NotificationsCenter';
 
 // Main routing component
 function AppRoutes() {
@@ -50,7 +55,7 @@ function AppRoutes() {
         path="/notifications"
         element={
           <PrivateRoute>
-            <Notifications />
+            <NotificationsCenter />
           </PrivateRoute>
         }
       />
@@ -64,9 +69,43 @@ function AppRoutes() {
         }
       />
 
+      <Route
+        path="/travel-requests"
+        element={
+          <PrivateRoute>
+            <TravelRequests />
+          </PrivateRoute>
+        }
+      />
+
+      <Route
+        path="/travel-requests/new"
+        element={
+          <PrivateRoute>
+            <CreateRequest />
+          </PrivateRoute>
+        }
+      />
+
+      <Route
+        path="/travel-requests/:id"
+        element={
+          <PrivateRoute>
+            <TravelRequestDetail />
+          </PrivateRoute>
+        }
+      />
+
+      <Route
+        path="/approvals"
+        element={
+          <PrivateRoute>
+            <Approvals />
+          </PrivateRoute>
+        }
+      />
+
       {/* Routes to be added in later stages */}
-      {/* <Route path="/travel-requests" element={<PrivateRoute><TravelRequests /></PrivateRoute>} /> */}
-      {/* <Route path="/approvals" element={<PrivateRoute><Approvals /></PrivateRoute>} /> */}
       {/* <Route path="/expenses" element={<PrivateRoute><Expenses /></PrivateRoute>} /> */}
 
       {/* 404 Not Found - redirect to dashboard if authenticated, otherwise to login */}
