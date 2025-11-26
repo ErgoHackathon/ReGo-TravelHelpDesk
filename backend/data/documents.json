@@ -1,0 +1,20 @@
+[
+  {
+    "document_id": "d-1",
+    "request_id": "r-1",
+    "uploaded_by": "u-user-1",
+    "document_type": "passport",
+    "file_name": "passport.pdf",
+    "file_size_bytes": 23456,
+    "mime_type": "application/pdf",
+    "blob_storage_url": "",
+    "ocr_status": "COMPLETED",
+    "ocr_extracted_data": {
+      "name": "John Traveler"
+    },
+    "ocr_confidence_score": 92,
+    "ocr_processed_at": "2025-11-26T14:49:31.880Z",
+    "verification_status": "VERIFIED",
+    "uploaded_at": "2025-11-26T14:49:31.880Z"
+  }
+]

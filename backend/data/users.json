@@ -1,29 +1,44 @@
 [
   {
     "id": "u-admin-1",
+    "firstName": "Admin",
+    "lastName": "User",
     "name": "Admin User",
     "email": "admin@rego.com",
     "password": "admin123",
     "role": "admin",
     "avatar": "/static/admin.png",
-    "createdAt": "2025-11-26T14:44:20.475Z"
+    "department": "Travel",
+    "employeeId": "EMP-ADMIN",
+    "reporting_manager_id": null,
+    "createdAt": "2025-11-26T14:49:31.875Z"
   },
   {
     "id": "u-agent-1",
+    "firstName": "Agent",
+    "lastName": "Alice",
     "name": "Agent Alice",
     "email": "agent@rego.com",
     "password": "agent123",
     "role": "agent",
     "avatar": "/static/agent.png",
-    "createdAt": "2025-11-26T14:44:20.482Z"
+    "department": "Support",
+    "employeeId": "EMP-AGENT",
+    "reporting_manager_id": "u-admin-1",
+    "createdAt": "2025-11-26T14:49:31.880Z"
   },
   {
     "id": "u-user-1",
+    "firstName": "John",
+    "lastName": "Traveler",
     "name": "John Traveler",
     "email": "user@rego.com",
     "password": "user123",
     "role": "user",
     "avatar": "/static/user.png",
-    "createdAt": "2025-11-26T14:44:20.482Z"
+    "department": "Engineering",
+    "employeeId": "EMP-USER1",
+    "reporting_manager_id": "u-agent-1",
+    "createdAt": "2025-11-26T14:49:31.880Z"
   }
 ]

@@ -1,0 +1,20 @@
+[
+  {
+    "approval_id": "a-1",
+    "request_id": "r-1",
+    "approver_id": "u-agent-1",
+    "approval_level": 1,
+    "status": "PENDING",
+    "comments": null,
+    "created_at": "2025-11-26T14:49:31.880Z"
+  },
+  {
+    "approval_id": "a-2",
+    "request_id": "r-1",
+    "approver_id": "u-admin-1",
+    "approval_level": 2,
+    "status": "PENDING",
+    "comments": null,
+    "created_at": "2025-11-26T14:49:31.880Z"
+  }
+]

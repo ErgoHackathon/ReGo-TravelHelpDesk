@@ -6,12 +6,12 @@
     "category": "Compensation",
     "status": "open",
     "userId": "u-user-1",
-    "createdAt": "2025-11-26T14:44:20.482Z",
+    "createdAt": "2025-11-26T14:49:31.880Z",
     "updates": [
       {
         "by": "u-agent-1",
         "message": "We are looking into it",
-        "ts": "2025-11-26T14:44:20.482Z"
+        "ts": "2025-11-26T14:49:31.880Z"
       }
     ]
   },
@@ -22,12 +22,12 @@
     "category": "Baggage",
     "status": "in-progress",
     "userId": "u-user-1",
-    "createdAt": "2025-11-26T14:44:20.482Z",
+    "createdAt": "2025-11-26T14:49:31.880Z",
     "updates": [
       {
         "by": "u-agent-1",
         "message": "Please provide baggage tag",
-        "ts": "2025-11-26T14:44:20.482Z"
+        "ts": "2025-11-26T14:49:31.880Z"
       }
     ]
   }
