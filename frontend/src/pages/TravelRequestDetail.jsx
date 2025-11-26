@@ -28,7 +28,7 @@ export default function TravelRequestDetail() {
     onSuccess: () => qc.invalidateQueries(['travelRequests', ['travelRequest', id], 'approvals'])
   });
 
-  const upload = useMutation((payload) => api.post(`/travel-requests/${id}/documents`, payload), {
+  const upload = useMutation((formData) => api.post(`/travel-requests/${id}/documents`, formData, { headers: { 'Content-Type': 'multipart/form-data' } }), {
     onSuccess: () => {
       qc.invalidateQueries(['travelRequest', id]);
       setUploadStatus('success');
@@ -49,8 +49,11 @@ export default function TravelRequestDetail() {
   const handleFile = (e) => {
     const f = e.target.files[0];
     if (!f) return;
-    // send metadata only
-    upload.mutate({ fileName: f.name, fileSize: f.size, mimeType: f.type, document_type: 'passport' });
+    // send as multipart FormData
+    const fd = new FormData();
+    fd.append('file', f);
+    fd.append('document_type', 'passport');
+    upload.mutate(fd);
   };
 
   return (
@@ -82,7 +85,13 @@ export default function TravelRequestDetail() {
       <h3>Documents</h3>
       <ul>
         {req.documents.map(d => (
-          <li key={d.document_id}>{d.file_name} - {d.verification_status}</li>
+          <li key={d.document_id}>
+            {d.blob_storage_url ? (
+              <a href={d.blob_storage_url} target="_blank" rel="noreferrer">{d.file_name}</a>
+            ) : (
+              d.file_name
+            )} - {d.verification_status}
+          </li>
         ))}
       </ul>
 
