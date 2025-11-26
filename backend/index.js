@@ -4,6 +4,7 @@ const bodyParser = require('body-parser');
 const fs = require('fs');
 const path = require('path');
 const { v4: uuidv4 } = require('uuid');
+const multer = require('multer');
 
 const app = express();
 const PORT = process.env.PORT || 8080;
@@ -297,23 +298,29 @@ app.get('/api/v1/travel-requests/:id', requireAuth, (req, res) => {
 });
 
 // Upload document metadata (no file storage) and simulate OCR
-app.post('/api/v1/travel-requests/:id/documents', requireAuth, (req, res) => {
+// Supports multipart/form-data with field 'file' OR JSON body with metadata
+app.post('/api/v1/travel-requests/:id/documents', requireAuth, upload.single('file'), (req, res) => {
   const documents = readSafe(DOCUMENTS_FILE);
   const reqs = readSafe(TRAVEL_REQ_FILE);
   const travel = reqs.find(t => t.id === req.params.id);
   if (!travel) return res.status(404).json({ success: false, error: { message: 'Request not found' } });
   if (req.user.id !== travel.userId && req.user.role !== 'agent' && req.user.role !== 'admin') return res.status(403).json({ success: false, error: { message: 'Forbidden' } });
 
-  const body = req.body; // expect { fileName, document_type, fileSize }
+  // accept metadata from either JSON body or form fields
+  const body = req.body || {};
+  const file = req.file;
+
+  const blobUrl = file ? `/static/uploads/${file.filename}` : '';
+
   const doc = {
     document_id: uuidv4(),
     request_id: travel.id,
     uploaded_by: req.user.id,
     document_type: body.document_type || 'passport',
-    file_name: body.fileName || 'file.pdf',
-    file_size_bytes: body.fileSize || 0,
-    mime_type: body.mimeType || 'application/pdf',
-    blob_storage_url: '',
+    file_name: file ? file.originalname : (body.fileName || 'file.pdf'),
+    file_size_bytes: file ? file.size : (Number(body.fileSize) || 0),
+    mime_type: file ? file.mimetype : (body.mimeType || 'application/pdf'),
+    blob_storage_url: blobUrl,
     ocr_status: 'COMPLETED',
     ocr_extracted_data: { name: 'John Doe' },
     ocr_confidence_score: Math.round(Math.random() * 40) + 60, // 60-100
