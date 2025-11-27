@@ -1,0 +1,50 @@
+import React from 'react';
+import { Routes, Route, Navigate } from 'react-router-dom';
+import Login from '../pages/Login';
+import Register from '../pages/Register';
+import DashboardRouter from '../pages/Dashboard/DashboardRouter';
+import PrivateRoute from './PrivateRoute';
+
+// Main routing component
+function AppRoutes() {
+  return (
+    <Routes>
+      {/* Public routes */}
+      <Route path="/" element={<Navigate to="/login" replace />} />
+      <Route path="/login" element={<Login />} />
+      <Route path="/register" element={<Register />} />
+
+      {/* Protected routes */}
+      <Route
+        path="/dashboard"
+        element={
+          <PrivateRoute>
+            <DashboardRouter />
+          </PrivateRoute>
+        }
+      />
+
+      {/* Placeholder for forgot password */}
+      <Route 
+        path="/forgot-password" 
+        element={
+          <div style={{ padding: '50px', textAlign: 'center' }}>
+            <h2>Forgot Password</h2>
+            <p>This feature will be implemented in a later phase.</p>
+            <a href="/login">Back to Login</a>
+          </div>
+        } 
+      />
+
+      {/* Routes to be added in later stages */}
+      {/* <Route path="/travel-requests" element={<PrivateRoute><TravelRequests /></PrivateRoute>} /> */}
+      {/* <Route path="/approvals" element={<PrivateRoute><Approvals /></PrivateRoute>} /> */}
+      {/* <Route path="/expenses" element={<PrivateRoute><Expenses /></PrivateRoute>} /> */}
+
+      {/* 404 Not Found - redirect to dashboard if authenticated, otherwise to login */}
+      <Route path="*" element={<Navigate to="/dashboard" replace />} />
+    </Routes>
+  );
+}
+
+export default AppRoutes;

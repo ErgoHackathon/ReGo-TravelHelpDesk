@@ -1,0 +1,11 @@
+Employee:
+email: employee@company.com
+password: Test123!
+
+Manager:
+email: manager@company.com
+password: Test123!
+
+AVP:
+email: avp@company.com
+password: Test123!
