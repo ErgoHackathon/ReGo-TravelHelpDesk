@@ -1,8 +1,12 @@
 import api from './api';
 import mockDataService from './mockDataService';
+import apiConfig from '../config/apiConfig';
 
-// Toggle between mock and real API
-const USE_MOCK_API = true; // Set to false when .NET backend is ready
+/**
+ * Auth Service
+ * Handles all authentication-related API calls
+ * Automatically switches between mock and real API based on apiConfig
+ */
 
 const authService = {
   /**
@@ -11,12 +15,14 @@ const authService = {
   login: async (credentials) => {
     let response;
     
-    if (USE_MOCK_API) {
+    if (apiConfig.USE_MOCK_API) {
       // Use mock data
+      console.log('🔵 Using MOCK API for login');
       response = await mockDataService.login(credentials);
     } else {
-      // Use real API
-      response = await api.post('/auth/login', credentials);
+      // Use real .NET API
+      console.log('🟢 Using REAL API for login');
+      response = await api.post(apiConfig.ENDPOINTS.LOGIN, credentials);
     }
     
     if (response.data.success) {
@@ -27,6 +33,7 @@ const authService = {
       localStorage.setItem('accessToken', token);
       localStorage.setItem('refreshToken', refreshToken);
       
+      console.log('✅ Login successful:', user.email);
       return response.data.data;
     }
     
@@ -39,10 +46,12 @@ const authService = {
   register: async (userData) => {
     let response;
     
-    if (USE_MOCK_API) {
+    if (apiConfig.USE_MOCK_API) {
+      console.log('🔵 Using MOCK API for register');
       response = await mockDataService.register(userData);
     } else {
-      response = await api.post('/auth/register', userData);
+      console.log('🟢 Using REAL API for register');
+      response = await api.post(apiConfig.ENDPOINTS.REGISTER, userData);
     }
     
     if (response.data.success) {
@@ -64,14 +73,17 @@ const authService = {
    */
   logout: async () => {
     try {
-      if (USE_MOCK_API) {
+      if (apiConfig.USE_MOCK_API) {
+        console.log('🔵 Using MOCK API for logout');
         await mockDataService.logout();
       } else {
-        await api.post('/auth/logout');
+        console.log('🟢 Using REAL API for logout');
+        await api.post(apiConfig.ENDPOINTS.LOGOUT);
       }
     } finally {
       // Clear localStorage even if API call fails
       authService.clearLocalStorage();
+      console.log('✅ Logged out successfully');
     }
   },
 
@@ -86,11 +98,13 @@ const authService = {
     }
 
     // For mock, just return the existing token
-    if (USE_MOCK_API) {
+    if (apiConfig.USE_MOCK_API) {
+      console.log('🔵 Mock: Returning existing token');
       return localStorage.getItem('accessToken');
     }
 
-    const response = await api.post('/auth/refresh', { refreshToken });
+    console.log('🟢 Using REAL API for token refresh');
+    const response = await api.post(apiConfig.ENDPOINTS.REFRESH_TOKEN, { refreshToken });
     
     if (response.data.success) {
       const { token } = response.data.data;
@@ -107,10 +121,12 @@ const authService = {
   getProfile: async () => {
     let response;
     
-    if (USE_MOCK_API) {
+    if (apiConfig.USE_MOCK_API) {
+      console.log('🔵 Using MOCK API for profile');
       response = await mockDataService.getProfile();
     } else {
-      response = await api.get('/auth/profile');
+      console.log('🟢 Using REAL API for profile');
+      response = await api.get(apiConfig.ENDPOINTS.GET_PROFILE);
     }
     
     if (response.data.success) {
@@ -127,7 +143,9 @@ const authService = {
    * Update user profile
    */
   updateProfile: async (profileData) => {
-    const response = await api.put('/auth/profile', profileData);
+    // Only real API for now (implement mock if needed)
+    console.log('🟢 Using REAL API for update profile');
+    const response = await api.put(apiConfig.ENDPOINTS.UPDATE_PROFILE, profileData);
     
     if (response.data.success) {
       const user = response.data.data;
@@ -143,7 +161,9 @@ const authService = {
    * Change password
    */
   changePassword: async (passwordData) => {
-    const response = await api.post('/auth/change-password', passwordData);
+    // Only real API for now (implement mock if needed)
+    console.log('🟢 Using REAL API for change password');
+    const response = await api.post(apiConfig.ENDPOINTS.CHANGE_PASSWORD, passwordData);
     return response.data;
   },
 

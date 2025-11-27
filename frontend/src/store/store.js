@@ -23,7 +23,8 @@
 
 import { configureStore } from '@reduxjs/toolkit';
 import authReducer from '../features/authSlice';
-import dashboardReducer from '../features/dashboard/dashboardSlice'; 
+import dashboardReducer from '../redux/slices/dashboardSlice';
+ 
 // (Make sure this path is correct based on your folder structure)
 
 export const store = configureStore({

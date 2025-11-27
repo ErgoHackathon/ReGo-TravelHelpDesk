@@ -1,5 +1,5 @@
-import React from 'react';
-import { useSelector } from 'react-redux';
+import React, { useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import {
   Box,
   Container,
@@ -23,53 +23,18 @@ import {
   TrendingUp
 } from '@mui/icons-material';
 import Navbar from '../../components/layout/Navbar';
+import { fetchDashboardData } from '../../redux/slices/dashboardSlice';
 
 const DashboardManager = () => {
+  const dispatch = useDispatch();
   const { user } = useSelector((state) => state.auth);
+  const { stats, pendingApprovals, loading } = useSelector((state) => state.dashboard);
 
-  // Mock stats data
-  const stats = [
-    { title: 'Team Requests', value: 12, icon: <People />, color: '#E63946' },
-    { title: 'Pending My Approval', value: 5, icon: <PendingActions />, color: '#FFA726' },
-    { title: 'Approved Today', value: 8, icon: <CheckCircle />, color: '#4CAF50' },
-    { title: 'Budget Used', value: '₹3.2L', icon: <TrendingUp />, color: '#2196F3' }
-  ];
+  useEffect(() => {
+    dispatch(fetchDashboardData());
+  }, [dispatch]);
 
-  // Mock pending approvals
-  const pendingApprovals = [
-    { 
-      id: 'TR-2025-015', 
-      employee: 'Rahul Sharma', 
-      destination: 'Singapore', 
-      amount: '₹85,000',
-      urgency: 'high',
-      date: '2025-12-10'
-    },
-    { 
-      id: 'TR-2025-016', 
-      employee: 'Priya Patel', 
-      destination: 'Dubai, UAE', 
-      amount: '₹65,000',
-      urgency: 'medium',
-      date: '2025-12-15'
-    },
-    { 
-      id: 'TR-2025-017', 
-      employee: 'Amit Kumar', 
-      destination: 'Mumbai, India', 
-      amount: '₹22,000',
-      urgency: 'low',
-      date: '2025-12-20'
-    },
-    { 
-      id: 'TR-2025-018', 
-      employee: 'Neha Singh', 
-      destination: 'London, UK', 
-      amount: '₹1,25,000',
-      urgency: 'high',
-      date: '2025-12-08'
-    }
-  ];
+  const icons = [<People />, <PendingActions />, <CheckCircle />, <TrendingUp />];
 
   const getUrgencyColor = (urgency) => {
     const colors = {
@@ -81,67 +46,40 @@ const DashboardManager = () => {
   };
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+    <Box sx={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
       <Navbar />
-      
-      {/* Add padding for fixed navbar */}
-      <Box component="main" sx={{ flexGrow: 1, mt: 8 }}>
-        <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-          {/* Welcome Section */}
-          <Box sx={{ mb: 4 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              <Avatar
-                sx={{
-                  width: 60,
-                  height: 60,
-                  bgcolor: '#E63946',
-                  fontSize: '1.5rem',
-                  fontWeight: 'bold'
-                }}
-              >
-                {user?.firstName?.charAt(0)}{user?.lastName?.charAt(0)}
-              </Avatar>
-              <Box>
-                <Typography variant="h4" gutterBottom sx={{ mb: 0 }}>
-                  Welcome, {user?.firstName}!
-                </Typography>
-                <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', mt: 0.5 }}>
-                  <Chip
-                    label={user?.role?.replace('_', ' ')}
-                    size="small"
-                    sx={{ bgcolor: '#E63946', color: 'white' }}
-                  />
-                  {user?.department && (
-                    <Chip
-                      label={`Team Lead - ${user.department}`}
-                      variant="outlined"
-                      size="small"
-                    />
-                  )}
-                </Box>
-              </Box>
+
+      <Box sx={{ mt: 8, flexGrow: 1 }}>
+        <Container maxWidth="lg">
+          
+          {/* Welcome */}
+          <Box sx={{ mb: 4, display: 'flex', gap: 2 }}>
+            <Avatar sx={{ width: 60, height: 60, bgcolor: '#E63946' }}>
+              {user?.firstName?.charAt(0)}{user?.lastName?.charAt(0)}
+            </Avatar>
+
+            <Box>
+              <Typography variant="h4">Welcome, {user?.firstName}!</Typography>
+              <Chip
+                label={user?.role?.replace('_', ' ')}
+                size="small"
+                sx={{ mt: 1, bgcolor: '#E63946', color: 'white' }}
+              />
             </Box>
           </Box>
 
-          {/* Stats Cards */}
+          {/* Stats */}
           <Grid container spacing={3} sx={{ mb: 4 }}>
-            {stats.map((stat, index) => (
-              <Grid item xs={12} sm={6} md={3} key={index}>
-                <Card sx={{ height: '100%', bgcolor: stat.color, color: 'white' }}>
+            {(stats || []).map((stat, i) => (
+              <Grid item xs={12} sm={6} md={3} key={i}>
+                <Card sx={{ bgcolor: stat.color, color: 'white' }}>
                   <CardContent>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                      <Box>
-                        <Typography variant="body2" sx={{ opacity: 0.9, mb: 1 }}>
-                          {stat.title}
-                        </Typography>
-                        <Typography variant="h4" fontWeight="bold">
-                          {stat.value}
-                        </Typography>
-                      </Box>
-                      <Box sx={{ opacity: 0.8 }}>
-                        {React.cloneElement(stat.icon, { sx: { fontSize: 40 } })}
-                      </Box>
-                    </Box>
+                    <Typography variant="body2">{stat.title}</Typography>
+                    <Typography variant="h4" fontWeight="bold">{stat.value}</Typography>
+
+                    {React.cloneElement(icons[i % icons.length], {
+                      sx: { fontSize: 40, opacity: 0.8 }
+                    })}
                   </CardContent>
                 </Card>
               </Grid>
@@ -149,118 +87,51 @@ const DashboardManager = () => {
           </Grid>
 
           {/* Pending Approvals */}
-          <Paper sx={{ p: 3, mb: 3 }}>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-              <Typography variant="h6">
-                Pending Approvals
-              </Typography>
+          <Paper sx={{ p: 3 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+              <Typography variant="h6">Pending Approvals</Typography>
               <Chip
-                label={`${pendingApprovals.length} pending`}
+                label={`${pendingApprovals?.length || 0} pending`}
                 sx={{ bgcolor: '#FFA726', color: 'white' }}
               />
             </Box>
+
+            {loading && <Typography>Loading...</Typography>}
+
             <List>
-              {pendingApprovals.map((request, index) => (
-                <React.Fragment key={request.id}>
-                  <ListItem
-                    sx={{
-                      '&:hover': { bgcolor: '#F5F5F5' },
-                      borderRadius: 1,
-                      mb: 1
-                    }}
-                  >
+              {(pendingApprovals || []).map((req, i) => (
+                <React.Fragment key={i}>
+                  <ListItem>
                     <ListItemText
                       primary={
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-                          <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
-                            <Typography variant="subtitle1" fontWeight="bold">
-                              {request.id}
-                            </Typography>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                          <Box sx={{ display: 'flex', gap: 2 }}>
+                            <Typography fontWeight={600}>{req.id}</Typography>
                             <Chip
-                              label={request.urgency.toUpperCase()}
-                              color={getUrgencyColor(request.urgency)}
+                              label={req.urgency?.toUpperCase()}
+                              color={getUrgencyColor(req.urgency)}
                               size="small"
                             />
                           </Box>
+
                           <Typography variant="h6" color="#E63946">
-                            {request.amount}
+                            {req.amount}
                           </Typography>
                         </Box>
                       }
                       secondary={
-                        <Box>
-                          <Typography variant="body2" color="text.secondary">
-                            <strong>Employee:</strong> {request.employee}
-                          </Typography>
-                          <Typography variant="body2" color="text.secondary">
-                            <strong>Destination:</strong> {request.destination} | <strong>Travel Date:</strong> {request.date}
-                          </Typography>
-                          <Box sx={{ mt: 1, display: 'flex', gap: 1 }}>
-                            <Button
-                              size="small"
-                              variant="contained"
-                              sx={{ bgcolor: '#4CAF50', '&:hover': { bgcolor: '#45a049' } }}
-                            >
-                              Approve
-                            </Button>
-                            <Button
-                              size="small"
-                              variant="outlined"
-                              color="error"
-                            >
-                              Reject
-                            </Button>
-                            <Button
-                              size="small"
-                              variant="text"
-                              sx={{ color: '#E63946' }}
-                            >
-                              View Details
-                            </Button>
-                          </Box>
-                        </Box>
+                        <Typography variant="body2">
+                          {req.employee} • {req.destination} • {req.date}
+                        </Typography>
                       }
                     />
                   </ListItem>
-                  {index < pendingApprovals.length - 1 && <Divider sx={{ my: 1 }} />}
+
+                  {i < pendingApprovals.length - 1 && <Divider />}
                 </React.Fragment>
               ))}
             </List>
           </Paper>
-
-          {/* Quick Stats */}
-          <Grid container spacing={3}>
-            <Grid item xs={12} md={6}>
-              <Card>
-                <CardContent>
-                  <Typography variant="h6" gutterBottom color="#E63946">
-                    Team Overview
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary" paragraph>
-                    Your team has 12 active travel requests this month
-                  </Typography>
-                  <Button variant="outlined" sx={{ borderColor: '#E63946', color: '#E63946' }}>
-                    View Team Requests
-                  </Button>
-                </CardContent>
-              </Card>
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <Card>
-                <CardContent>
-                  <Typography variant="h6" gutterBottom color="#E63946">
-                    Budget Tracker
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary" paragraph>
-                    ₹3.2L used of ₹10L monthly budget (32%)
-                  </Typography>
-                  <Button variant="outlined" sx={{ borderColor: '#E63946', color: '#E63946' }}>
-                    View Budget Details
-                  </Button>
-                </CardContent>
-              </Card>
-            </Grid>
-          </Grid>
         </Container>
       </Box>
     </Box>
