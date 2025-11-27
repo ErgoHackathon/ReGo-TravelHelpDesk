@@ -63,9 +63,10 @@ const LoginPage=()=> {
   }, [dispatch]);
 
   const handleChange = (e) => {
+    const { name, value } = e.target;
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value
+      [name]: value,
     });
   };
 
@@ -153,12 +154,16 @@ const LoginPage=()=> {
               gap: 2.5,
               mt: 1
             }}
+            component="form" onSubmit={handleSubmit}
           >
             <TextField
               label="Email"
               type="email"
+              name="email"
               fullWidth
               size="small"
+              value={formData.email}
+              onChange={handleChange}
               sx={{
                   "& .MuiOutlinedInput-root": {
                     borderRadius: "8px",
@@ -187,8 +192,11 @@ const LoginPage=()=> {
             <TextField
               label="Password"
               type="password"
+              name="password"
               fullWidth
               size="small"
+              value={formData.password}
+              onChange={handleChange}
               sx={{
                   "& .MuiOutlinedInput-root": {
                     borderRadius: "8px",
@@ -216,6 +224,7 @@ const LoginPage=()=> {
             />
 
             <Button
+              type="submit"
               variant="contained"
               fullWidth
               size="medium"
