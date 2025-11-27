@@ -1,0 +1,62 @@
+.rego-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
+
+.rego-card {
+  width: 380px;
+  background: #fff;
+  padding: 35px;
+  border-radius: 12px;
+  box-shadow: 0px 8px 24px rgba(0, 0, 0, 0.1);
+  text-align: center;
+}
+
+.rego-logo {
+  font-size: 38px;
+  font-weight: bold;
+  color: #c42323;
+}
+
+.rego-title {
+  margin: 0;
+  font-size: 26px;
+  font-weight: bold;
+}
+
+.rego-subtitle {
+  margin-bottom: 25px;
+  color: #555;
+}
+
+.rego-label {
+  display: block;
+  text-align: left;
+  margin-top: 15px;
+}
+
+.rego-input {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  transition: 0.2s;
+}
+
+.rego-input:focus {
+  border-color: #c42323;
+  outline: none;
+}
+
+.rego-btn {
+  width: 100%;
+  padding: 12px;
+  margin-top: 20px;
+  background: #c42323;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}

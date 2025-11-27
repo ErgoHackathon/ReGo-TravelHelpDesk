@@ -1,0 +1,34 @@
+.flight-overlay {
+  position: fixed;
+  inset: 0;
+  background: white;
+  z-index: 9999;
+  overflow: hidden;
+}
+
+/* Sky background */
+.sky-bg {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, #9bd3ff 0%, #cde9ff 40%, #ffffff 100%);
+  z-index: 1;
+}
+
+/* Plane */
+.plane {
+  position: absolute;
+  z-index: 10;
+}
+
+/* CLOUDS */
+.cloud {
+  position: absolute;
+  filter: brightness(0.9);  /* makes clouds visible */
+  opacity: 0.90;
+  z-index: 5;
+}
+
+/* Bigger clouds */
+.cloud1 { top: 25%; width: 280px; }
+.cloud2 { top: 50%; width: 350px; opacity: 0.85; }
+.cloud3 { top: 10%; width: 240px; opacity: 0.75; }
