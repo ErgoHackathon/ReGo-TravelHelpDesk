@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { ThemeProvider, createTheme, CssBaseline } from '@mui/material';
 import AppRoutes from './routes/AppRoutes';
 
@@ -81,8 +81,20 @@ const theme = createTheme({
     },
   },
 });
+export default function App() {
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isAnimating, setIsAnimating] = useState(false);
 
-function App() {
+  const handleLogin = () => {
+    setIsAnimating(true);
+
+    // Play animation for 1.8 seconds, then load homepage
+    setTimeout(() => {
+      setIsAnimating(false);
+      setIsLoggedIn(true);
+    }, 2000);
+  };
+
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
@@ -90,5 +102,3 @@ function App() {
     </ThemeProvider>
   );
 }
-
-export default App;

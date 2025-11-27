@@ -1,17 +1,19 @@
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
-import Login from '../pages/Login';
 import Register from '../pages/Register';
 import DashboardRouter from '../pages/Dashboard/DashboardRouter';
 import PrivateRoute from './PrivateRoute';
+import LoginPage from '../pages/Login';
+import ForgotPassword from '../pages/ForgotPassword';
+
 
 // Main routing component
 function AppRoutes() {
   return (
     <Routes>
-      {/* Public routes */}
+      Public routes
       <Route path="/" element={<Navigate to="/login" replace />} />
-      <Route path="/login" element={<Login />} />
+      <Route path="/login" element={<LoginPage/>}/>
       <Route path="/register" element={<Register />} />
 
       {/* Protected routes */}
@@ -28,11 +30,12 @@ function AppRoutes() {
       <Route 
         path="/forgot-password" 
         element={
-          <div style={{ padding: '50px', textAlign: 'center' }}>
-            <h2>Forgot Password</h2>
-            <p>This feature will be implemented in a later phase.</p>
-            <a href="/login">Back to Login</a>
-          </div>
+          // <div style={{ padding: '50px', textAlign: 'center', backgroundColor:'#fef2f2' }}>
+          //   <h2>Forgot Password</h2>
+          //   <p>This feature will be implemented in a later phase.</p>
+          //   <a href="/login">Back to Login</a>
+          // </div>
+          <ForgotPassword />
         } 
       />
 
