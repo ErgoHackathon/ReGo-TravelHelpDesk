@@ -31,6 +31,7 @@ import { fetchDashboardData } from '../../redux/slices/dashboardSlice';
 import RaiseRequestModal from '../../components/RaiseRequestModal';
 import { LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import SharedButton from '../../sharedComponents/SharedButton';
 
 const DashboardManager = () => {
   const dispatch = useDispatch();
@@ -167,8 +168,9 @@ const DashboardManager = () => {
 
 
             {/* Raise Travel Request Button */}
-            <Button
-              variant="contained"
+            
+            <SharedButton
+                variant="contained"
               startIcon={<FlightTakeoff />}
               sx={{
                 bgcolor: "#b22a2a",
@@ -179,7 +181,7 @@ const DashboardManager = () => {
               onClick={handleRaiseNewRequest}
             >
               Raise Travel Request
-            </Button>
+            </SharedButton>
           </Box>
 
           {/* Cards */}
