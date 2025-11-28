@@ -9,7 +9,7 @@ export const getDashboardStats = async () => {
     setTimeout(() => {
       resolve({
         data: [
-          { title: 'Team Requests', value: 12, icon: <People />, color: '#E63946' },
+          { title: 'Team Requests', value: 12, icon: <People />, color: '#b91c1c' },
           { title: 'Pending My Approval', value: 5, icon: <PendingActions />, color: '#FFA726' },
           { title: 'Approved Today', value: 8, icon: <CheckCircle />, color: '#4CAF50' },
           { title: 'Budget Used', value: '₹3.2L', icon: <TrendingUp />, color: '#2196F3' },

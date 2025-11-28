@@ -1,6 +1,6 @@
 GET /dashboard/stats
 [
-  { "title": "Team Requests", "value": 12, "color": "#E63946" },
+  { "title": "Team Requests", "value": 12, "color": "#b91c1c" },
   { "title": "Pending My Approval", "value": 5, "color": "#FFA726" }
 ]
 GET /dashboard/pending-approvals

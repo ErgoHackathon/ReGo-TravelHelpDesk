@@ -6,7 +6,7 @@ import AppRoutes from './routes/AppRoutes';
 const theme = createTheme({
   palette: {
     primary: {
-  main: '#E63946',
+  main: '#b91c1c',
   light: '#FF6B6B',
   dark: '#D62828',
 },

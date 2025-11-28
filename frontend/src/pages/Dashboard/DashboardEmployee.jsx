@@ -58,7 +58,15 @@ const DashboardEmployee = () => {
           <Box sx={{ mb: 4 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                <Avatar sx={{ width: 60, height: 60, bgcolor: '#E63946' }}>
+                <Avatar
+                  sx={{
+                    width: 60,
+                    height: 60,
+                    bgcolor: '#b91c1c',
+                    fontSize: '1.5rem',
+                    fontWeight: 'bold'
+                  }}
+                >
                   {user?.firstName?.charAt(0)}{user?.lastName?.charAt(0)}
                 </Avatar>
 
@@ -66,19 +74,32 @@ const DashboardEmployee = () => {
                   <Typography variant="h4">
                     Welcome back, {user?.firstName}!
                   </Typography>
-
-                  <Chip
-                    label={user?.role?.replace('_', ' ')}
-                    size="small"
-                    sx={{ mt: 1, bgcolor: '#E63946', color: 'white' }}
-                  />
+                  <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', mt: 0.5 }}>
+                    <Chip
+                      label={user?.role?.replace('_', ' ')}
+                      size="small"
+                      sx={{ bgcolor: '#b91c1c', color: 'white' }}
+                    />
+                    {user?.department && (
+                      <Chip
+                        label={user.department}
+                        variant="outlined"
+                        size="small"
+                      />
+                    )}
+                  </Box>
                 </Box>
               </Box>
 
               <Button
                 variant="contained"
                 startIcon={<AddCircleOutline />}
-                sx={{ bgcolor: '#E63946', '&:hover': { bgcolor: '#D62828' }, textTransform: 'none' }}
+                sx={{
+                  bgcolor: '#b91c1c',
+                  '&:hover': { bgcolor: '#D62828' },
+                  textTransform: 'none',
+                  px: 3
+                }}
               >
                 New Travel Request
               </Button>
@@ -135,6 +156,40 @@ const DashboardEmployee = () => {
               ))}
             </List>
           </Paper>
+
+          {/* Quick Actions */}
+          <Grid container spacing={3} sx={{ mt: 2 }}>
+            <Grid item xs={12} md={6}>
+              <Card>
+                <CardContent>
+                  <Typography variant="h6" gutterBottom color="#b91c1c">
+                    Quick Actions
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary" paragraph>
+                    Submit expense claims, upload documents, or check request status
+                  </Typography>
+                  <Button variant="outlined" sx={{ borderColor: '#b91c1c', color: '#b91c1c' }}>
+                    Submit Expenses
+                  </Button>
+                </CardContent>
+              </Card>
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <Card>
+                <CardContent>
+                  <Typography variant="h6" gutterBottom color="#b91c1c">
+                    Upcoming Travel
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary" paragraph>
+                    View your confirmed bookings and travel details
+                  </Typography>
+                  <Button variant="outlined" sx={{ borderColor: '#b91c1c', color: '#b91c1c' }}>
+                    View Bookings
+                  </Button>
+                </CardContent>
+              </Card>
+            </Grid>
+          </Grid>
         </Container>
       </Box>
     </Box>

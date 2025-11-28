@@ -57,7 +57,8 @@ const Navbar = ({ onMenuClick }) => {
       position="fixed" 
       sx={{ 
         zIndex: (theme) => theme.zIndex.drawer + 1,
-        bgcolor: '#E63946'
+        bgcolor: 'white', // inverted from #b91c1c
+        color: '#b91c1c', // text/icons color inverted
       }}
     >
       <Toolbar>
@@ -72,14 +73,14 @@ const Navbar = ({ onMenuClick }) => {
         </IconButton>
 
         {/* Logo */}
-        <Flight sx={{ mr: 1 }} />
+        <Flight sx={{ mr: 2 }} fontSize='large'/>
         <Typography 
-          variant="h6" 
+          variant="h3" 
           component="div" 
           sx={{ 
             flexGrow: 1,
             fontWeight: 'bold',
-            letterSpacing: '0.5px'
+            letterSpacing: '0.5px',
           }}
         >
           ReGo
@@ -111,8 +112,8 @@ const Navbar = ({ onMenuClick }) => {
                 sx={{ 
                   width: 32, 
                   height: 32,
-                  bgcolor: 'white',
-                  color: '#E63946',
+                  bgcolor: '#b91c1c', // inverted from white
+                  color: 'white', // inverted from #b91c1c
                   fontSize: '0.875rem',
                   fontWeight: 'bold'
                 }}

@@ -20,9 +20,9 @@ function AppRoutes() {
       <Route
         path="/dashboard"
         element={
-          <PrivateRoute>
+          // <PrivateRoute>
             <DashboardRouter />
-          </PrivateRoute>
+          // </PrivateRoute>
         }
       />
 
