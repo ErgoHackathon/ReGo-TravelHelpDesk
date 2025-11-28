@@ -2,6 +2,7 @@ import React from "react";
 import { Box, Typography, Button } from "@mui/material";
 import EngineeringIcon from "@mui/icons-material/Engineering";
 import { useNavigate } from "react-router-dom";
+import SharedButton from "../sharedComponents/SharedButton";
 
 const ForgotPassword = () => {
   const navigate = useNavigate(); // hook to navigate programmatically
@@ -54,14 +55,14 @@ const ForgotPassword = () => {
           later!
         </Typography>
 
-        <Button
+        <SharedButton
           variant="contained"
           color="primary"
           onClick={handleGoHome}
           sx={{ py: 1.2, px: 4, fontWeight: 600 }}
         >
           Go to Home
-        </Button>
+        </SharedButton>
       </Box>
     </Box>
   );

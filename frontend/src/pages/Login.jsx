@@ -29,6 +29,7 @@ import { toast } from 'react-toastify';
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import VpnKeyOutlinedIcon from "@mui/icons-material/VpnKeyOutlined";
 import AirplanemodeActiveOutlinedIcon from "@mui/icons-material/AirplanemodeActiveOutlined";
+import SharedButton from '../sharedComponents/SharedButton';
 
 // ONLY HAS THE LOGIN PAGE UI INTEGRATION WITH BE YE TO BE DONE 
 // - ONCE INTEGRATED KINDLY REMPVE THIS COMMENT
@@ -223,7 +224,7 @@ const LoginPage=()=> {
               }}
             />
 
-            <Button
+            <SharedButton
               type="submit"
               variant="contained"
               fullWidth
@@ -260,7 +261,7 @@ const LoginPage=()=> {
               }}
             >
               {icon} Log In
-            </Button>
+            </SharedButton>
           </Box>
         </Card>
       </Fade>
