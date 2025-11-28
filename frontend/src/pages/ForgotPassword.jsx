@@ -2,7 +2,7 @@ import React from "react";
 import { Box, Typography, Button } from "@mui/material";
 import EngineeringIcon from "@mui/icons-material/Engineering";
 import { useNavigate } from "react-router-dom";
-import SharedButton from "../sharedComponents/SharedButton";
+import { SharedButton } from "../sharedComponents";
 
 const ForgotPassword = () => {
   const navigate = useNavigate(); // hook to navigate programmatically

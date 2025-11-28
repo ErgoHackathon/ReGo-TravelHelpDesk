@@ -29,7 +29,7 @@ import { toast } from 'react-toastify';
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import VpnKeyOutlinedIcon from "@mui/icons-material/VpnKeyOutlined";
 import AirplanemodeActiveOutlinedIcon from "@mui/icons-material/AirplanemodeActiveOutlined";
-import SharedButton from '../sharedComponents/SharedButton';
+import { SharedButton } from '../sharedComponents';
 
 // ONLY HAS THE LOGIN PAGE UI INTEGRATION WITH BE YE TO BE DONE 
 // - ONCE INTEGRATED KINDLY REMPVE THIS COMMENT

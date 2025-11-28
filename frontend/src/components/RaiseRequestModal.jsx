@@ -18,7 +18,7 @@ import {
 // import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import dayjs from "dayjs";
 import { toast } from "react-toastify";
-import SharedButton from "../sharedComponents/SharedButton";
+// import SharedButton from "../sharedComponents/SharedButton";
 
 const style = {
     position: "absolute",
@@ -159,17 +159,17 @@ export default function RaiseRequestModal({ open, onClose }) {
                 {/* Buttons */}
                 <Box sx={{ mt: 3, textAlign: "right" }}>
 
-                    <SharedButton onClick={onClose} sx={{ mr: 2 }} variant="outlined">
+                    <Button onClick={onClose} sx={{ mr: 2 }} variant="outlined">
                         Cancel
-                    </SharedButton>
+                    </Button>
 
-                    <SharedButton
+                    <Button
                         variant="contained"
                         color="error"
                         onClick={handleSubmit}
                     >
                         Review & Submit Request
-                    </SharedButton>
+                    </Button>
                 </Box>
             </Box>
         </Modal>

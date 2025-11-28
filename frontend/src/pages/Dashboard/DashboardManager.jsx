@@ -31,7 +31,10 @@ import { fetchDashboardData } from '../../redux/slices/dashboardSlice';
 import RaiseRequestModal from '../../components/RaiseRequestModal';
 import { LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
-import SharedButton from '../../sharedComponents/SharedButton';
+import SharedButton from '../../sharedComponents/buttons/SharedButton';
+import PageWrapper from '../../sharedComponents/layout/PageWrapper';
+import { SharedCard, SharedTable, SharedTypography, StatCard, StatusChip, TableHeader, TableRowActionButtons } from '../../sharedComponents';
+import UserAvatar from '../../sharedComponents/avatars/UserAvatars';
 
 const DashboardManager = () => {
   const dispatch = useDispatch();
@@ -115,256 +118,144 @@ const DashboardManager = () => {
   }
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", minHeight: "100vh", bgcolor: "#fff6f6" }}>
-      <RaiseRequestModal open={requestModalOpen} onClose={()=>setRequestModalOpen(false)} />
-      {/* Your Navbar at the top */}
+   (
+    <Box sx={{ bgcolor: "#fff6f6" }}>
       <Navbar />
+      <RaiseRequestModal
+        open={requestModalOpen}
+        onClose={() => setRequestModalOpen(false)}
+      />
 
-      {/* Main content with padding for fixed Navbar */}
-      <Box component="main" sx={{ flexGrow: 1, mt: 8, width: "100%" }}>
-        <Container maxWidth={false} sx={{ py: 4 }}>
-          {/* Welcome + Raise Travel Request button */}
-          <Box
-            sx={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              mb: 4,
-              px: 3,
-              flexWrap: "wrap",
-              gap: 2,
-            }}
-          >
-            {/* Welcome Section */}
-            <Box sx={{ display: "flex", alignItems: "center", gap: 2, flexWrap: "wrap" }}>
-              <Avatar
-                sx={{
-                  width: 60,
-                  height: 60,
-                  bgcolor: "#b22a2a",
-                  fontSize: "1.5rem",
-                  fontWeight: "bold",
-                }}
-              >
-                {user.firstName.charAt(0)}
-                {user.lastName.charAt(0)}
-              </Avatar>
-              <Box>
-                <Typography variant="h4" gutterBottom sx={{ mb: 0 }}>
-                  Welcome, {user.firstName}!
-                </Typography>
-                <Box sx={{ display: "flex", gap: 1, alignItems: "center", mt: 0.5, flexWrap: "wrap" }}>
-                  <Chip
-                    label={user.role.replace("_", " ")}
-                    size="small"
-                    sx={{ bgcolor: "#b22a2a", color: "white" }}
+      <PageWrapper>
+        {/* Top Section */}
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            flexWrap: "wrap",
+            alignItems: "center",
+            mb: 4,
+          }}
+        >
+          {/* Welcome Section */}
+          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+            <UserAvatar firstName={user.firstName} lastName={user.lastName} />
+
+            <Box>
+              <SharedTypography>Welcome, {user.firstName}!</SharedTypography>
+
+              <Box sx={{ display: "flex", gap: 1 }}>
+                <StatusChip
+                  label={user.role.replace("_", " ")}
+                  color="#b22a2a"
+                />
+
+                {user.department && (
+                  <StatusChip
+                    label={`Team Lead - ${user.department}`}
+                    color="#f5f5f5"
                   />
-                  {user.department && (
-                    <Chip label={`Team Lead - ${user.department}`} variant="outlined" size="small" />
-                  )}
-                </Box>
+                )}
               </Box>
             </Box>
-
-
-            {/* Raise Travel Request Button */}
-            
-            <SharedButton
-                variant="contained"
-              startIcon={<FlightTakeoff />}
-              sx={{
-                bgcolor: "#b22a2a",
-                "&:hover": { bgcolor: "#8b1f1f" },
-                textTransform: "none",
-                minWidth: 200,
-              }}
-              onClick={handleRaiseNewRequest}
-            >
-              Raise Travel Request
-            </SharedButton>
           </Box>
 
-          {/* Cards */}
-          <Grid container spacing={3} mb={6} px={3}>
-            <Grid item xs={12} sm={4}>
-              <Paper
-                elevation={2}
-                sx={{
-                  p: 3,
-                  border: "1.5px solid",
-                  borderColor: "#b91c1c",
-                  borderTop: "7px solid #b91c1c",
-                  borderRadius: 2,
-                }}
-              >
-                <Box
-                  sx={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                  }}
-                >
-                  <Box>
-                    <Typography variant="caption" color="grey.600" gutterBottom>
-                      Requests Raised (Last 30 Days)
-                    </Typography>
-                    <Typography variant="h5" fontWeight="bold">
-                      12
-                    </Typography>
-                  </Box>
+          {/* Raise Travel Request Button */}
+          <SharedButton
+            variant="contained"
+            startIcon={<FlightTakeoff />}
+            sx={{
+              bgcolor: "#b22a2a",
+              "&:hover": { bgcolor: "#8b1f1f" },
+              minWidth: 200,
+            }}
+            onClick={handleRaiseNewRequest}
+          >
+            Raise Travel Request
+          </SharedButton>
+        </Box>
 
-                  <FlightTakeoff sx={{ fontSize: 40, color: "#f9b6b6" }} />
-                </Box>
-              </Paper>
-
-            </Grid>
-
-            <Grid item xs={12} sm={4}>
-              <Paper
-                elevation={2}
-                sx={{
-                  p: 3,
-                  border: "1.5px solid",
-                  borderColor: "#f5d67a",
-                  borderTop: "7px solid #f5d67a",
-                  borderRadius: 2,
-                }}
-              >
-                <Box
-                  sx={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                  }}
-                >
-                  <Box>
-                    <Typography variant="caption" color="grey.600" gutterBottom>
-                      Pending Approvals
-                    </Typography>
-                    <Typography variant="h5" fontWeight="bold">
-                      3
-                    </Typography>
-                  </Box>
-
-                  <AccessTime sx={{ fontSize: 40, color: "#e1b300" }} />
-                </Box>
-              </Paper>
-
-            </Grid>
-
-            <Grid item xs={12} sm={4}>
-              <Paper
-                elevation={2}
-                sx={{
-                  p: 3,
-                  border: "1.5px solid",
-                  borderColor: "#c7cbd6",
-                  borderTop: "7px solid #c7cbd6",
-                  borderRadius: 2,
-                }}
-              >
-                <Box
-                  sx={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                  }}
-                >
-                  <Box>
-                    <Typography variant="caption" color="grey.600" gutterBottom>
-                      Total Reports
-                    </Typography>
-                    <Typography variant="h5" fontWeight="bold">
-                      25
-                    </Typography>
-                  </Box>
-
-                  <Group sx={{ fontSize: 40, color: "#a4acc9" }} />
-                </Box>
-              </Paper>
-
-            </Grid>
+        {/* Stats Cards */}
+        <Grid container spacing={3} mb={4}>
+          <Grid item xs={12} sm={4}>
+            <StatCard
+              title="Requests Raised (Last 30 Days)"
+              value="12"
+              icon={<FlightTakeoff sx={{ fontSize: 40, color: "#f9b6b6" }} />}
+              color="#b91c1c"
+            />
           </Grid>
 
-          {/* Recent Application Status Table */}
-          <Box component={Paper} p={3} borderRadius={2} boxShadow={3} px={3} pb={6} m={3}>
-            <Typography variant="h6" fontWeight="bold" mb={2}>
-              Recent Application Status
-            </Typography>
+          <Grid item xs={12} sm={4}>
+            <StatCard
+              title="Pending Approvals"
+              value="3"
+              icon={<AccessTime sx={{ fontSize: 40, color: "#e1b300" }} />}
+              color="#f5d67a"
+            />
+          </Grid>
 
-            <Table size="small">
-              <TableHead>
-                <TableRow sx={{ bgcolor: "#f9f9f9", margin:'10px' }}>
-                  <TableCell sx={{ fontWeight: "bold", color: "grey.500" }}>ID</TableCell>
-                  <TableCell sx={{ fontWeight: "bold", color: "grey.500" }}>EMPLOYEES</TableCell>
-                  <TableCell sx={{ fontWeight: "bold", color: "grey.500" }}>DESTINATION</TableCell>
-                  <TableCell sx={{ fontWeight: "bold", color: "grey.500" }}>STATUS</TableCell>
-                  <TableCell sx={{ fontWeight: "bold", color: "grey.500", textAlign:'right' }}>ACTION</TableCell>
+          <Grid item xs={12} sm={4}>
+            <StatCard
+              title="Total Reports"
+              value="25"
+              icon={<Group sx={{ fontSize: 40, color: "#a4acc9" }} />}
+              color="#c7cbd6"
+            />
+          </Grid>
+        </Grid>
+
+        {/* Recent Applications Table */}
+        <SharedCard sx={{ p: 3, mb: 5 }}>
+          <SharedTypography variant="h6">Recent Application Status</SharedTypography>
+
+          <SharedTable>
+            <TableHeader
+              columns={[
+                "ID",
+                "EMPLOYEE",
+                "DESTINATION",
+                "STATUS",
+                "ACTION",
+              ]}
+            />
+
+            <TableBody>
+              {pendingApprovals?.map((row) => (
+                <TableRow key={row.id} hover>
+                  <TableCell sx={{ fontFamily: "monospace" }}>
+                    {row.id}
+                  </TableCell>
+
+                  <TableCell>{row.employee}</TableCell>
+
+                  <TableCell>{row.destination}</TableCell>
+
+                  <TableCell>
+                    <StatusChip
+                      label={row.status}
+                      color={row.statusColor}
+                    />
+                  </TableCell>
+
+                  <TableCell sx={{ textAlign: "right" }}>
+                    <TableRowActionButtons
+                      actionText={row.actionText}
+                      actionColor={row.actionColor}
+                      extraActionText={row.extraActionText}
+                      extraActionColor={row.extraActionColor}
+                      statusColor={row.statusColor}
+                      startIcon={<Send />}
+                    />
+                  </TableCell>
                 </TableRow>
-              </TableHead>
-              <TableBody>
-                {pendingApprovals?.map(
-                  ({
-                    id,
-                    employee,
-                    destination,
-                    status,
-                    statusColor,
-                    actionText,
-                    actionColor,
-                    extraActionText,
-                    extraActionColor,
-                    urgency
-                  }) => (
-                    <TableRow key={id} hover>
-                      <TableCell sx={{ fontFamily: "monospace" }}>{id}</TableCell>
-                      <TableCell sx={{ color: "grey.700" }}>{employee}</TableCell>
-                      <TableCell>{destination}</TableCell>
-                      <TableCell>
-                        <Chip
-                          label={status}
-                          // color={statusColor}
-                          size="small"
-                          sx={{ fontWeight: "bold", textTransform: "none", bgcolor: statusColor }}
-                        />
-                      </TableCell>
-                      <TableCell sx={{textAlign:'right'}}>
-                        <Stack direction="row" alignItems="center">
-                          <Grid item container direction="row">
-                            <Grid item xs={6}>
-                              {extraActionText && (
-                                <Button
-                                  size="small"
-                                  // color={extraActionColor}
-                                  startIcon={<Send />}
-                                  sx={{ textTransform: "none", fontWeight: "bold", color: extraActionColor, bgcolor: statusColor }}
-                                >
-                                  {extraActionText}
-                                </Button>
-                              )}
-                            </Grid>
-
-                            <Grid item xs={6}>
-                              <Button
-                                size="small"
-                                // color={actionColor}
-                                sx={{ textTransform: "none", fontWeight: "bold", color: actionColor }}
-                              >
-                                {actionText}
-                              </Button>
-                            </Grid>
-                          </Grid>
-                        </Stack>
-                      </TableCell>
-                    </TableRow>
-                  )
-                )}
-              </TableBody>
-            </Table>
-          </Box>
-        </Container>
-      </Box>
+              ))}
+            </TableBody>
+          </SharedTable>
+        </SharedCard>
+      </PageWrapper>
     </Box>
+   )
   );
 };
 
