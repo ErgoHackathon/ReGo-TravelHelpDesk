@@ -63,13 +63,22 @@ export default function RaiseRequestModal({ open, onClose }) {
     const handleSubmit = () => {
         toast.success('Request Sent')
         const selectedData = rows.filter(r => r.selected);
-        console.log({
-            destination,
-            reason,
-            employees: selectedData,
-        });
-        onClose();
+            selectedData.map(item => { 
+            item.reason = reason;
+            item.city = destinationCity;
+            item.country = destination;
+        })
+        console.table(
+            selectedData
+        );
+        closeDialog();
+        window.location.reload();
     };
+
+    const closeDialog = () => {
+         onClose();
+        window.location.reload();
+    }
 
     return (
         <Modal open={open} onClose={onClose}>
