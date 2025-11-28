@@ -18,6 +18,7 @@ import {
 // import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import dayjs from "dayjs";
 import { toast } from "react-toastify";
+import SharedButton from "../sharedComponents/SharedButton";
 
 const style = {
     position: "absolute",
@@ -131,7 +132,7 @@ export default function RaiseRequestModal({ open, onClose }) {
                                     </TableCell>
                                     <TableCell>{row.name}</TableCell>
                                     <TableCell>
-                                    
+
                                         {/* <DatePicker
                       label="Departure Date"
                       value={row.departure}
@@ -157,17 +158,18 @@ export default function RaiseRequestModal({ open, onClose }) {
 
                 {/* Buttons */}
                 <Box sx={{ mt: 3, textAlign: "right" }}>
-                    <Button onClick={onClose} sx={{ mr: 2 }} variant="outlined">
-                        Cancel
-                    </Button>
 
-                    <Button
+                    <SharedButton onClick={onClose} sx={{ mr: 2 }} variant="outlined">
+                        Cancel
+                    </SharedButton>
+
+                    <SharedButton
                         variant="contained"
                         color="error"
                         onClick={handleSubmit}
                     >
                         Review & Submit Request
-                    </Button>
+                    </SharedButton>
                 </Box>
             </Box>
         </Modal>
