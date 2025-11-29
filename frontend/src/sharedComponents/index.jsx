@@ -17,4 +17,4 @@ export { default as SharedTypography } from "./typography/SharedTypography";
 
 export {default as UserAvatar} from "./avatars/UserAvatars"
 
-// export { default as PageWrapper } from "./layout/PageWrapper";
+export {default as CommonDashboard} from "./layout/CommonDashboard"
