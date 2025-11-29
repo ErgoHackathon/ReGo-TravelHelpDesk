@@ -10,7 +10,7 @@ import {
   FlightTakeoff,
 } from '@mui/icons-material';
 import Navbar from '../../components/layout/Navbar';
-import RaiseRequestModal from '../../components/RaiseRequestModal';
+import PendingRequestModal from '../../components/PendingRequestModal';
 import SharedButton from '../../sharedComponents/buttons/SharedButton';
 import PageWrapper from '../../sharedComponents/layout/PageWrapper';
 import { SharedTypography, StatusChip, CommonDashboard } from '../../sharedComponents';
@@ -21,18 +21,25 @@ import { fetchTravelDeskData } from '../../redux/slices/dashboardSlice';
 const TravelDeskPortal = () => {
     const dispatch = useDispatch();
     const { user } = useSelector((state) => state.auth);
-    const [requestModalOpen, setRequestModalOpen] = useState(false);
+    const [pendingRequestModalOpen, setPendingRequestModalOpen] = useState(false);
     const {  pendingRequests } = useSelector((state) => state.dashboard);
+    const [selectedId, setSelectedId] = useState(null);
 
     useEffect(() => {
         dispatch(fetchTravelDeskData());
       }, [dispatch]);
-    
+
+    const handleViewRequest = (id) =>{
+      setSelectedId(id);
+      setPendingRequestModalOpen(true)
+    }
+
     return (
       <CommonDashboard>
-        <RaiseRequestModal
-          open={requestModalOpen}
-          onClose={() => setRequestModalOpen(false)}
+        <PendingRequestModal
+          open={pendingRequestModalOpen}
+          onClose={() => setPendingRequestModalOpen(false)}
+          requestId={selectedId}
         />
 
         <PageWrapper>
@@ -140,7 +147,7 @@ const TravelDeskPortal = () => {
                             Complete & Notify Manager
                           </SharedButton>
 
-                          <SharedButton variant="outlined">View</SharedButton>
+                          <SharedButton variant="outlined" onClick={() => handleViewRequest(req.id)} >View</SharedButton>
                         </Grid>
                       </Grid>
                     </Card>
