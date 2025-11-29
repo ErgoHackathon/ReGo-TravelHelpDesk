@@ -51,6 +51,36 @@ const mockPendingApprovals = {
   ]
 };
 
+const mockPendingRequests = {
+  data: [
+    {
+      id: "RG-1995",
+      employee: "Michael R.",
+      destination: "Delhi, India",
+      departure: "2025-11-25",
+      status: "Awaiting Flight/Visa Booking",
+      isPriority: true,
+    },
+    {
+      id: "RG-2002",
+      employee: "Ben K.",
+      destination: "Singapore",
+      departure: "2026-01-15",
+      status: "Documents Received, Awaiting Final Booking",
+      isPriority: true,
+    },
+    {
+      id: "RG-2002",
+      employee: "John Smith",
+      destination: "Dusseldorf",
+      departure: "2026-01-15",
+      status: "Documents Received, Awaiting Final Booking",
+      isPriority: false,
+    }
+  ],
+};
+
+
 /**
  * MAIN THUNK — SWITCHES BETWEEN MOCK + REAL API
  */
@@ -81,6 +111,30 @@ export const fetchDashboardData = createAsyncThunk(
   }
 );
 
+export const fetchTravelDeskData = createAsyncThunk(
+  'traveldesk/fetch',
+  async () => {
+    if (apiConfig.USE_MOCK_API) {
+      console.log("⚠ Using MOCK Dashboard API");
+      return {
+        stats: mockPendingRequests.data,
+        pendingRequests: mockPendingRequests // ← FIXED
+      };
+    }
+
+    console.log("🚀 Using REAL Dashboard API");
+    const [statsRes, approvalsRes] = await Promise.all([
+      api.get(apiConfig.ENDPOINTS.DASHBOARD_STATS),
+      api.get(apiConfig.ENDPOINTS.PENDING_APPROVALS)
+    ]);
+
+    return {
+      stats: statsRes.data?.data || statsRes.data,
+      pendingRequests: approvalsRes.data // MUST match component shape
+    };
+  }
+);
+
 /**
  * REDUX SLICE
  */
@@ -91,23 +145,39 @@ const dashboardSlice = createSlice({
     pendingApprovals: [],
     loading: false,
     error: null,
+    pendingRequests: [],
   },
   reducers: {},
   extraReducers: (builder) => {
-    builder
-      .addCase(fetchDashboardData.pending, (state) => {
-        state.loading = true;
-      })
-      .addCase(fetchDashboardData.fulfilled, (state, action) => {
-        state.loading = false;
-        state.stats = action.payload.stats;
-        state.pendingApprovals = action.payload.pendingApprovals;
-      })
-      .addCase(fetchDashboardData.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.error.message;
-      });
-  }
+  builder
+    /* DASHBOARD DATA */
+    .addCase(fetchDashboardData.pending, (state) => {
+      state.loading = true;
+    })
+    .addCase(fetchDashboardData.fulfilled, (state, action) => {
+      state.loading = false;
+      state.stats = action.payload.stats;
+      state.pendingApprovals = action.payload.pendingApprovals;
+    })
+    .addCase(fetchDashboardData.rejected, (state, action) => {
+      state.loading = false;
+      state.error = action.error.message;
+    })
+
+    /* TRAVEL DESK DATA — ADD THIS PART */
+    .addCase(fetchTravelDeskData.pending, (state) => {
+      state.loading = true;
+    })
+    .addCase(fetchTravelDeskData.fulfilled, (state, action) => {
+      state.loading = false;
+      state.pendingRequests = action.payload.pendingRequests.data; // <-- FIX
+    })
+    .addCase(fetchTravelDeskData.rejected, (state, action) => {
+      state.loading = false;
+      state.error = action.error.message;
+    });
+}
+
 });
 
 export default dashboardSlice.reducer;

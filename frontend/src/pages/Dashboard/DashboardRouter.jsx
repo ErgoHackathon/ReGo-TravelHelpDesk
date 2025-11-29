@@ -5,7 +5,7 @@ import DashboardManager from './DashboardManager';
 // Import other dashboards when ready
 // import DashboardSVP from './DashboardSVP';
 // import DashboardAdmin from './DashboardAdmin';
-
+import TravelDeskPortal from './TravelDeskPortal';
 /**
  * Dashboard Router - Shows correct dashboard based on user role
  */
@@ -34,7 +34,7 @@ const DashboardRouter = () => {
     case 'ADMIN':
     case 'TRAVEL_DESK':
       // Temporarily show Employee dashboard until we create Admin dashboard
-      return <DashboardEmployee />;
+      return <TravelDeskPortal />;
     
     default:
       return (
