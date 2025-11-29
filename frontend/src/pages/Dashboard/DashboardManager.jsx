@@ -33,7 +33,7 @@ import { LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import SharedButton from '../../sharedComponents/buttons/SharedButton';
 import PageWrapper from '../../sharedComponents/layout/PageWrapper';
-import { SharedCard, SharedTable, SharedTypography, StatCard, StatusChip, TableHeader, TableRowActionButtons } from '../../sharedComponents';
+import { CommonDashboard, SharedCard, SharedTable, SharedTypography, StatCard, StatusChip, TableHeader, TableRowActionButtons } from '../../sharedComponents';
 import UserAvatar from '../../sharedComponents/avatars/UserAvatars';
 
 const DashboardManager = () => {
@@ -119,8 +119,7 @@ const DashboardManager = () => {
 
   return (
    (
-    <Box sx={{ bgcolor: "#fff6f6" }}>
-      <Navbar />
+    <CommonDashboard>
       <RaiseRequestModal
         open={requestModalOpen}
         onClose={() => setRequestModalOpen(false)}
@@ -254,7 +253,7 @@ const DashboardManager = () => {
           </SharedTable>
         </SharedCard>
       </PageWrapper>
-    </Box>
+    </CommonDashboard>
    )
   );
 };
