@@ -80,6 +80,31 @@ const mockPendingRequests = {
   ],
 };
 
+const mockViewPendingRequestsData = {
+  data: {
+  "employeeName": "John Doe",
+  "employeeId": "JD-4621",
+  "email": "john@example.com",
+  "phone": "555-123-4567",
+  "department": "Engineering",
+  "status": "Approved",
+  "requestedOn": "Jan 12, 2025",
+  "lastUpdated": "Jan 13, 2025",
+
+  "travelType": "Business",
+  "from": "Mumbai, India",
+  "to": "Dubai, UAE",
+  "departureDate": "Jan 15, 2025",
+  "purpose": "Client meeting",
+
+  "attachments": [
+    { "fileName": "ticket.pdf", "size": 2.4 },
+    { "fileName": "invoice.png", "size": 1.1 },
+    { "fileName": "approval.letter.pdf", "size": 2.8 }
+  ]
+}
+}
+
 
 /**
  * MAIN THUNK — SWITCHES BETWEEN MOCK + REAL API
@@ -135,6 +160,23 @@ export const fetchTravelDeskData = createAsyncThunk(
   }
 );
 
+export const fetchViewDetailsData = createAsyncThunk(
+  'traveldesk/fetchById',
+  async (id) => {
+    if (apiConfig.USE_MOCK_API) {
+      console.log("⚠ Using MOCK Request Details API");
+
+      return {
+        data: mockViewPendingRequestsData.data   // CLEAN return
+      };
+    }
+
+    // REAL API CALL
+    const res = await api.get(`/travel-requests/${id}`);
+    return { data: res.data };
+  }
+);
+
 /**
  * REDUX SLICE
  */
@@ -173,6 +215,19 @@ const dashboardSlice = createSlice({
       state.pendingRequests = action.payload.pendingRequests.data; // <-- FIX
     })
     .addCase(fetchTravelDeskData.rejected, (state, action) => {
+      state.loading = false;
+      state.error = action.error.message;
+    })
+
+    /* TRAVEL DESK DATA — ADD THIS PART */
+    .addCase(fetchViewDetailsData.pending, (state) => {
+      state.loading = true;
+    })
+    .addCase(fetchViewDetailsData.fulfilled, (state, action) => {
+      state.loading = false;
+      state.viewRequestDetails = action.payload.data;  // <-- FIX
+    })
+    .addCase(fetchViewDetailsData.rejected, (state, action) => {
       state.loading = false;
       state.error = action.error.message;
     });
