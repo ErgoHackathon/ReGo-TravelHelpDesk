@@ -1,23 +1,23 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  Table, 
-  TableCell, 
-  TableHead, 
+import {
+  Table,
+  TableCell,
+  TableHead,
   TableRow,
   TableContainer,
   Paper
 } from '@mui/material';
 import { staggerContainer, tableRowVariants } from '../variants';
 
-const AnimatedTableRow = motion(TableRow);
+const AnimatedTableRow = motion.create(TableRow);
 
-const AnimatedTable = ({ 
-  columns, 
-  data, 
+const AnimatedTable = ({
+  columns,
+  data,
   renderRow,
   sx = {},
-  ...props 
+  ...props
 }) => {
   return (
     <TableContainer component={Paper} sx={{ overflow: 'hidden', ...sx }} {...props}>
@@ -25,9 +25,9 @@ const AnimatedTable = ({
         <TableHead>
           <TableRow>
             {columns.map((column, index) => (
-              <TableCell 
+              <TableCell
                 key={index}
-                sx={{ 
+                sx={{
                   fontWeight: 600,
                   backgroundColor: 'rgba(185, 28, 28, 0.05)',
                   borderBottom: '2px solid #b91c1c'
@@ -38,7 +38,7 @@ const AnimatedTable = ({
             ))}
           </TableRow>
         </TableHead>
-        
+
         <motion.tbody
           variants={staggerContainer}
           initial="initial"
