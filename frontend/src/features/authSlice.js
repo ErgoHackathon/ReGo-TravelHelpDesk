@@ -39,11 +39,14 @@ export const login = createAsyncThunk(
   'auth/login',
   async (credentials, { rejectWithValue }) => {
     try {
+      console.log('authSlice: Attempting login with:', credentials.email);
       const response = await authService.login(credentials);
+      console.log('authSlice: Login response:', response);
       return response;
     } catch (error) {
+      console.error('authSlice: Login error:', error);
       return rejectWithValue(
-        error.response?.data?.error?.message || 'Login failed'
+        error.response?.data?.error?.message || error.message || 'Login failed'
       );
     }
   }
@@ -159,10 +162,12 @@ const authSlice = createSlice({
       
       // Login
       .addCase(login.pending, (state) => {
+        console.log('authSlice: Login PENDING');
         state.loading = true;
         state.loginError = null;
       })
       .addCase(login.fulfilled, (state, action) => {
+        console.log('authSlice: Login FULFILLED', action.payload);
         state.loading = false;
         state.user = action.payload.user;
         state.token = action.payload.token;
@@ -170,6 +175,7 @@ const authSlice = createSlice({
         state.loginError = null;
       })
       .addCase(login.rejected, (state, action) => {
+        console.log('authSlice: Login REJECTED', action.payload);
         state.loading = false;
         state.loginError = action.payload;
         state.isAuthenticated = false;
@@ -213,7 +219,6 @@ const authSlice = createSlice({
       .addCase(updateProfile.fulfilled, (state, action) => {
         state.loading = false;
         state.user = action.payload;
-        // Update localStorage
         localStorage.setItem('user', JSON.stringify(action.payload));
       })
       .addCase(updateProfile.rejected, (state, action) => {

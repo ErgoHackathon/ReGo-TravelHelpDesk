@@ -4,7 +4,7 @@ import Register from '../pages/Register';
 import DashboardRouter from '../pages/Dashboard/DashboardRouter';
 import PrivateRoute from './PrivateRoute';
 import LoginPage from '../pages/Login';
-import ForgotPassword from '../pages/ForgotPassword';
+import ForgotPassword from '../pages/auth/ForgotPassword';
 
 
 // Main routing component

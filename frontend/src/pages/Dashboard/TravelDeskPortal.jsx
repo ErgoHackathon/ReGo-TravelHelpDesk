@@ -1,165 +1,139 @@
+// pages/dashboard/TravelDeskPortal.jsx
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import {
-  Box,
-  Grid,
-  Typography,CardContent,Card
-} from '@mui/material';
-import {
-
-  FlightTakeoff,
-} from '@mui/icons-material';
-import Navbar from '../../components/layout/Navbar';
-import PendingRequestModal from '../../components/PendingRequestModal';
-import SharedButton from '../../sharedComponents/buttons/SharedButton';
-import PageWrapper from '../../sharedComponents/layout/PageWrapper';
-import { SharedTypography, StatusChip, CommonDashboard } from '../../sharedComponents';
-import UserAvatar from '../../sharedComponents/avatars/UserAvatars';
+import { Box, Grid,TableBody,TableCell,TableRow} from '@mui/material';
 import { fetchTravelDeskData } from '../../redux/slices/dashboardSlice';
-
+import BaseLayout from '../../components/layout/BaseLayout';
+import {
+  Navbar,
+  SharedCard,
+  SharedTypography,
+  SharedTable,
+  TableHeader,
+  StatusChip,
+  SharedButton,
+  LoadingSpinner,
+  SharedModal,
+  UserAvatar,
+  InfoDisplay
+} from '../../components/shared';
 
 const TravelDeskPortal = () => {
-    const dispatch = useDispatch();
-    const { user } = useSelector((state) => state.auth);
-    const [pendingRequestModalOpen, setPendingRequestModalOpen] = useState(false);
-    const {  pendingRequests } = useSelector((state) => state.dashboard);
-    const [selectedId, setSelectedId] = useState(null);
+  const dispatch = useDispatch();
+  const { user } = useSelector((state) => state.auth);
+  const { pendingRequests, loading } = useSelector((state) => state.dashboard);
+  const [selectedRequest, setSelectedRequest] = useState(null);
 
-    useEffect(() => {
-        dispatch(fetchTravelDeskData());
-      }, [dispatch]);
+  useEffect(() => {
+    dispatch(fetchTravelDeskData());
+  }, [dispatch]);
 
-    const handleViewRequest = (id) =>{
-      setSelectedId(id);
-      setPendingRequestModalOpen(true)
-    }
+  if (loading) {
+    return <LoadingSpinner />;
+  }
 
-    return (
-      <CommonDashboard>
-        <PendingRequestModal
-          open={pendingRequestModalOpen}
-          onClose={() => setPendingRequestModalOpen(false)}
-          requestId={selectedId}
-        />
+  return (
+    <BaseLayout variant="dashboard">
+      <Navbar user={user} />
 
-        <PageWrapper>
-          {/* Top Section */}
-          <Box
-            sx={{
-              display: "flex",
-              justifyContent: "space-between",
-              flexWrap: "wrap",
-              alignItems: "center",
-              mb: 4,
-            }}
-          >
-            {/* Welcome Section */}
-            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-              <UserAvatar firstName={user.firstName} lastName={user.lastName} />
-
-              <Box>
-                <SharedTypography>Welcome, {user.firstName}!</SharedTypography>
-
-                <Box sx={{ display: "flex", gap: 1 }}>
-                  <StatusChip
-                    label={user.role.replace("_", " ")}
-                    color="#b22a2a"
-                  />
-
-                  {user.department && (
-                    <StatusChip
-                      label={`Team Lead - ${user.department}`}
-                      color="#f5f5f5"
-                    />
-                  )}
-                </Box>
-              </Box>
-            </Box>
-
-            {/* Raise Travel Request Button */}
-            <SharedButton
-              variant="contained"
-              startIcon={<FlightTakeoff />}
-              sx={{
-                bgcolor: "#b22a2a",
-                "&:hover": { bgcolor: "#8b1f1f" },
-                minWidth: 200,
-              }}
-              // onClick={handleRaiseNewRequest}
-            >
-              New Booking
-            </SharedButton>
+      <Box sx={{ p: 3 }}>
+        {/* Header */}
+        <Box sx={{ mb: 4, display: 'flex', alignItems: 'center', gap: 2 }}>
+          <UserAvatar 
+            firstName={user?.firstName}
+            lastName={user?.lastName}
+            size="large"
+          />
+          <Box>
+            <SharedTypography variant="pageTitle">
+              Travel Desk Portal
+            </SharedTypography>
+            <StatusChip 
+              label={user?.role}
+              variant="default"
+            />
           </Box>
-          <Grid container spacing={3} mb={4}>
-            <Grid item xs={12} sm={8} md={12}>
-              <Typography variant="h5" sx={{ fontSize: "1.8rem" }}>
-                Travel Desk Portal
-              </Typography>
-              <Card
-                sx={{
-                  p: 3,
-                  border: "1.5px solid",
-                  borderColor: "#b91c1c",
-                  borderTop: `7px solid #b91c1c`,
-                }}
-              >
-                <CardContent>
-                  <Typography variant="h5" sx={{ fontSize: "1.8rem" }}>
-                    Pending requests for review
-                  </Typography>
-                  {console.log(pendingRequests)}
-                  {pendingRequests?.map((req, index) => (
-                    <Card
-                      key={index}
-                      sx={{
-                        mb: 2,
-                        p: 2,
-                        border: "1px solid #e5e7eb",
-                        backgroundColor: req.isPriority ? "#fee2e2" : "#ffffff",
-                      }}
+        </Box>
+
+        {/* Pending Requests */}
+        <SharedCard variant="dashboard">
+          <SharedTypography variant="cardTitle">
+            Pending Travel Requests
+          </SharedTypography>
+
+          <SharedTable>
+            <TableHeader
+              columns={[
+                { id: 'id', label: 'Request ID' },
+                { id: 'employee', label: 'Employee' },
+                { id: 'destination', label: 'Destination' },
+                { id: 'departure', label: 'Departure' },
+                { id: 'status', label: 'Status' },
+                { id: 'actions', label: 'Actions' }
+              ]}
+            />
+            <TableBody>
+              {pendingRequests.map((request) => (
+                <TableRow 
+                  key={request.id}
+                  sx={request.isPriority ? { bgcolor: '#fee2e2' } : {}}
+                >
+                  <TableCell>{request.id}</TableCell>
+                  <TableCell>{request.employee}</TableCell>
+                  <TableCell>{request.destination}</TableCell>
+                  <TableCell>{request.departure}</TableCell>
+                  <TableCell>
+                    <StatusChip
+                      label={request.status}
+                      variant={request.statusVariant}
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <SharedButton
+                      variant="table"
+                      onClick={() => setSelectedRequest(request)}
                     >
-                      <Grid
-                        container
-                        justifyContent="space-between"
-                        alignItems="center"
-                      >
-                        <Grid item>
-                          <Typography
-                            sx={{ fontWeight: "bold", fontSize: "1.2rem" }}
-                          >
-                            {req.id}: {req.employee} to {req.destination}
-                          </Typography>
+                      Process Request
+                    </SharedButton>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </SharedTable>
+        </SharedCard>
+      </Box>
 
-                          <Typography sx={{ fontSize: "1rem", color: "#555" }}>
-                            Departure: {req.departure} | Status: {req.status}
-                          </Typography>
-                        </Grid>
-
-                        <Grid item>
-                          <SharedButton
-                            variant="contained"
-                            sx={{
-                              backgroundColor: "#16a34a",
-                              "&:hover": { backgroundColor: "#15803d" },
-                              mr: 2,
-                            }}
-                          >
-                            Complete & Notify Manager
-                          </SharedButton>
-
-                          <SharedButton variant="outlined" onClick={() => handleViewRequest(req.id)} >View</SharedButton>
-                        </Grid>
-                      </Grid>
-                    </Card>
-                  ))}
-                  <Typography sx={{ fontSize: "1.2rem" }}></Typography>
-                </CardContent>
-              </Card>
-            </Grid>
-          </Grid>
-        </PageWrapper>
-      </CommonDashboard>
-    );
-}
+      {/* Request Processing Modal */}
+      <SharedModal
+        open={!!selectedRequest}
+        onClose={() => setSelectedRequest(null)}
+        title="Process Travel Request"
+      >
+        <InfoDisplay
+          items={[
+            { label: 'Employee', value: selectedRequest?.employee },
+            { label: 'Destination', value: selectedRequest?.destination },
+            { label: 'Departure', value: selectedRequest?.departure },
+            { label: 'Status', value: selectedRequest?.status }
+          ]}
+        />
+        <Box sx={{ mt: 2, display: 'flex', gap: 2 }}>
+          <SharedButton
+            variant="secondary"
+            onClick={() => setSelectedRequest(null)}
+          >
+            Close
+          </SharedButton>
+          <SharedButton
+            variant="primary"
+            onClick={() => {/* Handle process */}}
+          >
+            Complete Processing
+          </SharedButton>
+        </Box>
+      </SharedModal>
+    </BaseLayout>
+  );
+};
 
 export default TravelDeskPortal;

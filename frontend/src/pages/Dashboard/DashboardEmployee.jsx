@@ -1,30 +1,28 @@
+// pages/dashboard/DashboardEmployee.jsx
 import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import {
-  Box,
-  Container,
-  Grid,
-  Paper,
-  Typography,
-  Button,
-  Card,
-  CardContent,
-  Chip,
-  Avatar,
-  List,
-  ListItem,
-  ListItemText,
-  Divider
-} from '@mui/material';
-import {
-  AddCircleOutline,
-  Flight,
-  AttachMoney,
-  CalendarToday,
-  TrendingUp
+import { Box, Grid, TableBody, TableRow, TableCell } from '@mui/material';
+import { 
+  Flight, 
+  TrendingUp, 
+  AccessTime, 
+  Group 
 } from '@mui/icons-material';
-import Navbar from '../../components/layout/Navbar';
 import { fetchDashboardData } from '../../redux/slices/dashboardSlice';
+// Example: src/pages/Dashboard/DashboardEmployee.jsx
+import { SharedModal,SharedTypography,Navbar } from '../../components/shared';
+import BaseLayout from '../../components/layout/BaseLayout';
+
+
+import {
+  SharedCard,
+  StatDisplay,
+  SharedTable,
+  TableHeader,
+  StatusChip,
+  LoadingSpinner,
+  UserAvatar
+} from '../../components/shared';
 
 const DashboardEmployee = () => {
   const dispatch = useDispatch();
@@ -35,164 +33,86 @@ const DashboardEmployee = () => {
     dispatch(fetchDashboardData());
   }, [dispatch]);
 
-  const icons = [<Flight />, <TrendingUp />, <CalendarToday />, <AttachMoney />];
-
-  const getStatusColor = (status) => {
-    const colors = {
-      DRAFT: 'default',
-      PENDING: 'warning',
-      APPROVED: 'success',
-      REJECTED: 'error'
-    };
-    return colors[status] || 'default';
-  };
+  if (loading) {
+    return <LoadingSpinner />;
+  }
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-      <Navbar />
-
-      <Box component="main" sx={{ flexGrow: 1, mt: 8 }}>
-        <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-          
-          {/* Welcome */}
-          <Box sx={{ mb: 4 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                <Avatar
-                  sx={{
-                    width: 60,
-                    height: 60,
-                    bgcolor: '#b91c1c',
-                    fontSize: '1.5rem',
-                    fontWeight: 'bold'
-                  }}
-                >
-                  {user?.firstName?.charAt(0)}{user?.lastName?.charAt(0)}
-                </Avatar>
-
-                <Box>
-                  <Typography variant="h4">
-                    Welcome back, {user?.firstName}!
-                  </Typography>
-                  <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', mt: 0.5 }}>
-                    <Chip
-                      label={user?.role?.replace('_', ' ')}
-                      size="small"
-                      sx={{ bgcolor: '#b91c1c', color: 'white' }}
-                    />
-                    {user?.department && (
-                      <Chip
-                        label={user.department}
-                        variant="outlined"
-                        size="small"
-                      />
-                    )}
-                  </Box>
-                </Box>
-              </Box>
-
-              <Button
-                variant="contained"
-                startIcon={<AddCircleOutline />}
-                sx={{
-                  bgcolor: '#b91c1c',
-                  '&:hover': { bgcolor: '#D62828' },
-                  textTransform: 'none',
-                  px: 3
-                }}
-              >
-                New Travel Request
-              </Button>
-            </Box>
+    <BaseLayout variant="dashboard">
+      <Navbar user={user} />
+      
+      <Box sx={{ p: 3 }}>
+        {/* Header */}
+        <Box sx={{ mb: 4, display: 'flex', alignItems: 'center', gap: 2 }}>
+          <UserAvatar 
+            firstName={user?.firstName}
+            lastName={user?.lastName}
+            size="large"
+          />
+          <Box>
+            <SharedTypography variant="pageTitle">
+              Welcome back, {user?.firstName}!
+            </SharedTypography>
+            <StatusChip 
+              label={user?.role}
+              variant="default"
+            />
           </Box>
+        </Box>
 
-          {/* Stats */}
-          <Grid container spacing={3}>
-            {(stats || []).map((stat, i) => (
-              <Grid item xs={12} sm={6} md={3} key={i}>
-                <Card sx={{ bgcolor: stat.color || '#E63946', color: 'white' }}>
-                  <CardContent>
-                    <Typography variant="body2">{stat.title}</Typography>
-                    <Typography variant="h4" fontWeight="bold">{stat.value}</Typography>
-
-                    {React.cloneElement(icons[i % icons.length], {
-                      sx: { fontSize: 40, opacity: 0.8 }
-                    })}
-                  </CardContent>
-                </Card>
-              </Grid>
-            ))}
+        {/* Stats */}
+        <Grid container spacing={3} sx={{ mb: 4 }}>
+          <Grid item xs={12} sm={6} md={3}>
+            <StatDisplay
+              title="Travel Requests"
+              value={stats?.requests || 0}
+              icon={<Flight />}
+            />
           </Grid>
+          <Grid item xs={12} sm={6} md={3}>
+            <StatDisplay
+              title="Pending Approvals"
+              value={stats?.pending || 0}
+              icon={<AccessTime />}
+            />
+          </Grid>
+          {/* Add other stats */}
+        </Grid>
 
-          {/* Recent Requests */}
-          <Paper sx={{ p: 3, mt: 4 }}>
-            <Typography variant="h6" gutterBottom>
-              Pending Approvals
-            </Typography>
-
-            {loading && <Typography>Loading...</Typography>}
-
-            <List>
-              {(pendingApprovals || []).map((item, i) => (
-                <React.Fragment key={i}>
-                  <ListItem sx={{ borderRadius: 1 }}>
-                    <ListItemText
-                      primary={
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                          <Typography fontWeight={600}>{item.id}</Typography>
-                          <Chip label={item.status || item.urgency} color="warning" size="small" />
-                        </Box>
-                      }
-                      secondary={
-                        <Typography variant="body2">
-                          {item.destination} • {item.date} • {item.amount}
-                        </Typography>
-                      }
+        {/* Table */}
+        <SharedCard variant="dashboard">
+          <SharedTypography variant="cardTitle">
+            Recent Requests
+          </SharedTypography>
+          
+          <SharedTable>
+            <TableHeader
+              columns={[
+                { id: 'id', label: 'Request ID' },
+                { id: 'destination', label: 'Destination' },
+                { id: 'date', label: 'Date' },
+                { id: 'status', label: 'Status' }
+              ]}
+            />
+            <TableBody>
+              {pendingApprovals.map((request) => (
+                <TableRow key={request.id}>
+                  <TableCell>{request.id}</TableCell>
+                  <TableCell>{request.destination}</TableCell>
+                  <TableCell>{request.date}</TableCell>
+                  <TableCell>
+                    <StatusChip
+                      label={request.status}
+                      variant={request.statusVariant}
                     />
-                  </ListItem>
-
-                  {i < pendingApprovals.length - 1 && <Divider />}
-                </React.Fragment>
+                  </TableCell>
+                </TableRow>
               ))}
-            </List>
-          </Paper>
-
-          {/* Quick Actions */}
-          <Grid container spacing={3} sx={{ mt: 2 }}>
-            <Grid item xs={12} md={6}>
-              <Card>
-                <CardContent>
-                  <Typography variant="h6" gutterBottom color="#b91c1c">
-                    Quick Actions
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary" paragraph>
-                    Submit expense claims, upload documents, or check request status
-                  </Typography>
-                  <Button variant="outlined" sx={{ borderColor: '#b91c1c', color: '#b91c1c' }}>
-                    Submit Expenses
-                  </Button>
-                </CardContent>
-              </Card>
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <Card>
-                <CardContent>
-                  <Typography variant="h6" gutterBottom color="#b91c1c">
-                    Upcoming Travel
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary" paragraph>
-                    View your confirmed bookings and travel details
-                  </Typography>
-                  <Button variant="outlined" sx={{ borderColor: '#b91c1c', color: '#b91c1c' }}>
-                    View Bookings
-                  </Button>
-                </CardContent>
-              </Card>
-            </Grid>
-          </Grid>
-        </Container>
+            </TableBody>
+          </SharedTable>
+        </SharedCard>
       </Box>
-    </Box>
+    </BaseLayout>
   );
 };
 
