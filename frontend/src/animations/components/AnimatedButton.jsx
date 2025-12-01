@@ -9,15 +9,15 @@ import { motion } from 'framer-motion';
 import { Button } from '@mui/material';
 import { buttonVariants, iconVariants } from '../variants';
 
-const AnimatedButton = ({ 
-  children, 
+const AnimatedButton = ({
+  children,
   startIcon,
   endIcon,
   animateIcon = true,
   sx = {},
-  ...props 
+  ...props
 }) => {
-  const MotionButton = motion(Button);
+  const MotionButton = motion.create ? motion.create(Button) : motion(Button);
 
   return (
     <MotionButton
@@ -53,7 +53,7 @@ const AnimatedButton = ({
       {...props}
     >
       {children}
-      
+
       {/* Ripple effect overlay */}
       <motion.span
         style={{
