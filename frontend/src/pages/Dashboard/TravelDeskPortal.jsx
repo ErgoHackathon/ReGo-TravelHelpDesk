@@ -153,7 +153,9 @@ const TravelDeskPortal = () => {
                   </TableRow>
                 )) : (
                   <TableRow>
-                    <TableCell colSpan={6} align="center">No pending bookings.</TableCell>
+                    <TableCell colSpan={6} align="center" sx={{ py: 4, color: '#64748b' }}>
+                      No pending bookings. Good job!
+                    </TableCell>
                   </TableRow>
                 )}
               </TableBody>
@@ -179,14 +181,18 @@ const TravelDeskPortal = () => {
                     <TableCell>{req.employee}</TableCell>
                     <TableCell>{req.destination}</TableCell>
                     <TableCell>
-                      <Typography variant="caption" display="block">Flight: {req.bookingDetails?.airline || 'N/A'}</Typography>
-                      <Typography variant="caption" display="block">PNR: {req.bookingDetails?.pnr || 'N/A'}</Typography>
+                      <Box>
+                        <Typography variant="caption" display="block" fontWeight={600}>Flight: {req.bookingDetails?.airline || 'N/A'}</Typography>
+                        <Typography variant="caption" display="block" color="text.secondary">PNR: {req.bookingDetails?.pnr || 'N/A'}</Typography>
+                      </Box>
                     </TableCell>
                     <TableCell><StatusChip label="COMPLETED" color="success" /></TableCell>
                   </TableRow>
                 )) : (
                   <TableRow>
-                    <TableCell colSpan={5} align="center">No completed bookings yet.</TableCell>
+                    <TableCell colSpan={5} align="center" sx={{ py: 4, color: '#64748b' }}>
+                      No completed bookings yet.
+                    </TableCell>
                   </TableRow>
                 )}
               </TableBody>
@@ -202,14 +208,14 @@ const TravelDeskPortal = () => {
           maxWidth="md"
         >
           <Box sx={{ mt: 2 }}>
-            <Typography variant="subtitle2" sx={{ mb: 2, p: 1, bgcolor: '#f1f5f9', borderRadius: 1 }}>
-              Traveler: {selectedRequest?.employee} • Destination: {selectedRequest?.destination}
+            <Typography variant="subtitle2" sx={{ mb: 3, p: 2, bgcolor: '#f1f5f9', borderRadius: 2, border: '1px solid #e2e8f0' }}>
+              <strong>Traveler:</strong> {selectedRequest?.employee} &nbsp;•&nbsp; <strong>Destination:</strong> {selectedRequest?.destination}
             </Typography>
 
             <Grid container spacing={3}>
               {/* Flight Section */}
               <Grid item xs={12}>
-                <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+                <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2, color: '#1e293b' }}>
                   <Flight color="primary" /> Flight Details
                 </Typography>
                 <Grid container spacing={2}>
@@ -248,7 +254,7 @@ const TravelDeskPortal = () => {
 
               {/* Hotel Section */}
               <Grid item xs={12}>
-                <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+                <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2, color: '#1e293b' }}>
                   <Hotel color="primary" /> Hotel Details
                 </Typography>
                 <Grid container spacing={2}>
@@ -277,7 +283,7 @@ const TravelDeskPortal = () => {
               </Grid>
 
               <Grid item xs={12}>
-                <Box sx={{ display: 'flex', gap: 3 }}>
+                <Box sx={{ display: 'flex', gap: 3, p: 2, bgcolor: '#f8fafc', borderRadius: 2 }}>
                   <FormControlLabel
                     control={<Checkbox checked={bookingData.visaProcessed} onChange={(e) => setBookingData({ ...bookingData, visaProcessed: e.target.checked })} />}
                     label="Visa Processed"
@@ -291,15 +297,16 @@ const TravelDeskPortal = () => {
             </Grid>
 
             <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 4 }}>
-              <Button variant="outlined" onClick={() => setShowBookingModal(false)}>Cancel</Button>
+              <Button variant="outlined" onClick={() => setShowBookingModal(false)} sx={{ color: '#64748b' }}>Cancel</Button>
               <Button variant="outlined" onClick={() => toast.info("Draft Saved")}>Save Draft</Button>
               <Button
                 variant="contained"
                 color="success"
                 startIcon={<CheckCircle />}
                 onClick={handleConfirmBooking}
+                sx={{ px: 3 }}
               >
-                Confirm Booking & Notify Employee
+                Submit & Notify Manager
               </Button>
             </Box>
           </Box>

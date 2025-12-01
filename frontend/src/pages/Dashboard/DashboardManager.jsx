@@ -12,7 +12,9 @@ import {
   Checkbox,
   TableHead,
   Table,
-  Typography
+  Typography,
+  Button,
+  Stack
 } from '@mui/material';
 import {
   FlightTakeoff,
@@ -23,7 +25,8 @@ import {
   Cancel,
   People,
   PendingActions,
-  AttachMoney
+  AttachMoney,
+  FilterList
 } from '@mui/icons-material';
 import { fetchDashboardData } from '../../redux/slices/dashboardSlice';
 import { logout } from '../../features/authSlice';
@@ -63,6 +66,9 @@ const DashboardManager = () => {
   const { stats, pendingApprovals, loading } = useSelector((state) => state.dashboard);
   const [showRaiseRequestModal, setShowRaiseRequestModal] = useState(false);
 
+  // Filter State
+  const [filterStatus, setFilterStatus] = useState('ALL');
+
   useEffect(() => {
     dispatch(fetchDashboardData());
   }, [dispatch]);
@@ -75,6 +81,41 @@ const DashboardManager = () => {
   const handleViewDetails = (id) => {
     navigate(`/application/${id}`);
   };
+
+  // Filter Logic
+  const getFilteredApprovals = () => {
+    if (filterStatus === 'ALL') return pendingApprovals;
+
+    return pendingApprovals.filter(req => {
+      if (filterStatus === 'PENDING') return req.status.includes('REVIEW') || req.status === 'PENDING';
+      if (filterStatus === 'APPROVED') return req.status.includes('APPROVED');
+      if (filterStatus === 'REJECTED') return req.status === 'REJECTED';
+      return req.status === filterStatus;
+    });
+  };
+
+  const filteredApprovals = getFilteredApprovals();
+
+  const FilterButton = ({ label, value }) => (
+    <Button
+      variant={filterStatus === value ? "contained" : "outlined"}
+      size="small"
+      onClick={() => setFilterStatus(value)}
+      sx={{
+        borderRadius: 5,
+        textTransform: 'none',
+        borderColor: filterStatus === value ? 'transparent' : '#e2e8f0',
+        bgcolor: filterStatus === value ? '#1e293b' : 'transparent',
+        color: filterStatus === value ? '#fff' : '#64748b',
+        '&:hover': {
+          bgcolor: filterStatus === value ? '#0f172a' : '#f1f5f9',
+          borderColor: filterStatus === value ? 'transparent' : '#cbd5e1'
+        }
+      }}
+    >
+      {label}
+    </Button>
+  );
 
   if (loading) {
     return <LoadingSpinner />;
@@ -140,9 +181,23 @@ const DashboardManager = () => {
 
         {/* Recent Application Status Table */}
         <SharedCard variant="dashboard">
-          <SharedTypography variant="cardTitle">
-            Recent Application Status
-          </SharedTypography>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3, flexWrap: 'wrap', gap: 2 }}>
+            <SharedTypography variant="cardTitle">
+              Recent Application Status
+            </SharedTypography>
+
+            {/* Filter Bar */}
+            <Stack direction="row" spacing={1} sx={{ overflowX: 'auto', pb: 1 }}>
+              <FilterButton label="All" value="ALL" />
+              <FilterButton label="Pending" value="PENDING" />
+              <FilterButton label="Approved" value="APPROVED" />
+              <FilterButton label="Rejected" value="REJECTED" />
+              <FilterButton label="Manager Review" value="MANAGER_REVIEW" />
+              {(user?.role === 'AVP' || user?.role === 'SVP') && (
+                <FilterButton label="Travel Desk" value="TRAVEL_DESK_REVIEW" />
+              )}
+            </Stack>
+          </Box>
 
           <SharedTable>
             <TableHeader
@@ -156,7 +211,7 @@ const DashboardManager = () => {
             />
 
             <TableBody>
-              {pendingApprovals.map((request) => (
+              {filteredApprovals.length > 0 ? filteredApprovals.map((request) => (
                 <TableRow key={request.id}>
                   <TableCell>{request.id}</TableCell>
                   <TableCell>{request.employee}</TableCell>
@@ -184,7 +239,13 @@ const DashboardManager = () => {
                     </SharedButton>
                   </TableCell>
                 </TableRow>
-              ))}
+              )) : (
+                <TableRow>
+                  <TableCell colSpan={5} align="center" sx={{ py: 4, color: '#64748b' }}>
+                    No requests found matching filter "{filterStatus}"
+                  </TableCell>
+                </TableRow>
+              )}
             </TableBody>
           </SharedTable>
         </SharedCard>
@@ -268,7 +329,6 @@ const DashboardManager = () => {
             <SharedButton
               variant="contained"
               onClick={() => {
-                console.log("Request Submitted");
                 setShowRaiseRequestModal(false);
               }}
               sx={{ bgcolor: '#b91c1c', '&:hover': { bgcolor: '#991b1b' }, px: 4 }}

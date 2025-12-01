@@ -59,7 +59,7 @@ const Navbar = ({ user, onLogout }) => {
           sx={{ mr: 2, color: 'white' }}
           onClick={(e) => setNotifAnchorEl(e.currentTarget)}
         >
-          <Badge badgeContent={notifications.length} color="warning">
+          <Badge badgeContent={notifications.filter(n => !n.read).length} color="warning">
             <Notifications />
           </Badge>
         </IconButton>

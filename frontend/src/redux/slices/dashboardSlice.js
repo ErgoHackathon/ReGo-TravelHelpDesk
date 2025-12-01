@@ -12,7 +12,9 @@ const mockDashboardStats = [
 
 const mockPendingApprovals = [
   { id: 'req-001', employee: 'John Doe', destination: 'New York', departure: '2025-12-15', status: 'MANAGER_REVIEW' },
-  { id: 'req-002', employee: 'Jane Smith', destination: 'London', departure: '2025-12-10', status: 'MANAGER_REVIEW' }
+  { id: 'req-002', employee: 'Jane Smith', destination: 'London', departure: '2025-12-10', status: 'MANAGER_REVIEW' },
+  { id: 'req-003', employee: 'Mike Johnson', destination: 'Singapore', departure: '2025-12-20', status: 'AVP_REVIEW' },
+  { id: 'req-004', employee: 'Sarah Williams', destination: 'Dubai', departure: '2025-12-25', status: 'SVP_REVIEW' }
 ];
 
 const mockEmployeeActiveRequest = {
@@ -84,7 +86,8 @@ const initialState = {
   pendingRequests: [], // For Travel Desk
   notifications: [
     { id: 1, message: "New travel request from John Doe", read: false, time: "10 mins ago" },
-    { id: 2, message: "Flight booking confirmed for NY", read: true, time: "2 hours ago" }
+    { id: 2, message: "Flight booking confirmed for NY", read: false, time: "2 hours ago" },
+    { id: 3, message: "Visa application approved", read: true, time: "1 day ago" }
   ],
   approvalHistory: [
     { role: 'MANAGER', name: 'Alice Manager', status: 'APPROVED', comment: 'Approved, proceed.', date: '2025-11-26 10:30 AM' },
@@ -130,9 +133,15 @@ const dashboardSlice = createSlice({
     },
     // Travel Desk Actions
     processBooking: (state, action) => {
-      // Logic to move request from pending to booked
       const { id, bookingDetails } = action.payload;
-      // Update status logic here
+      const requestIndex = state.pendingRequests.findIndex(r => r.id === id);
+      if (requestIndex !== -1) {
+        state.pendingRequests[requestIndex] = {
+          ...state.pendingRequests[requestIndex],
+          status: 'BOOKING_COMPLETED',
+          bookingDetails: bookingDetails
+        };
+      }
     }
   },
   extraReducers: (builder) => {

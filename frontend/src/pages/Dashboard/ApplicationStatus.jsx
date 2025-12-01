@@ -24,7 +24,8 @@ import {
     LocationOn,
     Check,
     Comment,
-    History
+    History,
+    CheckCircle
 } from '@mui/icons-material';
 import BaseLayout from '../../components/layout/BaseLayout';
 import { Navbar, SharedCard, StatusChip, UserAvatar } from '../../components/shared';
@@ -128,6 +129,10 @@ const ApplicationStatus = () => {
             newStatus = 'CHANGES_REQUESTED';
             stepIndex = 1;
             notifMessage = `Changes requested for ${id} by ${user.role}`;
+        } else if (actionType === 'COMPLETE_BOOKING') {
+            newStatus = 'BOOKING_COMPLETED';
+            stepIndex = 5;
+            notifMessage = `Booking completed for request ${id}`;
         }
 
         // Dispatch updates
@@ -262,9 +267,11 @@ const ApplicationStatus = () => {
                 </SharedCard>
 
                 {/* Role-Specific Actions Panel */}
-                {user?.role !== 'EMPLOYEE' && user?.role !== 'TRAVEL_DESK' && (
+                {user?.role !== 'EMPLOYEE' && (
                     <SharedCard sx={{ bgcolor: '#f8fafc', border: '1px solid #e2e8f0' }}>
-                        <Typography variant="h6" sx={{ mb: 3, fontWeight: 600 }}>Approval Actions</Typography>
+                        <Typography variant="h6" sx={{ mb: 3, fontWeight: 600 }}>
+                            {user?.role === 'TRAVEL_DESK' ? 'Booking Actions' : 'Approval Actions'}
+                        </Typography>
 
                         <Grid container spacing={3}>
                             <Grid item xs={12}>
@@ -297,28 +304,44 @@ const ApplicationStatus = () => {
                             )}
 
                             <Grid item xs={12} sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 1 }}>
-                                <Button
-                                    variant="outlined"
-                                    color="error"
-                                    onClick={() => handleStatusUpdate('REJECTED')}
-                                >
-                                    Reject Request
-                                </Button>
-                                <Button
-                                    variant="outlined"
-                                    onClick={() => handleStatusUpdate('REQUEST_CHANGES')}
-                                    sx={{ borderColor: '#64748b', color: '#64748b' }}
-                                >
-                                    Request Changes
-                                </Button>
-                                <Button
-                                    variant="contained"
-                                    color="success"
-                                    onClick={() => handleStatusUpdate('APPROVE')}
-                                    sx={{ color: 'white', px: 4 }}
-                                >
-                                    {user?.role === 'CHRO' ? 'Final Approval' : 'Approve & Forward'}
-                                </Button>
+                                {user?.role === 'TRAVEL_DESK' ? (
+                                    <Button
+                                        variant="contained"
+                                        color="success"
+                                        startIcon={<CheckCircle />}
+                                        onClick={() => handleStatusUpdate('COMPLETE_BOOKING')}
+                                        sx={{ color: 'white', px: 4 }}
+                                    >
+                                        Mark Booking Complete
+                                    </Button>
+                                ) : (
+                                    <>
+                                        <Button
+                                            variant="outlined"
+                                            color="error"
+                                            onClick={() => handleStatusUpdate('REJECTED')}
+                                        >
+                                            Reject Request
+                                        </Button>
+                                        {user?.role !== 'SVP' && user?.role !== 'CHRO' && (
+                                            <Button
+                                                variant="outlined"
+                                                onClick={() => handleStatusUpdate('REQUEST_CHANGES')}
+                                                sx={{ borderColor: '#64748b', color: '#64748b' }}
+                                            >
+                                                Request Changes
+                                            </Button>
+                                        )}
+                                        <Button
+                                            variant="contained"
+                                            color="success"
+                                            onClick={() => handleStatusUpdate('APPROVE')}
+                                            sx={{ color: 'white', px: 4 }}
+                                        >
+                                            {user?.role === 'CHRO' ? 'Final Approval' : 'Approve & Forward'}
+                                        </Button>
+                                    </>
+                                )}
                             </Grid>
                         </Grid>
                     </SharedCard>
@@ -329,4 +352,3 @@ const ApplicationStatus = () => {
 };
 
 export default ApplicationStatus;
-

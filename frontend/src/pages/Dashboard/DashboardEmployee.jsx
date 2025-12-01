@@ -13,13 +13,16 @@ import {
   TableBody,
   TableCell,
   TableHead,
-  TableRow
+  TableRow,
+  IconButton
 } from '@mui/material';
 import {
   Flight,
   CloudUpload,
   CheckCircle,
-  Description
+  Description,
+  Close,
+  UploadFile
 } from '@mui/icons-material';
 import { fetchDashboardData, updateRequestStatus } from '../../redux/slices/dashboardSlice';
 import { logout } from '../../features/authSlice';
@@ -40,10 +43,14 @@ const DashboardEmployee = () => {
   const navigate = useNavigate();
   const { user } = useSelector((state) => state.auth);
   const { activeRequest, loading } = useSelector((state) => state.dashboard);
+
+  // Modals state
+  const [showDocumentsListModal, setShowDocumentsListModal] = useState(false);
   const [showUploadModal, setShowUploadModal] = useState(false);
+
   const [documents, setDocuments] = useState([]);
+  const [activeDoc, setActiveDoc] = useState(null);
   const fileInputRef = useRef(null);
-  const [activeDocId, setActiveDocId] = useState(null);
 
   useEffect(() => {
     dispatch(fetchDashboardData());
@@ -60,18 +67,25 @@ const DashboardEmployee = () => {
     navigate('/login', { replace: true });
   };
 
+  // --- Upload Logic ---
+
+  const openUploadModal = (doc) => {
+    setActiveDoc(doc);
+    setShowUploadModal(true);
+  };
+
   const handleFileSelect = (event) => {
     const file = event.target.files[0];
-    if (file && activeDocId) {
-      processFile(file, activeDocId);
+    if (file && activeDoc) {
+      processFile(file);
     }
   };
 
-  const handleDrop = (event, docId) => {
+  const handleDrop = (event) => {
     event.preventDefault();
     const file = event.dataTransfer.files[0];
-    if (file) {
-      processFile(file, docId);
+    if (file && activeDoc) {
+      processFile(file);
     }
   };
 
@@ -79,22 +93,24 @@ const DashboardEmployee = () => {
     event.preventDefault();
   };
 
-  const processFile = (file, docId) => {
-    setDocuments(prev => prev.map(doc =>
-      doc.id === docId ? { ...doc, status: 'UPLOADED', fileName: file.name } : doc
+  const processFile = (file) => {
+    // Update local state
+    setDocuments(prev => prev.map(d =>
+      d.id === activeDoc.id ? { ...d, status: 'UPLOADED', fileName: file.name } : d
     ));
-    setActiveDocId(null);
+
+    // Close upload modal
+    setShowUploadModal(false);
+    setActiveDoc(null);
   };
 
-  const triggerFileUpload = (docId) => {
-    setActiveDocId(docId);
+  const triggerFileInput = () => {
     if (fileInputRef.current) {
       fileInputRef.current.click();
     }
   };
 
   const handleSubmitAll = () => {
-    // Update local status and close modal
     if (activeRequest) {
       dispatch(updateRequestStatus({
         id: activeRequest.id,
@@ -102,7 +118,7 @@ const DashboardEmployee = () => {
         stepIndex: 2
       }));
     }
-    setShowUploadModal(false);
+    setShowDocumentsListModal(false);
   };
 
   if (loading) {
@@ -175,7 +191,7 @@ const DashboardEmployee = () => {
               <Button
                 variant="contained"
                 startIcon={<CloudUpload />}
-                onClick={() => setShowUploadModal(true)}
+                onClick={() => setShowDocumentsListModal(true)}
                 disabled={activeRequest.status !== 'AWAITING_DOCUMENTS'}
                 sx={{
                   bgcolor: '#b91c1c',
@@ -195,26 +211,19 @@ const DashboardEmployee = () => {
         )}
       </Box>
 
-      {/* Upload Documents Modal */}
+      {/* 1. Documents List Modal */}
       <SharedModal
-        open={showUploadModal}
-        onClose={() => setShowUploadModal(false)}
+        open={showDocumentsListModal}
+        onClose={() => setShowDocumentsListModal(false)}
         title={`Required Documents for ${activeRequest?.id}`}
         maxWidth="md"
       >
-        <input
-          type="file"
-          ref={fileInputRef}
-          style={{ display: 'none' }}
-          onChange={handleFileSelect}
-        />
-
         <Table sx={{ minWidth: 600 }}>
           <TableHead>
             <TableRow>
               <TableCell>Document Name</TableCell>
               <TableCell>Status</TableCell>
-              <TableCell>Upload</TableCell>
+              <TableCell align="center">Action</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -224,7 +233,7 @@ const DashboardEmployee = () => {
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                     <Description color="action" fontSize="small" />
                     <Box>
-                      <Typography variant="body2">{doc.name}</Typography>
+                      <Typography variant="body2" fontWeight={500}>{doc.name}</Typography>
                       {doc.fileName && (
                         <Typography variant="caption" color="text.secondary">
                           {doc.fileName}
@@ -239,36 +248,26 @@ const DashboardEmployee = () => {
                     color={doc.status === 'UPLOADED' ? 'success' : 'warning'}
                   />
                 </TableCell>
-                <TableCell>
+                <TableCell align="center">
                   {doc.status === 'PENDING' ? (
-                    <Box
-                      sx={{
-                        border: '2px dashed #e2e8f0',
-                        borderRadius: 1,
-                        p: 2,
-                        textAlign: 'center',
-                        cursor: 'pointer',
-                        '&:hover': { bgcolor: '#f8fafc', borderColor: '#cbd5e1' }
-                      }}
-                      onClick={() => triggerFileUpload(doc.id)}
-                      onDragOver={handleDragOver}
-                      onDrop={(e) => handleDrop(e, doc.id)}
-                    >
-                      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.5 }}>
-                        <CloudUpload color="action" fontSize="small" />
-                        <Typography variant="caption" color="text.secondary">
-                          Click or Drag File
-                        </Typography>
-                      </Box>
-                    </Box>
-                  ) : (
                     <Button
+                      variant="outlined"
                       size="small"
-                      color="success"
-                      startIcon={<CheckCircle />}
+                      startIcon={<CloudUpload />}
+                      onClick={() => openUploadModal(doc)}
                       sx={{ textTransform: 'none' }}
                     >
-                      Uploaded
+                      Upload
+                    </Button>
+                  ) : (
+                    <Button
+                      variant="text"
+                      size="small"
+                      color="primary"
+                      onClick={() => openUploadModal(doc)}
+                      sx={{ textTransform: 'none' }}
+                    >
+                      Re-upload
                     </Button>
                   )}
                 </TableCell>
@@ -286,6 +285,62 @@ const DashboardEmployee = () => {
             sx={{ px: 4 }}
           >
             Submit All Documents
+          </Button>
+        </Box>
+      </SharedModal>
+
+      {/* 2. Drag & Drop Upload Modal */}
+      <SharedModal
+        open={showUploadModal}
+        onClose={() => setShowUploadModal(false)}
+        title={activeDoc ? `Upload ${activeDoc.name}` : 'Upload Document'}
+        maxWidth="sm"
+      >
+        <Box
+          sx={{
+            border: '2px dashed #cbd5e1',
+            borderRadius: 2,
+            p: 6,
+            textAlign: 'center',
+            cursor: 'pointer',
+            bgcolor: '#f8fafc',
+            transition: 'all 0.2s',
+            '&:hover': {
+              borderColor: '#b91c1c',
+              bgcolor: '#fef2f2'
+            }
+          }}
+          onClick={triggerFileInput}
+          onDragOver={handleDragOver}
+          onDrop={handleDrop}
+        >
+          <input
+            type="file"
+            ref={fileInputRef}
+            style={{ display: 'none' }}
+            onChange={handleFileSelect}
+          />
+
+          <Box sx={{ mb: 2, display: 'flex', justifyContent: 'center' }}>
+            <Box sx={{ p: 2, bgcolor: '#fee2e2', borderRadius: '50%', color: '#b91c1c' }}>
+              <UploadFile fontSize="large" />
+            </Box>
+          </Box>
+
+          <Typography variant="h6" sx={{ mb: 1, color: '#1e293b' }}>
+            Click or Drag file to upload
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            Supported formats: PDF, JPG, PNG (Max 5MB)
+          </Typography>
+        </Box>
+
+        <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end' }}>
+          <Button
+            onClick={() => setShowUploadModal(false)}
+            sx={{ color: '#64748b' }}
+          >
+            Cancel
           </Button>
         </Box>
       </SharedModal>
