@@ -1,5 +1,5 @@
 // src/App.jsx
-import React, { Suspense, lazy } from 'react';
+import React, { Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Provider } from 'react-redux';
 import { ToastContainer } from 'react-toastify';
@@ -7,15 +7,14 @@ import { ThemeProvider, createTheme } from '@mui/material';
 import CssBaseline from '@mui/material/CssBaseline';
 import { store } from './store/store';
 import 'react-toastify/dist/ReactToastify.css';
-import './styles/toastStyles.css';
-// src/App.jsx
-import DashboardRouter from './pages/Dashboard/DashboardRouter';  // Fix path
 
-// Lazy load pages
-const Login = lazy(() => import('./pages/auth/Login'));
-const Register = lazy(() => import('./pages/auth/Register'));
-const ForgotPassword = lazy(() => import('./pages/auth/ForgotPassword'));
-
+// Import page components
+import Login from './pages/auth/Login';
+import Register from './pages/auth/Register';
+import ForgotPassword from './pages/auth/ForgotPassword';
+import DashboardRouter from './pages/Dashboard/DashboardRouter';
+import CreateRequest from './pages/TravelRequests/CreateRequest';
+import ApplicationStatus from './pages/Dashboard/ApplicationStatus';
 
 // Simple fallback loader
 const SimpleLoader = () => (
@@ -53,14 +52,16 @@ function App() {
     <Provider store={store}>
       <ThemeProvider theme={theme}>
         <CssBaseline />
-        <BrowserRouter>
+        <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
           <Suspense fallback={<SimpleLoader />}>
             <Routes>
               <Route path="/" element={<Navigate to="/login" replace />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/create-request" element={<CreateRequest />} />
               <Route path="/dashboard/*" element={<DashboardRouter />} />
+              <Route path="/application/:id" element={<ApplicationStatus />} />
               <Route path="*" element={<Navigate to="/login" replace />} />
             </Routes>
           </Suspense>

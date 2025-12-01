@@ -1,134 +1,63 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import api from '../../services/api'; // your axios instance
+import api from '../../services/api';
 import apiConfig from '../../config/apiConfig';
+import dashboardService from '../../services/dashboardService';
 
-/**
- * MOCK DATA FALLBACK (used only when USE_MOCK_API = true)
- */
-const mockDashboardStats = {
-  data: [
-    { title: 'Team Requests', value: 12, icon: '👥', color: '#E63946' },
-    { title: 'Pending My Approval', value: 5, icon: '⏳', color: '#FFA726' },
-    { title: 'Approved Today', value: 8, icon: '✅', color: '#4CAF50' },
-    { title: 'Budget Used', value: '₹3.2L', icon: '📈', color: '#2196F3' },
-  ]
-};
+// Inline Mock Data (since JSON files don't exist)
+const mockDashboardStats = [
+  { title: 'Total Requests', value: 24, iconKey: 'FlightTakeoff', trend: '+12%' },
+  { title: 'Pending', value: 5, iconKey: 'PendingActions', trend: '+2' },
+  { title: 'Approved', value: 15, iconKey: 'CheckCircle', trend: '+8%' }
+];
 
-const mockPendingApprovals = {
-  data: [
-    { 
-      id: 'TR-2025-015', 
-      employee: 'Rahul Sharma', 
-      destination: 'Singapore', 
-      amount: '₹85,000',
-      urgency: 'high',
-      date: '2025-12-10'
-    },
-    { 
-      id: 'TR-2025-016', 
-      employee: 'Priya Patel', 
-      destination: 'Dubai, UAE', 
-      amount: '₹65,000',
-      urgency: 'medium',
-      date: '2025-12-15'
-    },
-    { 
-      id: 'TR-2025-017', 
-      employee: 'Amit Kumar', 
-      destination: 'Mumbai, India', 
-      amount: '₹22,000',
-      urgency: 'low',
-      date: '2025-12-20'
-    },
-    { 
-      id: 'TR-2025-018', 
-      employee: 'Neha Singh', 
-      destination: 'London, UK', 
-      amount: '₹1,25,000',
-      urgency: 'high',
-      date: '2025-12-08'
-    }
-  ]
-};
+const mockPendingApprovals = [
+  { id: 'req-001', employee: 'John Doe', destination: 'New York', departure: '2025-12-15', status: 'MANAGER_REVIEW' },
+  { id: 'req-002', employee: 'Jane Smith', destination: 'London', departure: '2025-12-10', status: 'MANAGER_REVIEW' },
+  { id: 'req-003', employee: 'Mike Johnson', destination: 'Singapore', departure: '2025-12-20', status: 'AVP_REVIEW' },
+  { id: 'req-004', employee: 'Sarah Williams', destination: 'Dubai', departure: '2025-12-25', status: 'SVP_REVIEW' }
+];
 
-const mockPendingRequests = {
-  data: [
-    {
-      id: "RG-1995",
-      employee: "Michael R.",
-      destination: "Delhi, India",
-      departure: "2025-11-25",
-      status: "Awaiting Flight/Visa Booking",
-      isPriority: true,
-    },
-    {
-      id: "RG-2002",
-      employee: "Ben K.",
-      destination: "Singapore",
-      departure: "2026-01-15",
-      status: "Documents Received, Awaiting Final Booking",
-      isPriority: true,
-    },
-    {
-      id: "RG-2002",
-      employee: "John Smith",
-      destination: "Dusseldorf",
-      departure: "2026-01-15",
-      status: "Documents Received, Awaiting Final Booking",
-      isPriority: false,
-    }
+const mockEmployeeActiveRequest = {
+  id: 'req-001',
+  destination: 'New York, USA',
+  departure: '2025-12-15',
+  return: '2025-12-20',
+  status: 'APPROVED',
+  steps: [
+    { label: 'Submitted', completed: true, active: false },
+    { label: 'Manager Approved', completed: true, active: false },
+    { label: 'Documents Required', completed: false, active: true },
+    { label: 'Booking', completed: false, active: false }
   ],
+  documents: [
+    { id: 'doc-1', name: 'Passport Front', status: 'PENDING' },
+    { id: 'doc-2', name: 'Passport Back', status: 'PENDING' },
+    { id: 'doc-3', name: 'Visa Application', status: 'PENDING' }
+  ]
 };
 
-const mockViewPendingRequestsData = {
-  data: {
-  "employeeName": "John Doe",
-  "employeeId": "JD-4621",
-  "email": "john@example.com",
-  "phone": "555-123-4567",
-  "department": "Engineering",
-  "status": "Approved",
-  "requestedOn": "Jan 12, 2025",
-  "lastUpdated": "Jan 13, 2025",
-
-  "travelType": "Business",
-  "from": "Mumbai, India",
-  "to": "Dubai, UAE",
-  "departureDate": "Jan 15, 2025",
-  "purpose": "Client meeting",
-
-  "attachments": [
-    { "fileName": "ticket.pdf", "size": 2.4 },
-    { "fileName": "invoice.png", "size": 1.1 },
-    { "fileName": "approval.letter.pdf", "size": 2.8 }
-  ]
-}
-}
-
-
-/**
- * MAIN THUNK — SWITCHES BETWEEN MOCK + REAL API
- */
+// Async Thunks
 export const fetchDashboardData = createAsyncThunk(
   'dashboard/fetch',
-  async () => {
-    // If configured to use mock API → return mock data
+  async (_, { getState }) => {
     if (apiConfig.USE_MOCK_API) {
-      console.log("⚠ Using MOCK Dashboard API");
+      const { auth } = getState();
+      const userRole = auth.user?.role;
+
+      // Use dashboardService for mock data
+      const stats = await dashboardService.getDashboardStats(userRole);
+      const pendingApprovals = await dashboardService.getPendingApprovals();
+
       return {
-        stats: mockDashboardStats.data,
-        pendingApprovals: mockPendingApprovals.data
+        stats: stats || mockDashboardStats,
+        pendingApprovals: pendingApprovals || mockPendingApprovals,
+        activeRequest: mockEmployeeActiveRequest
       };
     }
-
-    // Otherwise, call the REAL .NET API
-    console.log("🚀 Using REAL Dashboard API");
-
     const [statsRes, approvalsRes] = await Promise.all([
       api.get(apiConfig.ENDPOINTS.DASHBOARD_STATS),
       api.get(apiConfig.ENDPOINTS.PENDING_APPROVALS)
     ]);
-
     return {
       stats: statsRes.data?.data || statsRes.data,
       pendingApprovals: approvalsRes.data?.data || approvalsRes.data
@@ -137,102 +66,121 @@ export const fetchDashboardData = createAsyncThunk(
 );
 
 export const fetchTravelDeskData = createAsyncThunk(
-  'traveldesk/fetch',
+  'dashboard/fetchTravelDesk',
   async () => {
     if (apiConfig.USE_MOCK_API) {
-      console.log("⚠ Using MOCK Dashboard API");
-      return {
-        stats: mockPendingRequests.data,
-        pendingRequests: mockPendingRequests // ← FIXED
-      };
+      const pendingRequests = await dashboardService.getPendingRequests();
+      return { pendingRequests: pendingRequests || [] };
     }
-
-    console.log("🚀 Using REAL Dashboard API");
-    const [statsRes, approvalsRes] = await Promise.all([
-      api.get(apiConfig.ENDPOINTS.DASHBOARD_STATS),
-      api.get(apiConfig.ENDPOINTS.PENDING_APPROVALS)
-    ]);
-
-    return {
-      stats: statsRes.data?.data || statsRes.data,
-      pendingRequests: approvalsRes.data // MUST match component shape
-    };
+    const response = await api.get(apiConfig.ENDPOINTS.TRAVEL_DESK.PENDING_REQUESTS);
+    return { pendingRequests: response.data?.data || response.data };
   }
 );
 
-export const fetchViewDetailsData = createAsyncThunk(
-  'traveldesk/fetchById',
-  async (id) => {
-    if (apiConfig.USE_MOCK_API) {
-      console.log("⚠ Using MOCK Request Details API");
+const initialState = {
+  stats: [],
+  pendingApprovals: [],
+  loading: false,
+  error: null,
+  activeRequest: null,
+  pendingRequests: [], // For Travel Desk
+  notifications: [
+    { id: 1, message: "New travel request from John Doe", read: false, time: "10 mins ago" },
+    { id: 2, message: "Flight booking confirmed for NY", read: false, time: "2 hours ago" },
+    { id: 3, message: "Visa application approved", read: true, time: "1 day ago" }
+  ],
+  approvalHistory: [
+    { role: 'MANAGER', name: 'Alice Manager', status: 'APPROVED', comment: 'Approved, proceed.', date: '2025-11-26 10:30 AM' },
+    { role: 'AVP', name: 'Bob AVP', status: 'PENDING', comment: '', date: '' }
+  ]
+};
 
-      return {
-        data: mockViewPendingRequestsData.data   // CLEAN return
-      };
-    }
-
-    // REAL API CALL
-    const res = await api.get(`/travel-requests/${id}`);
-    return { data: res.data };
-  }
-);
-
-/**
- * REDUX SLICE
- */
 const dashboardSlice = createSlice({
   name: 'dashboard',
-  initialState: {
-    stats: [],
-    pendingApprovals: [],
-    loading: false,
-    error: null,
-    pendingRequests: [],
+  initialState,
+  reducers: {
+    updateRequestStatus: (state, action) => {
+      const { id, status, stepIndex } = action.payload;
+      if (state.activeRequest && state.activeRequest.id === id) {
+        state.activeRequest.status = status;
+        if (stepIndex !== undefined) {
+          state.activeRequest.steps = state.activeRequest.steps.map((step, index) => ({
+            ...step,
+            completed: index < stepIndex,
+            active: index === stepIndex
+          }));
+        }
+      }
+      const approvalIndex = state.pendingApprovals.findIndex(r => r.id === id);
+      if (approvalIndex !== -1) {
+        state.pendingApprovals[approvalIndex].status = status;
+      }
+    },
+    addNotification: (state, action) => {
+      state.notifications.unshift({
+        id: Date.now(),
+        message: action.payload,
+        read: false,
+        time: "Just now"
+      });
+    },
+    markNotificationRead: (state, action) => {
+      const notif = state.notifications.find(n => n.id === action.payload);
+      if (notif) notif.read = true;
+    },
+    addApprovalHistory: (state, action) => {
+      state.approvalHistory.push(action.payload);
+    },
+    // Travel Desk Actions
+    processBooking: (state, action) => {
+      const { id, bookingDetails } = action.payload;
+      const requestIndex = state.pendingRequests.findIndex(r => r.id === id);
+      if (requestIndex !== -1) {
+        state.pendingRequests[requestIndex] = {
+          ...state.pendingRequests[requestIndex],
+          status: 'BOOKING_COMPLETED',
+          bookingDetails: bookingDetails
+        };
+      }
+    }
   },
-  reducers: {},
   extraReducers: (builder) => {
-  builder
-    /* DASHBOARD DATA */
-    .addCase(fetchDashboardData.pending, (state) => {
-      state.loading = true;
-    })
-    .addCase(fetchDashboardData.fulfilled, (state, action) => {
-      state.loading = false;
-      state.stats = action.payload.stats;
-      state.pendingApprovals = action.payload.pendingApprovals;
-    })
-    .addCase(fetchDashboardData.rejected, (state, action) => {
-      state.loading = false;
-      state.error = action.error.message;
-    })
-
-    /* TRAVEL DESK DATA — ADD THIS PART */
-    .addCase(fetchTravelDeskData.pending, (state) => {
-      state.loading = true;
-    })
-    .addCase(fetchTravelDeskData.fulfilled, (state, action) => {
-      state.loading = false;
-      state.pendingRequests = action.payload.pendingRequests.data; // <-- FIX
-    })
-    .addCase(fetchTravelDeskData.rejected, (state, action) => {
-      state.loading = false;
-      state.error = action.error.message;
-    })
-
-    /* TRAVEL DESK DATA — ADD THIS PART */
-    .addCase(fetchViewDetailsData.pending, (state) => {
-      state.loading = true;
-    })
-    .addCase(fetchViewDetailsData.fulfilled, (state, action) => {
-      state.loading = false;
-      state.viewRequestDetails = action.payload.data;  // <-- FIX
-    })
-    .addCase(fetchViewDetailsData.rejected, (state, action) => {
-      state.loading = false;
-      state.error = action.error.message;
-    });
-}
-
+    builder
+      .addCase(fetchDashboardData.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchDashboardData.fulfilled, (state, action) => {
+        state.loading = false;
+        state.stats = action.payload.stats;
+        state.pendingApprovals = action.payload.pendingApprovals;
+        state.activeRequest = action.payload.activeRequest;
+      })
+      .addCase(fetchDashboardData.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.error.message;
+      })
+      .addCase(fetchTravelDeskData.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchTravelDeskData.fulfilled, (state, action) => {
+        state.loading = false;
+        state.pendingRequests = action.payload.pendingRequests;
+      })
+      .addCase(fetchTravelDeskData.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.error.message;
+      });
+  },
 });
+
+export const {
+  updateRequestStatus,
+  addNotification,
+  markNotificationRead,
+  addApprovalHistory,
+  processBooking
+} = dashboardSlice.actions;
 
 export default dashboardSlice.reducer;
