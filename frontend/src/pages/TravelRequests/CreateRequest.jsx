@@ -7,15 +7,14 @@ import {
     TextField,
     MenuItem,
     Typography,
-    Paper,
     InputAdornment
 } from '@mui/material';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
-import { FlightTakeoff, FlightLand, AttachMoney, Description } from '@mui/icons-material';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import { FlightLand, AttachMoney, Description } from '@mui/icons-material';
 import BaseLayout from '../../components/layout/BaseLayout';
-import { Navbar, SharedButton, SharedCard, StatusChip } from '../../components/shared';
+import { Navbar, SharedButton, SharedCard } from '../../components/shared';
 import { logout } from '../../features/authSlice';
 
 const CreateRequest = () => {
@@ -82,7 +81,7 @@ const CreateRequest = () => {
                             />
                         </Grid>
 
-                        <LocalizationProvider dateAdapter={AdapterDateFns}>
+                        <LocalizationProvider dateAdapter={AdapterDayjs}>
                             <Grid item xs={12} sm={6}>
                                 <DatePicker
                                     label="Departure Date"

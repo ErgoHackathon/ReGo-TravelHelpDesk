@@ -1,13 +1,20 @@
 // src/App.jsx
-import React, { Suspense, lazy } from 'react';
+import React, { Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Provider } from 'react-redux';
 import { ToastContainer } from 'react-toastify';
 import { ThemeProvider, createTheme } from '@mui/material';
 import CssBaseline from '@mui/material/CssBaseline';
 import { store } from './store/store';
-<Route path="/dashboard/*" element={<DashboardRouter />} />
+import 'react-toastify/dist/ReactToastify.css';
 
+// Import page components
+import Login from './pages/auth/Login';
+import Register from './pages/auth/Register';
+import ForgotPassword from './pages/auth/ForgotPassword';
+import DashboardRouter from './pages/Dashboard/DashboardRouter';
+import CreateRequest from './pages/TravelRequests/CreateRequest';
+import ApplicationStatus from './pages/Dashboard/ApplicationStatus';
 
 // Simple fallback loader
 const SimpleLoader = () => (

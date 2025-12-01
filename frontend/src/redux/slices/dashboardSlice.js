@@ -1,21 +1,55 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import api from '../../services/api';
 import apiConfig from '../../config/apiConfig';
+import dashboardService from '../../services/dashboardService';
 
-// Mock Data Imports
-import mockDashboardStats from '../../mock/dashboardStats.json';
-import mockPendingApprovals from '../../mock/pendingApprovals.json';
-import mockEmployeeActiveRequest from '../../mock/employeeActiveRequest.json';
+// Inline Mock Data (since JSON files don't exist)
+const mockDashboardStats = [
+  { title: 'Total Requests', value: 24, iconKey: 'FlightTakeoff', trend: '+12%' },
+  { title: 'Pending', value: 5, iconKey: 'PendingActions', trend: '+2' },
+  { title: 'Approved', value: 15, iconKey: 'CheckCircle', trend: '+8%' }
+];
+
+const mockPendingApprovals = [
+  { id: 'req-001', employee: 'John Doe', destination: 'New York', departure: '2025-12-15', status: 'MANAGER_REVIEW' },
+  { id: 'req-002', employee: 'Jane Smith', destination: 'London', departure: '2025-12-10', status: 'MANAGER_REVIEW' }
+];
+
+const mockEmployeeActiveRequest = {
+  id: 'req-001',
+  destination: 'New York, USA',
+  departure: '2025-12-15',
+  return: '2025-12-20',
+  status: 'APPROVED',
+  steps: [
+    { label: 'Submitted', completed: true, active: false },
+    { label: 'Manager Approved', completed: true, active: false },
+    { label: 'Documents Required', completed: false, active: true },
+    { label: 'Booking', completed: false, active: false }
+  ],
+  documents: [
+    { id: 'doc-1', name: 'Passport Front', status: 'PENDING' },
+    { id: 'doc-2', name: 'Passport Back', status: 'PENDING' },
+    { id: 'doc-3', name: 'Visa Application', status: 'PENDING' }
+  ]
+};
 
 // Async Thunks
 export const fetchDashboardData = createAsyncThunk(
   'dashboard/fetch',
-  async () => {
+  async (_, { getState }) => {
     if (apiConfig.USE_MOCK_API) {
+      const { auth } = getState();
+      const userRole = auth.user?.role;
+
+      // Use dashboardService for mock data
+      const stats = await dashboardService.getDashboardStats(userRole);
+      const pendingApprovals = await dashboardService.getPendingApprovals();
+
       return {
-        stats: mockDashboardStats.data,
-        pendingApprovals: mockPendingApprovals.data,
-        activeRequest: mockEmployeeActiveRequest.data
+        stats: stats || mockDashboardStats,
+        pendingApprovals: pendingApprovals || mockPendingApprovals,
+        activeRequest: mockEmployeeActiveRequest
       };
     }
     const [statsRes, approvalsRes] = await Promise.all([
@@ -26,6 +60,18 @@ export const fetchDashboardData = createAsyncThunk(
       stats: statsRes.data?.data || statsRes.data,
       pendingApprovals: approvalsRes.data?.data || approvalsRes.data
     };
+  }
+);
+
+export const fetchTravelDeskData = createAsyncThunk(
+  'dashboard/fetchTravelDesk',
+  async () => {
+    if (apiConfig.USE_MOCK_API) {
+      const pendingRequests = await dashboardService.getPendingRequests();
+      return { pendingRequests: pendingRequests || [] };
+    }
+    const response = await api.get(apiConfig.ENDPOINTS.TRAVEL_DESK.PENDING_REQUESTS);
+    return { pendingRequests: response.data?.data || response.data };
   }
 );
 
@@ -102,6 +148,18 @@ const dashboardSlice = createSlice({
         state.activeRequest = action.payload.activeRequest;
       })
       .addCase(fetchDashboardData.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.error.message;
+      })
+      .addCase(fetchTravelDeskData.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchTravelDeskData.fulfilled, (state, action) => {
+        state.loading = false;
+        state.pendingRequests = action.payload.pendingRequests;
+      })
+      .addCase(fetchTravelDeskData.rejected, (state, action) => {
         state.loading = false;
         state.error = action.error.message;
       });

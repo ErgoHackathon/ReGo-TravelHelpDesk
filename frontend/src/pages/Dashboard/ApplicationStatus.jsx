@@ -23,7 +23,6 @@ import {
     CalendarToday,
     LocationOn,
     Check,
-    Person,
     Comment,
     History
 } from '@mui/icons-material';

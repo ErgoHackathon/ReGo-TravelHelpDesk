@@ -94,28 +94,28 @@ const getMockStats = (role) => {
     {
       title: 'Total Requests',
       value: 24,
-      icon: FlightIcon,
+      iconKey: 'Flight',
       color: 'primary',
       trend: '+12%'
     },
     {
       title: 'Pending Approvals',
       value: 5,
-      icon: PendingActionsIcon,
+      iconKey: 'PendingActions',
       color: 'warning',
       trend: '+2'
     },
     {
       title: 'Approved',
       value: 15,
-      icon: CheckCircleIcon,
+      iconKey: 'CheckCircle',
       color: 'success',
       trend: '+8%'
     },
     {
       title: 'Rejected',
       value: 4,
-      icon: CancelIcon,
+      iconKey: 'Cancel',
       color: 'error',
       trend: '-2'
     }
@@ -126,7 +126,7 @@ const getMockStats = (role) => {
       {
         title: 'Team Requests',
         value: 18,
-        icon: PeopleIcon,
+        iconKey: 'People',
         color: 'primary',
         trend: '+5'
       },
@@ -139,21 +139,21 @@ const getMockStats = (role) => {
       {
         title: 'Pending Processing',
         value: 12,
-        icon: PendingActionsIcon,
+        iconKey: 'PendingActions',
         color: 'warning',
         trend: '+3'
       },
       {
         title: 'Total Bookings',
         value: 45,
-        icon: FlightIcon,
+        iconKey: 'Flight',
         color: 'info',
         trend: '+15%'
       },
       {
         title: 'Completed',
         value: 33,
-        icon: CheckCircleIcon,
+        iconKey: 'CheckCircle',
         color: 'success',
         trend: '+10'
       }
@@ -165,14 +165,14 @@ const getMockStats = (role) => {
       {
         title: 'Pending Reimbursements',
         value: 8,
-        icon: AttachMoneyIcon,
+        iconKey: 'AttachMoney',
         color: 'warning',
         trend: '+2'
       },
       {
         title: 'Total Amount',
         value: '₹2,45,000',
-        icon: AttachMoneyIcon,
+        iconKey: 'AttachMoney',
         color: 'success',
         trend: '+18%'
       },

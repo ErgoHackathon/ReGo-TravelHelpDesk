@@ -4,7 +4,6 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
-  Grid,
   Stepper,
   Step,
   StepLabel,
@@ -14,15 +13,13 @@ import {
   TableBody,
   TableCell,
   TableHead,
-  TableRow,
-  Paper
+  TableRow
 } from '@mui/material';
 import {
   Flight,
   CloudUpload,
   CheckCircle,
-  Description,
-  AttachFile
+  Description
 } from '@mui/icons-material';
 import { fetchDashboardData, updateRequestStatus } from '../../redux/slices/dashboardSlice';
 import { logout } from '../../features/authSlice';

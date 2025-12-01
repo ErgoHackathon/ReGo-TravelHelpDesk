@@ -9,13 +9,22 @@ import {
   TableCell,
   TableRow,
   TextField,
-  MenuItem,
   Checkbox,
   TableHead,
   Table,
   Typography
 } from '@mui/material';
-import { FlightTakeoff, Group, Assignment, ArrowForward } from '@mui/icons-material';
+import {
+  FlightTakeoff,
+  Group,
+  Assignment,
+  ArrowForward,
+  CheckCircle,
+  Cancel,
+  People,
+  PendingActions,
+  AttachMoney
+} from '@mui/icons-material';
 import { fetchDashboardData } from '../../redux/slices/dashboardSlice';
 import { logout } from '../../features/authSlice';
 
@@ -33,6 +42,19 @@ import {
   UserAvatar
 } from '../../components/shared';
 import BaseLayout from '../../components/layout/BaseLayout';
+
+// Icon Mapping
+const ICON_MAP = {
+  'Flight': <FlightTakeoff />,
+  'FlightTakeoff': <FlightTakeoff />,
+  'Group': <Group />,
+  'People': <People />,
+  'Assignment': <Assignment />,
+  'PendingActions': <PendingActions />,
+  'CheckCircle': <CheckCircle />,
+  'Cancel': <Cancel />,
+  'AttachMoney': <AttachMoney />
+};
 
 const DashboardManager = () => {
   const dispatch = useDispatch();
@@ -99,27 +121,21 @@ const DashboardManager = () => {
 
         {/* Stats */}
         <Grid container spacing={3} sx={{ mb: 4 }}>
-          <Grid item xs={12} sm={6} md={4}>
-            <StatDisplay
-              title="Requests Raised"
-              value={stats?.requests || 24}
-              icon={<FlightTakeoff />}
-            />
-          </Grid>
-          <Grid item xs={12} sm={6} md={4}>
-            <StatDisplay
-              title="Pending Approvals"
-              value={stats?.pending || 5}
-              icon={<Assignment />}
-            />
-          </Grid>
-          <Grid item xs={12} sm={6} md={4}>
-            <StatDisplay
-              title="Total Reports"
-              value={stats?.teamCount || 12}
-              icon={<Group />}
-            />
-          </Grid>
+          {(stats && stats.length > 0 ? stats : [
+            { title: 'Requests Raised', value: 24, iconKey: 'FlightTakeoff' },
+            { title: 'Pending Approvals', value: 5, iconKey: 'Assignment' },
+            { title: 'Total Reports', value: 12, iconKey: 'Group' }
+          ]).map((stat, index) => (
+            <Grid item xs={12} sm={6} md={4} key={index}>
+              <StatDisplay
+                title={stat.title}
+                value={stat.value}
+                icon={ICON_MAP[stat.iconKey] || <FlightTakeoff />}
+                trend={stat.trend}
+                color={stat.color}
+              />
+            </Grid>
+          ))}
         </Grid>
 
         {/* Recent Application Status Table */}
