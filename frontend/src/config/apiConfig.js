@@ -54,7 +54,7 @@ const ENDPOINTS = {
   // ==========================================
   AUTH: {
     REGISTER: '/auth/register',
-    LOGIN: '/auth/login',
+    LOGIN: '/api/auth/login',
     LOGOUT: '/auth/logout',
     REFRESH_TOKEN: '/auth/refresh',
     GET_PROFILE: '/auth/profile',

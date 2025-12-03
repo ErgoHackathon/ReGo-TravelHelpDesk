@@ -8,6 +8,7 @@ import apiClient from '../api/client';
 import mockDataService from './mockDataService';
 import apiConfig, { ENDPOINTS } from '../config/apiConfig';
 import { STORAGE_KEYS } from '../utils/constants';
+import { ROLE_ID_MAP,ROLES } from '../utils/constants';
 
 const authService = {
   /**
@@ -16,30 +17,41 @@ const authService = {
    * @returns {Promise<object>} - { user, token, refreshToken }
    */
   login: async (credentials) => {
-    let response;
+  let response;
 
-    if (apiConfig.USE_MOCK_API) {
-      console.log('🔵 Using MOCK API for login');
-      response = await mockDataService.login(credentials);
-    } else {
-      console.log('🟢 Using REAL API for login');
-      response = await apiClient.post(ENDPOINTS.AUTH.LOGIN, credentials);
-    }
+  if (apiConfig.USE_MOCK_API) {
+    console.log('🔵 Using MOCK API for login');
+    response = await mockDataService.login(credentials);
+  } else {
+    console.log('🟢 Using REAL API for login');
+    response = await apiClient.post(`${ENDPOINTS.AUTH.LOGIN}`, null, {
+      params: {
+        username: credentials.email,
+        password: credentials.password
+      }
+    });
+  }
 
-    if (response.data.success) {
-      const { user, token, refreshToken } = response.data.data;
+  console.log('Login API response:', response.data);
 
-      // Store in localStorage
-      localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(user));
-      localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, token);
-      localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, refreshToken);
+  if (response.data.status === 'Success') {
+    const userId = response.data.result; // backend only returns an ID
+    // If you need full user info or token, call getProfile or another endpoint
+    const user = { id: userId, email: credentials.email, role: ROLES.EMPLOYEE };
+    const token = 'dummy-token'; // Replace with actual token if backend provides later
+    const refreshToken = null;
 
-      console.log('✅ Login successful:', user.email);
-      return response.data.data;
-    }
+    // Store in localStorage
+    localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(user));
+    localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, token);
+    if (refreshToken) localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, refreshToken);
 
-    throw new Error(response.data.error?.message || 'Login failed');
-  },
+    console.log('✅ Login successful:', user.email);
+    return { user, token, refreshToken };
+  }
+
+  throw new Error('Login failed');
+},
 
   /**
    * Register a new user
@@ -70,6 +82,38 @@ const authService = {
     }
 
     throw new Error(response.data.error?.message || 'Registration failed');
+  },
+
+  
+  /**
+   * Get user profile
+   * @returns {Promise<object>} - User object
+   */
+  getProfile: async () => {
+    let response;
+
+    if (apiConfig.USE_MOCK_API) {
+      console.log('🔵 Using MOCK API for getProfile');
+      response = await mockDataService.getProfile();
+    } else {
+      console.log('🟢 Using REAL API for getProfile');
+      response = await apiClient.get(ENDPOINTS.AUTH.GET_PROFILE);
+    }
+
+    if (response.data.success) {
+      const user = response.data.data;
+
+      // Map numeric role ID to frontend role string
+      const roleName = ROLE_ID_MAP[user.refRoleId] || ROLES.EMPLOYEE;
+      const userWithRole = { ...user, role: roleName };
+
+      // Update localStorage
+      localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(userWithRole));
+
+      return userWithRole;
+    }
+
+    throw new Error('Failed to get profile');
   },
 
   /**

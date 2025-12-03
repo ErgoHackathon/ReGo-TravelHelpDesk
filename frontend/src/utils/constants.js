@@ -319,3 +319,10 @@ export const SUCCESS_MESSAGES = {
   PROFILE_UPDATED: 'Profile updated successfully.',
   PASSWORD_CHANGED: 'Password changed successfully.'
 };
+export const ROLE_ID_MAP = {
+  101: ROLES.EMPLOYEE,
+  102: ROLES.MANAGER,
+  103: ROLES.TRAVEL_DESK, // or ROLES.HELPDESK if you have
+  104: ROLES.AVP,
+  105: ROLES.SVP
+};

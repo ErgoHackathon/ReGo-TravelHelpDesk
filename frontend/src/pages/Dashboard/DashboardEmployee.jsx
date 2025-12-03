@@ -328,6 +328,7 @@ const DashboardEmployee = () => {
           </Box>
         </Box>
 
+        <Box>
           <Typography variant="h6" sx={{ mb: 1, color: '#1e293b' }}>
             Click or Drag file to upload
           </Typography>
