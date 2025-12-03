@@ -1,11 +1,37 @@
-import React, { useEffect, useState } from 'react';
+// pages/dashboard/DashboardManager.jsx
+import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { Box, Grid, TableBody, TableCell, TableRow } from '@mui/material';
-import { FlightTakeoff, Group } from '@mui/icons-material'; // ✅ Correct icon imports
+import { useNavigate } from 'react-router-dom';
+import {
+  Box,
+  Grid,
+  TableBody,
+  TableCell,
+  TableRow,
+  TextField,
+  Checkbox,
+  TableHead,
+  Table,
+  Typography,
+  Button,
+  Stack
+} from '@mui/material';
+import {
+  FlightTakeoff,
+  Group,
+  Assignment,
+  ArrowForward,
+  CheckCircle,
+  Cancel,
+  People,
+  PendingActions,
+  AttachMoney,
+  FilterList
+} from '@mui/icons-material';
 import { fetchDashboardData } from '../../redux/slices/dashboardSlice';
+import { logout } from '../../features/authSlice';
 
 import {
-  InfoDisplay,
   Navbar,
   SharedTypography,
   SharedCard,
@@ -20,21 +46,76 @@ import {
 } from '../../components/shared';
 import BaseLayout from '../../components/layout/BaseLayout';
 
+// Icon Mapping
+const ICON_MAP = {
+  'Flight': <FlightTakeoff />,
+  'FlightTakeoff': <FlightTakeoff />,
+  'Group': <Group />,
+  'People': <People />,
+  'Assignment': <Assignment />,
+  'PendingActions': <PendingActions />,
+  'CheckCircle': <CheckCircle />,
+  'Cancel': <Cancel />,
+  'AttachMoney': <AttachMoney />
+};
+
 const DashboardManager = () => {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const { user } = useSelector((state) => state.auth);
   const { stats, pendingApprovals, loading } = useSelector((state) => state.dashboard);
-  const [selectedRequest, setSelectedRequest] = useState(null);
+  const [showRaiseRequestModal, setShowRaiseRequestModal] = useState(false);
+
+  // Filter State
+  const [filterStatus, setFilterStatus] = useState('ALL');
 
   useEffect(() => {
     dispatch(fetchDashboardData());
   }, [dispatch]);
 
-  // ✅ Define the missing function
-  const handleRaiseNewRequest = () => {
-    console.log("Raise Travel Request clicked");
-    // You can open a modal or navigate to a raise request page here
+  const handleLogout = async () => {
+    await dispatch(logout());
+    navigate('/login', { replace: true });
   };
+
+  const handleViewDetails = (id) => {
+    navigate(`/application/${id}`);
+  };
+
+  // Filter Logic
+  const getFilteredApprovals = () => {
+    if (filterStatus === 'ALL') return pendingApprovals;
+
+    return pendingApprovals.filter(req => {
+      if (filterStatus === 'PENDING') return req.status.includes('REVIEW') || req.status === 'PENDING';
+      if (filterStatus === 'APPROVED') return req.status.includes('APPROVED');
+      if (filterStatus === 'REJECTED') return req.status === 'REJECTED';
+      return req.status === filterStatus;
+    });
+  };
+
+  const filteredApprovals = getFilteredApprovals();
+
+  const FilterButton = ({ label, value }) => (
+    <Button
+      variant={filterStatus === value ? "contained" : "outlined"}
+      size="small"
+      onClick={() => setFilterStatus(value)}
+      sx={{
+        borderRadius: 5,
+        textTransform: 'none',
+        borderColor: filterStatus === value ? 'transparent' : '#e2e8f0',
+        bgcolor: filterStatus === value ? '#1e293b' : 'transparent',
+        color: filterStatus === value ? '#fff' : '#64748b',
+        '&:hover': {
+          bgcolor: filterStatus === value ? '#0f172a' : '#f1f5f9',
+          borderColor: filterStatus === value ? 'transparent' : '#cbd5e1'
+        }
+      }}
+    >
+      {label}
+    </Button>
+  );
 
   if (loading) {
     return <LoadingSpinner />;
@@ -42,25 +123,27 @@ const DashboardManager = () => {
 
   return (
     <BaseLayout variant="dashboard">
-      <Navbar user={user} />
+      <Navbar user={user} onLogout={handleLogout} />
 
       <Box sx={{ p: 3 }}>
         {/* Header */}
         <Box sx={{ mb: 4, display: 'flex', alignItems: 'center', gap: 2 }}>
-          <UserAvatar 
+          <UserAvatar
             firstName={user?.firstName}
             lastName={user?.lastName}
             size="large"
           />
           <Box>
             <SharedTypography variant="pageTitle">
-              Manager Dashboard
+              {user?.role === 'MANAGER' ? 'Manager Dashboard' : `${user?.role} Dashboard`}
             </SharedTypography>
-            <StatusChip 
+            <StatusChip
               label={`${user?.role} - ${user?.department}`}
               variant="default"
             />
           </Box>
+
+          <Box sx={{ flexGrow: 1 }} />
 
           {/* Raise Travel Request Button */}
           <SharedButton
@@ -71,7 +154,7 @@ const DashboardManager = () => {
               "&:hover": { bgcolor: "#8b1f1f" },
               minWidth: 200,
             }}
-            onClick={handleRaiseNewRequest} // ✅ fixed
+            onClick={() => setShowRaiseRequestModal(true)}
           >
             Raise Travel Request
           </SharedButton>
@@ -79,21 +162,42 @@ const DashboardManager = () => {
 
         {/* Stats */}
         <Grid container spacing={3} sx={{ mb: 4 }}>
-          <Grid item xs={12} sm={6} md={3}>
-            <StatDisplay
-              title="Team Members"
-              value={stats?.teamCount || 0}
-              icon={<Group />}
-            />
-          </Grid>
-          {/* Add other stats here */}
+          {(stats && stats.length > 0 ? stats : [
+            { title: 'Requests Raised', value: 24, iconKey: 'FlightTakeoff' },
+            { title: 'Pending Approvals', value: 5, iconKey: 'Assignment' },
+            { title: 'Total Reports', value: 12, iconKey: 'Group' }
+          ]).map((stat, index) => (
+            <Grid item xs={12} sm={6} md={4} key={index}>
+              <StatDisplay
+                title={stat.title}
+                value={stat.value}
+                icon={ICON_MAP[stat.iconKey] || <FlightTakeoff />}
+                trend={stat.trend}
+                color={stat.color}
+              />
+            </Grid>
+          ))}
         </Grid>
 
-        {/* Approvals Table */}
+        {/* Recent Application Status Table */}
         <SharedCard variant="dashboard">
-          <SharedTypography variant="cardTitle">
-            Pending Approvals
-          </SharedTypography>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3, flexWrap: 'wrap', gap: 2 }}>
+            <SharedTypography variant="cardTitle">
+              Recent Application Status
+            </SharedTypography>
+
+            {/* Filter Bar */}
+            <Stack direction="row" spacing={1} sx={{ overflowX: 'auto', pb: 1 }}>
+              <FilterButton label="All" value="ALL" />
+              <FilterButton label="Pending" value="PENDING" />
+              <FilterButton label="Approved" value="APPROVED" />
+              <FilterButton label="Rejected" value="REJECTED" />
+              <FilterButton label="Manager Review" value="MANAGER_REVIEW" />
+              {(user?.role === 'AVP' || user?.role === 'SVP') && (
+                <FilterButton label="Travel Desk" value="TRAVEL_DESK_REVIEW" />
+              )}
+            </Stack>
+          </Box>
 
           <SharedTable>
             <TableHeader
@@ -102,64 +206,136 @@ const DashboardManager = () => {
                 { id: 'employee', label: 'Employee' },
                 { id: 'destination', label: 'Destination' },
                 { id: 'status', label: 'Status' },
-                { id: 'actions', label: 'Actions' }
+                { id: 'actions', label: 'Action' }
               ]}
             />
 
             <TableBody>
-              {pendingApprovals.map((request) => (
+              {filteredApprovals.length > 0 ? filteredApprovals.map((request) => (
                 <TableRow key={request.id}>
                   <TableCell>{request.id}</TableCell>
                   <TableCell>{request.employee}</TableCell>
                   <TableCell>{request.destination}</TableCell>
                   <TableCell>
-                    <StatusChip
-                      label={request.status}
-                      variant={request.statusVariant}
-                    />
+                    <StatusChip label={request.status || 'PENDING_MANAGER'} />
                   </TableCell>
                   <TableCell>
                     <SharedButton
-                      variant="table"
-                      onClick={() => setSelectedRequest(request)}
+                      variant="outlined"
+                      size="small"
+                      endIcon={<ArrowForward fontSize="small" />}
+                      onClick={() => handleViewDetails(request.id)}
+                      sx={{
+                        borderColor: '#e2e8f0',
+                        color: '#64748b',
+                        '&:hover': {
+                          borderColor: '#b91c1c',
+                          color: '#b91c1c',
+                          bgcolor: '#fef2f2'
+                        }
+                      }}
                     >
                       View Details
                     </SharedButton>
                   </TableCell>
                 </TableRow>
-              ))}
+              )) : (
+                <TableRow>
+                  <TableCell colSpan={5} align="center" sx={{ py: 4, color: '#64748b' }}>
+                    No requests found matching filter "{filterStatus}"
+                  </TableCell>
+                </TableRow>
+              )}
             </TableBody>
           </SharedTable>
         </SharedCard>
       </Box>
 
-      {/* Request Details Modal */}
+      {/* Raise New Request Modal */}
       <SharedModal
-        open={!!selectedRequest}
-        onClose={() => setSelectedRequest(null)}
-        title="Request Details"
+        open={showRaiseRequestModal}
+        onClose={() => setShowRaiseRequestModal(false)}
+        title="Raise New Travel Request"
+        maxWidth="md"
+        fullWidth
       >
-        <InfoDisplay
-          items={[
-            { label: 'Employee', value: selectedRequest?.employee },
-            { label: 'Destination', value: selectedRequest?.destination },
-            { label: 'Date', value: selectedRequest?.date },
-            { label: 'Status', value: selectedRequest?.status }
-          ]}
-        />
-        <Box sx={{ mt: 2, display: 'flex', gap: 2 }}>
-          <SharedButton
-            variant="secondary"
-            onClick={() => setSelectedRequest(null)}
-          >
-            Close
-          </SharedButton>
-          <SharedButton
-            variant="primary"
-            onClick={() => {/* Handle approve */}}
-          >
-            Approve
-          </SharedButton>
+        <Box sx={{ mt: 1 }}>
+          <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 3 }}>
+            Fill in the details below to submit a new travel request for your team.
+          </Typography>
+
+          <Grid container spacing={3} sx={{ mb: 4 }}>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                label="Destination City/Country"
+                variant="outlined"
+                placeholder="e.g. London, UK"
+                InputLabelProps={{ shrink: true }}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                label="Reason for Travel"
+                variant="outlined"
+                placeholder="e.g. Client Meeting"
+                InputLabelProps={{ shrink: true }}
+              />
+            </Grid>
+          </Grid>
+
+          <Box sx={{ mb: 2 }}>
+            <Typography variant="h6" sx={{ fontSize: '1rem', fontWeight: 600, mb: 2 }}>
+              Select Employees and Dates
+            </Typography>
+
+            <Box sx={{ border: '1px solid #e2e8f0', borderRadius: 2, overflow: 'hidden' }}>
+              <Table size="small">
+                <TableHead sx={{ bgcolor: '#f8fafc' }}>
+                  <TableRow>
+                    <TableCell padding="checkbox"><Checkbox size="small" /></TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>Employee Name</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>Departure Date</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>Arrival Date</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  <TableRow hover>
+                    <TableCell padding="checkbox"><Checkbox size="small" /></TableCell>
+                    <TableCell>John Doe</TableCell>
+                    <TableCell><TextField type="date" size="small" fullWidth variant="standard" InputProps={{ disableUnderline: true }} /></TableCell>
+                    <TableCell><TextField type="date" size="small" fullWidth variant="standard" InputProps={{ disableUnderline: true }} /></TableCell>
+                  </TableRow>
+                  <TableRow hover>
+                    <TableCell padding="checkbox"><Checkbox size="small" /></TableCell>
+                    <TableCell>Jane Smith</TableCell>
+                    <TableCell><TextField type="date" size="small" fullWidth variant="standard" InputProps={{ disableUnderline: true }} /></TableCell>
+                    <TableCell><TextField type="date" size="small" fullWidth variant="standard" InputProps={{ disableUnderline: true }} /></TableCell>
+                  </TableRow>
+                </TableBody>
+              </Table>
+            </Box>
+          </Box>
+
+          <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 4 }}>
+            <SharedButton
+              variant="outlined"
+              onClick={() => setShowRaiseRequestModal(false)}
+              sx={{ borderColor: '#e2e8f0', color: '#64748b', '&:hover': { borderColor: '#cbd5e1', bgcolor: '#f8fafc' } }}
+            >
+              Cancel
+            </SharedButton>
+            <SharedButton
+              variant="contained"
+              onClick={() => {
+                setShowRaiseRequestModal(false);
+              }}
+              sx={{ bgcolor: '#b91c1c', '&:hover': { bgcolor: '#991b1b' }, px: 4 }}
+            >
+              Review & Submit Request
+            </SharedButton>
+          </Box>
         </Box>
       </SharedModal>
     </BaseLayout>
