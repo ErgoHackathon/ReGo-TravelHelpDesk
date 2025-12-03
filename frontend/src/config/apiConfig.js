@@ -22,9 +22,9 @@ const USE_MOCK_API = process.env.REACT_APP_ENABLE_MOCK_API === 'true' ||
 
 /**
  * Real API base URL from environment variable
- * Falls back to localhost if not set
+ * Falls back to .NET backend localhost if not set
  */
-const REAL_API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8080/api/v1';
+const REAL_API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'https://localhost:7133';
 
 /**
  * Current API base URL (mock or real)
@@ -51,6 +51,55 @@ const HEADERS = {
 const ENDPOINTS = {
   // ==========================================
   // AUTHENTICATION ENDPOINTS
+  // ==========================================
+  AUTH_LOGIN: '/auth/login',
+  AUTH_REGISTER: '/auth/register',
+  AUTH_LOGOUT: '/auth/logout',
+  AUTH_REFRESH_TOKEN: '/auth/refresh',
+  AUTH_GET_PROFILE: '/auth/profile',
+  AUTH_UPDATE_PROFILE: '/auth/profile',
+  AUTH_CHANGE_PASSWORD: '/auth/change-password',
+  AUTH_FORGOT_PASSWORD: '/auth/forgot-password',
+  AUTH_RESET_PASSWORD: '/auth/reset-password',
+  AUTH_VERIFY_EMAIL: '/auth/verify-email',
+
+  // ==========================================
+  // TRAVEL REQUEST ENDPOINTS (SPEC v1)
+  // ==========================================
+  TRAVEL_REQUEST_CREATE: '/travel/request/create',
+  TRAVEL_REQUEST_BY_USER: '/travel/request/by-user',
+  TRAVEL_REQUEST_BY_ID: '/travel/request',
+
+  // ==========================================
+  // APPROVAL ENDPOINTS (SPEC v1)
+  // ==========================================
+  APPROVAL_SUBMIT: '/approval/submit',
+
+  // ==========================================
+  // DOCUMENT ENDPOINTS (SPEC v1)
+  // ==========================================
+  DOCUMENTS_UPLOAD: '/documents/upload',
+  DOCUMENTS_BY_REQUEST: '/documents/by-request',
+
+  // ==========================================
+  // TRAVEL DESK ENDPOINTS (SPEC v1)
+  // ==========================================
+  TRAVEL_BOOK: '/travel/book',
+
+  // ==========================================
+  // DASHBOARD ENDPOINTS (SPEC v1)
+  // ==========================================
+  DASHBOARD_STATS: '/dashboard/stats',
+  DASHBOARD_RECENT: '/dashboard/recent',
+
+  // ==========================================
+  // NOTIFICATION ENDPOINTS (SPEC v1)
+  // ==========================================
+  NOTIFICATIONS_GET: '/notifications',
+  NOTIFICATIONS_MARK_READ: '/notifications/mark-read',
+
+  // ==========================================
+  // LEGACY ENDPOINTS (FOR BACKWARD COMPATIBILITY)
   // ==========================================
   AUTH: {
     REGISTER: '/auth/register',

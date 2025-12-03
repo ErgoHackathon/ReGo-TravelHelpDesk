@@ -8,37 +8,77 @@ import apiClient from '../api/client';
 import mockDataService from './mockDataService';
 import apiConfig, { ENDPOINTS } from '../config/apiConfig';
 import { STORAGE_KEYS } from '../utils/constants';
-import { ROLE_ID_MAP,ROLES } from '../utils/constants';
+import { ROLE_ID_MAP, ROLES } from '../utils/constants';
+import employeeService from './employeeService';
 
 const authService = {
   /**
-   * Login user
+   * Login user with backend integration
    * @param {object} credentials - { email, password }
    * @returns {Promise<object>} - { user, token, refreshToken }
    */
   login: async (credentials) => {
-  let response;
+    if (apiConfig.USE_MOCK_API) {
+      console.log('🔵 Using MOCK API for login');
+      const response = await mockDataService.login(credentials);
 
-  if (apiConfig.USE_MOCK_API) {
-    console.log('🔵 Using MOCK API for login');
-    response = await mockDataService.login(credentials);
-  } else {
+      if (response.data.success) {
+        const { user, token, refreshToken } = response.data.data;
+
+        // Store in localStorage
+        localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(user));
+        localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, token);
+        if (refreshToken) localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, refreshToken);
+
+        console.log('✅ Login successful:', user.email);
+        return { user, token, refreshToken };
+      }
+
+      throw new Error(response.data.error?.message || 'Login failed');
+    }
+
+    // Real backend login flow
     console.log('🟢 Using REAL API for login');
-    response = await apiClient.post(`${ENDPOINTS.AUTH.LOGIN}`, null, {
+
+    // Step 1: Call Auth/Login to get roleId
+    const loginResponse = await apiClient.post(ENDPOINTS.AUTH_LOGIN, null, {
       params: {
         username: credentials.email,
         password: credentials.password
       }
     });
-  }
 
-  console.log('Login API response:', response.data);
+    console.log('Login API response:', loginResponse.data);
 
-  if (response.data.status === 'Success') {
-    const userId = response.data.result; // backend only returns an ID
-    // If you need full user info or token, call getProfile or another endpoint
-    const user = { id: userId, email: credentials.email, role: ROLES.EMPLOYEE };
-    const token = 'dummy-token'; // Replace with actual token if backend provides later
+    // Extract roleId from response
+    const loginData = loginResponse.data;
+    const roleId = Number(loginData?.result ?? loginData?.roleId ?? 0);
+
+    if (!roleId || loginData.status !== 'Success') {
+      throw new Error('Login failed - invalid credentials');
+    }
+
+    // Step 2: Fetch employee master data
+    const empData = await employeeService.getEmployeeProfile(credentials.email);
+
+    // Step 3: Map roleId to frontend role
+    const roleCode = ROLE_ID_MAP[roleId] || ROLES.EMPLOYEE;
+
+    // Step 4: Build user object
+    const user = {
+      empId: empData.empId,
+      email: credentials.email,
+      fullName: empData.empName,
+      name: empData.empName,
+      role: roleCode,
+      roleId: roleId,
+      refRoleId: empData.refRoleId,
+      rptEmpId: empData.rptEmpId,
+      department: empData.department,
+      designation: empData.designation
+    };
+
+    const token = 'dummy-token'; // Replace with actual JWT when backend provides
     const refreshToken = null;
 
     // Store in localStorage
@@ -46,12 +86,9 @@ const authService = {
     localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, token);
     if (refreshToken) localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, refreshToken);
 
-    console.log('✅ Login successful:', user.email);
+    console.log('✅ Login successful:', user.email, 'Role:', user.role);
     return { user, token, refreshToken };
-  }
-
-  throw new Error('Login failed');
-},
+  },
 
   /**
    * Register a new user
@@ -84,7 +121,7 @@ const authService = {
     throw new Error(response.data.error?.message || 'Registration failed');
   },
 
-  
+
   /**
    * Get user profile
    * @returns {Promise<object>} - User object

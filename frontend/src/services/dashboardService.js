@@ -1,11 +1,13 @@
 /**
  * Dashboard Service
- * Provides mock dashboard data for development
- * Will be replaced with real API calls when backend is ready
+ * Provides dashboard data for all roles
+ * Automatically switches between mock and real API based on environment
  */
 
 import apiClient from '../api/client';
 import apiConfig, { ENDPOINTS } from '../config/apiConfig';
+import employeeService from './employeeService';
+import managerService from './managerService';
 import {
   People as PeopleIcon,
   PendingActions as PendingActionsIcon,
@@ -77,6 +79,94 @@ const dashboardService = {
       params: { status: 'PENDING' }
     });
     return response.data.data.requests;
+  },
+
+  /**
+   * Get employee dashboard data (uses new backend services)
+   * @param {number} empId - Employee ID
+   * @returns {Promise<object>} - Employee dashboard data
+   */
+  getEmployeeDashboard: async (empId) => {
+    if (apiConfig.USE_MOCK_API) {
+      console.log('🔵 Using MOCK data for employee dashboard');
+      return {
+        stats: getMockStats('EMPLOYEE'),
+        travels: await employeeService.getEmployeeTravel(empId)
+      };
+    }
+
+    console.log('🟢 Using REAL API for employee dashboard');
+    const travels = await employeeService.getEmployeeTravel(empId);
+    return {
+      stats: getMockStats('EMPLOYEE'), // TODO: Replace with real stats endpoint
+      travels
+    };
+  },
+
+  /**
+   * Get manager dashboard data (uses new backend services)
+   * @param {number} managerId - Manager's employee ID
+   * @returns {Promise<object>} - Manager dashboard data
+   */
+  getManagerDashboard: async (managerId) => {
+    if (apiConfig.USE_MOCK_API) {
+      console.log('🔵 Using MOCK data for manager dashboard');
+      return {
+        stats: getMockStats('MANAGER'),
+        team: await managerService.getTeam(managerId),
+        travels: await managerService.getManagerTravel(managerId)
+      };
+    }
+
+    console.log('🟢 Using REAL API for manager dashboard');
+    const [team, travels] = await Promise.all([
+      managerService.getTeam(managerId),
+      managerService.getManagerTravel(managerId)
+    ]);
+
+    return {
+      stats: getMockStats('MANAGER'), // TODO: Replace with real stats endpoint
+      team,
+      travels
+    };
+  },
+
+  /**
+   * Get dashboard statistics (spec-compliant)
+   * @param {number} userId - User ID
+   * @returns {Promise<object>} - { allRequests, pending, approved, rejected }
+   */
+  getDashboardStats: async (userId) => {
+    if (apiConfig.USE_MOCK_API) {
+      console.log('🔵 Using MOCK data for dashboard stats');
+      return {
+        allRequests: 15,
+        pending: 5,
+        approved: 7,
+        rejected: 2
+      };
+
+    }
+
+    console.log('🟢 Using REAL API for dashboard stats');
+    const response = await apiClient.get(`${ENDPOINTS.DASHBOARD_STATS}/${userId}`);
+    return response.data;
+  },
+
+  /**
+   * Get recent dashboard data (spec-compliant)
+   * @param {number} userId - User ID
+   * @returns {Promise<Array>} - Array of recent travel requests
+   */
+  getDashboardRecent: async (userId) => {
+    if (apiConfig.USE_MOCK_API) {
+      console.log('🔵 Using MOCK data for dashboard recent');
+      return getMockPendingApprovals();
+    }
+
+    console.log('🟢 Using REAL API for dashboard recent');
+    const response = await apiClient.get(`${ENDPOINTS.DASHBOARD_RECENT}/${userId}`);
+    return response.data;
   }
 };
 
