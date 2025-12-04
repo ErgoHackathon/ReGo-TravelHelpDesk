@@ -16,7 +16,9 @@ import { STORAGE_KEYS, ERROR_MESSAGES } from '../utils/constants';
 const apiClient = axios.create({
     baseURL: apiConfig.API_BASE_URL,
     timeout: apiConfig.TIMEOUT,
-    headers: apiConfig.HEADERS
+    headers: {
+        'Accept': 'application/json'
+    }
 });
 
 // ============================================
@@ -35,12 +37,24 @@ apiClient.interceptors.request.use(
             config.headers.Authorization = `Bearer ${token}`;
         }
 
+        // ✅ FIX: Handle Content-Type based on data type
+        if (config.data instanceof FormData) {
+            // FormData - let browser set Content-Type with boundary
+            delete config.headers['Content-Type'];
+        } else if (config.data !== null && config.data !== undefined) {
+            // JSON data - set application/json
+            config.headers['Content-Type'] = 'application/json';
+        }
+
         // Add request timestamp for debugging
         config.metadata = { startTime: new Date() };
 
         // Log request in development
         if (process.env.NODE_ENV === 'development') {
-            console.log(`[API Request] ${config.method.toUpperCase()} ${config.url}`, config.data);
+            const logData = config.data instanceof FormData 
+                ? '[FormData]' 
+                : config.data;
+            console.log(`[API Request] ${config.method.toUpperCase()} ${config.url}`, logData);
         }
 
         return config;

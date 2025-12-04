@@ -1,66 +1,46 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import api from '../../services/api';
-import apiConfig from '../../config/apiConfig';
 import dashboardService from '../../services/dashboardService';
 
-// Inline Mock Data (since JSON files don't exist)
-const mockDashboardStats = [
-  { title: 'Total Requests', value: 24, iconKey: 'FlightTakeoff', trend: '+12%' },
-  { title: 'Pending', value: 5, iconKey: 'PendingActions', trend: '+2' },
-  { title: 'Approved', value: 15, iconKey: 'CheckCircle', trend: '+8%' }
+// Fallback stats
+const fallbackStats = [
+  { title: 'Total Requests', value: 0, iconKey: 'Flight', color: 'primary', trend: '' },
+  { title: 'Pending', value: 0, iconKey: 'PendingActions', color: 'warning', trend: '' },
+  { title: 'Approved', value: 0, iconKey: 'CheckCircle', color: 'success', trend: '' },
+  { title: 'Rejected', value: 0, iconKey: 'Cancel', color: 'error', trend: '' }
 ];
 
-const mockPendingApprovals = [
-  { id: 'req-001', employee: 'John Doe', destination: 'New York', departure: '2025-12-15', status: 'MANAGER_REVIEW' },
-  { id: 'req-002', employee: 'Jane Smith', destination: 'London', departure: '2025-12-10', status: 'MANAGER_REVIEW' },
-  { id: 'req-003', employee: 'Mike Johnson', destination: 'Singapore', departure: '2025-12-20', status: 'AVP_REVIEW' },
-  { id: 'req-004', employee: 'Sarah Williams', destination: 'Dubai', departure: '2025-12-25', status: 'SVP_REVIEW' }
-];
+// ============================================
+// ASYNC THUNKS
+// ============================================
 
-const mockEmployeeActiveRequest = {
-  id: 'req-001',
-  destination: 'New York, USA',
-  departure: '2025-12-15',
-  return: '2025-12-20',
-  status: 'APPROVED',
-  steps: [
-    { label: 'Submitted', completed: true, active: false },
-    { label: 'Manager Approved', completed: true, active: false },
-    { label: 'Documents Required', completed: false, active: true },
-    { label: 'Booking', completed: false, active: false }
-  ],
-  documents: [
-    { id: 'doc-1', name: 'Passport Front', status: 'PENDING' },
-    { id: 'doc-2', name: 'Passport Back', status: 'PENDING' },
-    { id: 'doc-3', name: 'Visa Application', status: 'PENDING' }
-  ]
-};
-
-// Async Thunks
 export const fetchDashboardData = createAsyncThunk(
   'dashboard/fetch',
   async (_, { getState }) => {
-    if (apiConfig.USE_MOCK_API) {
-      const { auth } = getState();
-      const userRole = auth.user?.role;
+    const { auth } = getState();
+    const user = auth.user;
+    const userRole = user?.role;
+    const userId = user?.empId;
 
-      // Use dashboardService for mock data
-      const stats = await dashboardService.getDashboardStats(userRole);
-      const pendingApprovals = await dashboardService.getPendingApprovals();
+    console.log('📊 Fetching dashboard data for:', { role: userRole, empId: userId });
 
-      return {
-        stats: stats || mockDashboardStats,
-        pendingApprovals: pendingApprovals || mockPendingApprovals,
-        activeRequest: mockEmployeeActiveRequest
-      };
+    // Get stats
+    const statsData = await dashboardService.getDashboardStats(userRole, userId);
+
+    // Only get pending approvals for managers
+    let pendingApprovals = [];
+    if (userRole === 'MANAGER' || userRole === 'AVP' || userRole === 'SVP' || userRole === 'CHRO') {
+      pendingApprovals = await dashboardService.getPendingApprovals(userId);
     }
-    const [statsRes, approvalsRes] = await Promise.all([
-      api.get(apiConfig.ENDPOINTS.DASHBOARD_STATS),
-      api.get(apiConfig.ENDPOINTS.PENDING_APPROVALS)
-    ]);
+
+    // Get recent requests
+    const recentRequests = await dashboardService.getRecentRequests(userId, userRole);
+    const activeRequest = recentRequests.length > 0 ? recentRequests[0] : null;
+
     return {
-      stats: statsRes.data?.data || statsRes.data,
-      pendingApprovals: approvalsRes.data?.data || approvalsRes.data
+      stats: statsData?.stats || fallbackStats,
+      pendingApprovals: pendingApprovals || [],
+      activeRequest: activeRequest,
+      recentRequests: recentRequests || []
     };
   }
 );
@@ -68,32 +48,33 @@ export const fetchDashboardData = createAsyncThunk(
 export const fetchTravelDeskData = createAsyncThunk(
   'dashboard/fetchTravelDesk',
   async () => {
-    if (apiConfig.USE_MOCK_API) {
-      const pendingRequests = await dashboardService.getPendingRequests();
-      return { pendingRequests: pendingRequests || [] };
-    }
-    const response = await api.get(apiConfig.ENDPOINTS.TRAVEL_DESK.PENDING_REQUESTS);
-    return { pendingRequests: response.data?.data || response.data };
+    console.log('📊 Fetching travel desk data');
+    const pendingRequests = await dashboardService.getPendingRequests();
+    return { pendingRequests: pendingRequests || [] };
   }
 );
 
+// ============================================
+// INITIAL STATE
+// ============================================
+
 const initialState = {
-  stats: [],
+  stats: fallbackStats,
   pendingApprovals: [],
+  recentRequests: [],
   loading: false,
   error: null,
   activeRequest: null,
-  pendingRequests: [], // For Travel Desk
+  pendingRequests: [],
   notifications: [
-    { id: 1, message: "New travel request from John Doe", read: false, time: "10 mins ago" },
-    { id: 2, message: "Flight booking confirmed for NY", read: false, time: "2 hours ago" },
-    { id: 3, message: "Visa application approved", read: true, time: "1 day ago" }
+    { id: 1, message: "Welcome to Travel Management System", read: false, time: "Just now" }
   ],
-  approvalHistory: [
-    { role: 'MANAGER', name: 'Alice Manager', status: 'APPROVED', comment: 'Approved, proceed.', date: '2025-11-26 10:30 AM' },
-    { role: 'AVP', name: 'Bob AVP', status: 'PENDING', comment: '', date: '' }
-  ]
+  approvalHistory: []
 };
+
+// ============================================
+// SLICE
+// ============================================
 
 const dashboardSlice = createSlice({
   name: 'dashboard',
@@ -116,6 +97,7 @@ const dashboardSlice = createSlice({
         state.pendingApprovals[approvalIndex].status = status;
       }
     },
+    
     addNotification: (state, action) => {
       state.notifications.unshift({
         id: Date.now(),
@@ -124,14 +106,22 @@ const dashboardSlice = createSlice({
         time: "Just now"
       });
     },
+    
     markNotificationRead: (state, action) => {
       const notif = state.notifications.find(n => n.id === action.payload);
       if (notif) notif.read = true;
     },
+    
+    clearError: (state) => {
+      state.error = null;
+    },
+
+    // ✅ ADD THIS - Missing export
     addApprovalHistory: (state, action) => {
       state.approvalHistory.push(action.payload);
     },
-    // Travel Desk Actions
+
+    // ✅ ADD THIS - Missing export
     processBooking: (state, action) => {
       const { id, bookingDetails } = action.payload;
       const requestIndex = state.pendingRequests.findIndex(r => r.id === id);
@@ -155,14 +145,16 @@ const dashboardSlice = createSlice({
         state.stats = action.payload.stats;
         state.pendingApprovals = action.payload.pendingApprovals;
         state.activeRequest = action.payload.activeRequest;
+        state.recentRequests = action.payload.recentRequests;
+        state.error = null;
       })
       .addCase(fetchDashboardData.rejected, (state, action) => {
         state.loading = false;
         state.error = action.error.message;
+        state.stats = fallbackStats;
       })
       .addCase(fetchTravelDeskData.pending, (state) => {
         state.loading = true;
-        state.error = null;
       })
       .addCase(fetchTravelDeskData.fulfilled, (state, action) => {
         state.loading = false;
@@ -175,12 +167,14 @@ const dashboardSlice = createSlice({
   },
 });
 
+// ✅ EXPORT ALL ACTIONS
 export const {
   updateRequestStatus,
   addNotification,
   markNotificationRead,
-  addApprovalHistory,
-  processBooking
+  clearError,
+  addApprovalHistory,  // ✅ Added
+  processBooking       // ✅ Added
 } = dashboardSlice.actions;
 
 export default dashboardSlice.reducer;

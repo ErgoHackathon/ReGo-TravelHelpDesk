@@ -17,78 +17,74 @@ const authService = {
    * @param {object} credentials - { email, password }
    * @returns {Promise<object>} - { user, token, refreshToken }
    */
-  login: async (credentials) => {
-    if (apiConfig.USE_MOCK_API) {
-      console.log('🔵 Using MOCK API for login');
-      const response = await mockDataService.login(credentials);
+login: async (credentials) => {
+  if (apiConfig.USE_MOCK_API) {
+    console.log('🔵 Using MOCK API for login');
+    const response = await mockDataService.login(credentials);
 
-      if (response.data.success) {
-        const { user, token, refreshToken } = response.data.data;
-
-        // Store in localStorage
-        localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(user));
-        localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, token);
-        if (refreshToken) localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, refreshToken);
-
-        console.log('✅ Login successful:', user.email);
-        return { user, token, refreshToken };
-      }
-
-      throw new Error(response.data.error?.message || 'Login failed');
+    if (response.data.success) {
+      const { user, token, refreshToken } = response.data.data;
+      localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(user));
+      localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, token);
+      if (refreshToken) localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, refreshToken);
+      console.log('✅ Login successful:', user.email);
+      return { user, token, refreshToken };
     }
+    throw new Error(response.data.error?.message || 'Login failed');
+  }
 
-    // Real backend login flow
-    console.log('🟢 Using REAL API for login');
+  // Real backend login flow
+  console.log('🟢 Using REAL API for login');
 
-    // Step 1: Call Auth/Login to get roleId
-    const loginResponse = await apiClient.post(ENDPOINTS.AUTH_LOGIN, null, {
-      params: {
-        username: credentials.email,
-        password: credentials.password
-      }
-    });
+  // ✅ FIX: Use FormData instead of query params
+  const formData = new FormData();
+  formData.append('username', credentials.email);
+  formData.append('password', credentials.password);
 
-    console.log('Login API response:', loginResponse.data);
+  // Step 1: Call Auth/Login to get roleId
+  const loginResponse = await apiClient.post('/api/LoginRequest', formData);
 
-    // Extract roleId from response
-    const loginData = loginResponse.data;
-    const roleId = Number(loginData?.result ?? loginData?.roleId ?? 0);
+  console.log('Login API response:', loginResponse.data);
 
-    if (!roleId || loginData.status !== 'Success') {
-      throw new Error('Login failed - invalid credentials');
-    }
+  // Extract roleId from response
+  const loginData = loginResponse.data;
+  const roleId = Number(loginData?.result ?? loginData?.roleId ?? 0);
 
-    // Step 2: Fetch employee master data
-    const empData = await employeeService.getEmployeeProfile(credentials.email);
+  if (!roleId || loginData.status !== 'Success') {
+    throw new Error('Login failed - invalid credentials');
+  }
 
-    // Step 3: Map roleId to frontend role
-    const roleCode = ROLE_ID_MAP[roleId] || ROLES.EMPLOYEE;
+  // Step 2: Fetch employee master data
+  const empData = await employeeService.getEmployeeProfile(credentials.email);
 
-    // Step 4: Build user object
-    const user = {
-      empId: empData.empId,
-      email: credentials.email,
-      fullName: empData.empName,
-      name: empData.empName,
-      role: roleCode,
-      roleId: roleId,
-      refRoleId: empData.refRoleId,
-      rptEmpId: empData.rptEmpId,
-      department: empData.department,
-      designation: empData.designation
-    };
+  // Step 3: Map roleId to frontend role
+  const roleCode = ROLE_ID_MAP[roleId] || ROLES.EMPLOYEE;
 
-    const token = 'dummy-token'; // Replace with actual JWT when backend provides
-    const refreshToken = null;
+  // Step 4: Build user object
+  const user = {
+    empId: empData.empId,
+    email: credentials.email,
+    fullName: empData.empName,
+    name: empData.empName,
+    role: roleCode,
+    roleId: roleId,
+    refRoleId: empData.refRoleId,
+    rptEmpId: empData.rptEmpId,
+    department: empData.department,
+    designation: empData.designation
+  };
 
-    // Store in localStorage
-    localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(user));
-    localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, token);
-    if (refreshToken) localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, refreshToken);
+  const token = 'dummy-token';
+  const refreshToken = null;
 
-    console.log('✅ Login successful:', user.email, 'Role:', user.role);
-    return { user, token, refreshToken };
-  },
+  // Store in localStorage
+  localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(user));
+  localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, token);
+  if (refreshToken) localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, refreshToken);
+
+  console.log('✅ Login successful:', user.email, 'Role:', user.role);
+  return { user, token, refreshToken };
+},
 
   /**
    * Register a new user

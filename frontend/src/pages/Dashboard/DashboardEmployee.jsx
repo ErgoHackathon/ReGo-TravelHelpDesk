@@ -14,15 +14,18 @@ import {
   TableCell,
   TableHead,
   TableRow,
-  IconButton
+  Card,
+  CardContent,
+  Grid
 } from '@mui/material';
 import {
   Flight,
   CloudUpload,
-  CheckCircle,
   Description,
-  Close,
-  UploadFile
+  UploadFile,
+  PendingActions,
+  CheckCircle,
+  Cancel
 } from '@mui/icons-material';
 import { fetchDashboardData, updateRequestStatus } from '../../redux/slices/dashboardSlice';
 import { logout } from '../../features/authSlice';
@@ -38,16 +41,41 @@ import {
   SharedButton
 } from '../../components/shared';
 
+// Default steps for travel workflow
+const DEFAULT_STEPS = [
+  { label: 'Submitted', completed: false, active: false },
+  { label: 'Manager Approval', completed: false, active: false },
+  { label: 'Documents Upload', completed: false, active: false },
+  { label: 'Booking', completed: false, active: false },
+  { label: 'Completed', completed: false, active: false }
+];
+
+// Map status number to step index
+const getStepIndex = (status) => {
+  switch (status) {
+    case 0: return 0; // Pending
+    case 1: return 1; // Submitted
+    case 2: return 2; // Approved
+    case 3: return 4; // Completed
+    case 4: return -1; // Rejected
+    default: return 0;
+  }
+};
+
 const DashboardEmployee = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { user } = useSelector((state) => state.auth);
-  const { activeRequest, loading } = useSelector((state) => state.dashboard);
+  const { 
+    activeRequest, 
+    recentRequests = [], 
+    stats = [], 
+    loading 
+  } = useSelector((state) => state.dashboard);
 
   // Modals state
   const [showDocumentsListModal, setShowDocumentsListModal] = useState(false);
   const [showUploadModal, setShowUploadModal] = useState(false);
-
   const [documents, setDocuments] = useState([]);
   const [activeDoc, setActiveDoc] = useState(null);
   const fileInputRef = useRef(null);
@@ -68,7 +96,6 @@ const DashboardEmployee = () => {
   };
 
   // --- Upload Logic ---
-
   const openUploadModal = (doc) => {
     setActiveDoc(doc);
     setShowUploadModal(true);
@@ -94,12 +121,9 @@ const DashboardEmployee = () => {
   };
 
   const processFile = (file) => {
-    // Update local state
     setDocuments(prev => prev.map(d =>
       d.id === activeDoc.id ? { ...d, status: 'UPLOADED', fileName: file.name } : d
     ));
-
-    // Close upload modal
     setShowUploadModal(false);
     setActiveDoc(null);
   };
@@ -121,6 +145,21 @@ const DashboardEmployee = () => {
     setShowDocumentsListModal(false);
   };
 
+  // ✅ Get steps with fallback
+  const getSteps = () => {
+    if (activeRequest?.steps) {
+      return activeRequest.steps;
+    }
+    
+    // Create steps based on current status
+    const currentStepIndex = getStepIndex(activeRequest?.status || 0);
+    return DEFAULT_STEPS.map((step, index) => ({
+      ...step,
+      completed: index < currentStepIndex,
+      active: index === currentStepIndex
+    }));
+  };
+
   if (loading) {
     return <LoadingSpinner />;
   }
@@ -133,16 +172,16 @@ const DashboardEmployee = () => {
         {/* Header */}
         <Box sx={{ mb: 4, display: 'flex', alignItems: 'center', gap: 2 }}>
           <UserAvatar
-            firstName={user?.firstName}
-            lastName={user?.lastName}
+            firstName={user?.firstName || user?.name?.split(' ')[0]}
+            lastName={user?.lastName || user?.name?.split(' ')[1]}
             size="large"
           />
           <Box>
             <SharedTypography variant="pageTitle">
-              Employee Dashboard
+              Welcome, {user?.name || user?.fullName || 'Employee'}!
             </SharedTypography>
             <StatusChip
-              label={user?.role}
+              label={user?.role || 'EMPLOYEE'}
               variant="default"
             />
           </Box>
@@ -160,6 +199,40 @@ const DashboardEmployee = () => {
           </SharedButton>
         </Box>
 
+        {/* Stats Cards */}
+        <Grid container spacing={3} sx={{ mb: 4 }}>
+          {(stats || []).map((stat, index) => (
+            <Grid item xs={12} sm={6} md={3} key={index}>
+              <Card sx={{ height: '100%' }}>
+                <CardContent>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                    <Box sx={{ 
+                      p: 1.5, 
+                      borderRadius: 2, 
+                      bgcolor: stat.color === 'warning' ? '#fef3c7' : 
+                               stat.color === 'success' ? '#d1fae5' : 
+                               stat.color === 'error' ? '#fee2e2' : '#dbeafe'
+                    }}>
+                      {stat.iconKey === 'PendingActions' && <PendingActions color="warning" />}
+                      {stat.iconKey === 'CheckCircle' && <CheckCircle color="success" />}
+                      {stat.iconKey === 'Cancel' && <Cancel color="error" />}
+                      {stat.iconKey === 'Flight' && <Flight color="primary" />}
+                    </Box>
+                    <Box>
+                      <Typography variant="h4" fontWeight="bold">
+                        {stat.value}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        {stat.title}
+                      </Typography>
+                    </Box>
+                  </Box>
+                </CardContent>
+              </Card>
+            </Grid>
+          ))}
+        </Grid>
+
         {/* Active Application Card */}
         {activeRequest ? (
           <SharedCard variant="dashboard" sx={{ mb: 4 }}>
@@ -169,21 +242,54 @@ const DashboardEmployee = () => {
                   Your Active Travel Application
                 </Typography>
                 <Typography variant="body2" sx={{ color: '#64748b' }}>
-                  {activeRequest.id} • {activeRequest.destination}
+                  {activeRequest.id} • {activeRequest.destination || `${activeRequest.city}, ${activeRequest.country}`}
                 </Typography>
               </Box>
-              <StatusChip label={activeRequest.status} />
+              <StatusChip label={activeRequest.statusLabel || activeRequest.status} />
             </Box>
 
-            {/* Stepper */}
+            {/* Stepper - ✅ FIXED with fallback */}
             <Box sx={{ width: '100%', mb: 4 }}>
-              <Stepper activeStep={activeRequest.status === 'UNDER_REVIEW' ? 2 : 1} alternativeLabel>
-                {activeRequest.steps.map((step) => (
-                  <Step key={step.label} completed={step.completed}>
+              <Stepper 
+                activeStep={getStepIndex(activeRequest.status)} 
+                alternativeLabel
+              >
+                {getSteps().map((step, index) => (
+                  <Step key={step.label || index} completed={step.completed}>
                     <StepLabel>{step.label}</StepLabel>
                   </Step>
                 ))}
               </Stepper>
+            </Box>
+
+            {/* Travel Details */}
+            <Box sx={{ mb: 3, p: 2, bgcolor: '#f8fafc', borderRadius: 2 }}>
+              <Grid container spacing={2}>
+                <Grid item xs={6} md={3}>
+                  <Typography variant="caption" color="text.secondary">Destination</Typography>
+                  <Typography variant="body1" fontWeight={500}>
+                    {activeRequest.destination || `${activeRequest.city}, ${activeRequest.country}`}
+                  </Typography>
+                </Grid>
+                <Grid item xs={6} md={3}>
+                  <Typography variant="caption" color="text.secondary">Departure</Typography>
+                  <Typography variant="body1" fontWeight={500}>
+                    {new Date(activeRequest.departureDate || activeRequest.travelStartDate).toLocaleDateString()}
+                  </Typography>
+                </Grid>
+                <Grid item xs={6} md={3}>
+                  <Typography variant="caption" color="text.secondary">Return</Typography>
+                  <Typography variant="body1" fontWeight={500}>
+                    {new Date(activeRequest.returnDate || activeRequest.travelEndDate).toLocaleDateString()}
+                  </Typography>
+                </Grid>
+                <Grid item xs={6} md={3}>
+                  <Typography variant="caption" color="text.secondary">Purpose</Typography>
+                  <Typography variant="body1" fontWeight={500}>
+                    {activeRequest.purpose || activeRequest.remark}
+                  </Typography>
+                </Grid>
+              </Grid>
             </Box>
 
             {/* Action Button */}
@@ -192,7 +298,7 @@ const DashboardEmployee = () => {
                 variant="contained"
                 startIcon={<CloudUpload />}
                 onClick={() => setShowDocumentsListModal(true)}
-                disabled={activeRequest.status !== 'AWAITING_DOCUMENTS'}
+                disabled={activeRequest.status === 3 || activeRequest.status === 4}
                 sx={{
                   bgcolor: '#b91c1c',
                   '&:hover': { bgcolor: '#991b1b' },
@@ -200,22 +306,61 @@ const DashboardEmployee = () => {
                   py: 1.5
                 }}
               >
-                {activeRequest.status === 'AWAITING_DOCUMENTS' ? 'Upload Required Documents' : 'Documents Submitted'}
+                {activeRequest.status >= 2 ? 'View/Upload Documents' : 'Upload Required Documents'}
               </Button>
             </Box>
           </SharedCard>
         ) : (
-          <SharedCard>
-            <Typography>No active travel applications.</Typography>
+          <SharedCard sx={{ textAlign: 'center', py: 4 }}>
+            <Flight sx={{ fontSize: 48, color: '#cbd5e1', mb: 2 }} />
+            <Typography variant="h6" color="text.secondary">
+              No active travel applications
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+              Click the button above to raise a new travel request
+            </Typography>
+          </SharedCard>
+        )}
+
+        {/* Recent Requests */}
+        {recentRequests && recentRequests.length > 0 && (
+          <SharedCard sx={{ mt: 4 }}>
+            <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
+              Your Travel History
+            </Typography>
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableCell>Destination</TableCell>
+                  <TableCell>Dates</TableCell>
+                  <TableCell>Purpose</TableCell>
+                  <TableCell>Status</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {recentRequests.map((request, index) => (
+                  <TableRow key={request.id || index}>
+                    <TableCell>{request.destination}</TableCell>
+                    <TableCell>
+                      {new Date(request.departureDate).toLocaleDateString()} - {new Date(request.returnDate).toLocaleDateString()}
+                    </TableCell>
+                    <TableCell>{request.purpose}</TableCell>
+                    <TableCell>
+                      <StatusChip label={request.statusLabel} />
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           </SharedCard>
         )}
       </Box>
 
-      {/* 1. Documents List Modal */}
+      {/* Documents List Modal */}
       <SharedModal
         open={showDocumentsListModal}
         onClose={() => setShowDocumentsListModal(false)}
-        title={`Required Documents for ${activeRequest?.id}`}
+        title={`Required Documents for ${activeRequest?.id || 'Travel Request'}`}
         maxWidth="md"
       >
         <Table sx={{ minWidth: 600 }}>
@@ -227,7 +372,7 @@ const DashboardEmployee = () => {
             </TableRow>
           </TableHead>
           <TableBody>
-            {documents.map((doc) => (
+            {(documents || []).map((doc) => (
               <TableRow key={doc.id}>
                 <TableCell>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -273,6 +418,15 @@ const DashboardEmployee = () => {
                 </TableCell>
               </TableRow>
             ))}
+            {documents.length === 0 && (
+              <TableRow>
+                <TableCell colSpan={3} align="center">
+                  <Typography color="text.secondary">
+                    No documents required yet
+                  </Typography>
+                </TableCell>
+              </TableRow>
+            )}
           </TableBody>
         </Table>
 
@@ -281,7 +435,7 @@ const DashboardEmployee = () => {
             variant="contained"
             color="success"
             onClick={handleSubmitAll}
-            disabled={documents.some(d => d.status === 'PENDING')}
+            disabled={documents.length === 0 || documents.some(d => d.status === 'PENDING')}
             sx={{ px: 4 }}
           >
             Submit All Documents
@@ -289,7 +443,7 @@ const DashboardEmployee = () => {
         </Box>
       </SharedModal>
 
-      {/* 2. Drag & Drop Upload Modal */}
+      {/* Upload Modal */}
       <SharedModal
         open={showUploadModal}
         onClose={() => setShowUploadModal(false)}
@@ -326,9 +480,7 @@ const DashboardEmployee = () => {
               <UploadFile fontSize="large" />
             </Box>
           </Box>
-        </Box>
-
-        <Box>
+          
           <Typography variant="h6" sx={{ mb: 1, color: '#1e293b' }}>
             Click or Drag file to upload
           </Typography>

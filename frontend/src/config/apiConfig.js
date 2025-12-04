@@ -1,268 +1,104 @@
 /**
  * API Configuration
  * Centralized API configuration for the ReGo Travel Management System
- * Controls mock/real API toggle and defines all API endpoints
  */
 
 // ============================================
 // MOCK API TOGGLE
 // ============================================
-
-/**
- * Toggle between mock and real API
- * Controlled by environment variable REACT_APP_ENABLE_MOCK_API
- * Defaults to true for local development
- */
-const USE_MOCK_API = process.env.REACT_APP_ENABLE_MOCK_API === 'true' ||
-  process.env.REACT_APP_ENABLE_MOCK_API === undefined;
+const USE_MOCK_API = false; // ✅ Set to FALSE to use real API
 
 // ============================================
 // API BASE URL
 // ============================================
-
-/**
- * Real API base URL from environment variable
- * Falls back to .NET backend localhost if not set
- */
 const REAL_API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'https://localhost:7133';
-
-/**
- * Current API base URL (mock or real)
- */
 const API_BASE_URL = USE_MOCK_API ? '' : REAL_API_BASE_URL;
 
 // ============================================
 // REQUEST CONFIGURATION
 // ============================================
-
-const TIMEOUT = 30000; // 30 seconds
+const TIMEOUT = 30000;
 const RETRY_ATTEMPTS = 3;
-const RETRY_DELAY = 1000; // 1 second
+const RETRY_DELAY = 1000;
 
 const HEADERS = {
-  'Content-Type': 'application/json',
   'Accept': 'application/json'
 };
 
 // ============================================
-// API ENDPOINTS
+// API ENDPOINTS - MAPPED TO YOUR BACKEND
 // ============================================
-
 const ENDPOINTS = {
-  // ==========================================
-  // AUTHENTICATION ENDPOINTS
-  // ==========================================
-  AUTH_LOGIN: '/auth/login',
-  AUTH_REGISTER: '/auth/register',
-  AUTH_LOGOUT: '/auth/logout',
-  AUTH_REFRESH_TOKEN: '/auth/refresh',
-  AUTH_GET_PROFILE: '/auth/profile',
-  AUTH_UPDATE_PROFILE: '/auth/profile',
-  AUTH_CHANGE_PASSWORD: '/auth/change-password',
-  AUTH_FORGOT_PASSWORD: '/auth/forgot-password',
-  AUTH_RESET_PASSWORD: '/auth/reset-password',
-  AUTH_VERIFY_EMAIL: '/auth/verify-email',
-
-  // ==========================================
-  // TRAVEL REQUEST ENDPOINTS (SPEC v1)
-  // ==========================================
-  TRAVEL_REQUEST_CREATE: '/travel/request/create',
-  TRAVEL_REQUEST_BY_USER: '/travel/request/by-user',
-  TRAVEL_REQUEST_BY_ID: '/travel/request',
-
-  // ==========================================
-  // APPROVAL ENDPOINTS (SPEC v1)
-  // ==========================================
-  APPROVAL_SUBMIT: '/approval/submit',
-
-  // ==========================================
-  // DOCUMENT ENDPOINTS (SPEC v1)
-  // ==========================================
-  DOCUMENTS_UPLOAD: '/documents/upload',
-  DOCUMENTS_BY_REQUEST: '/documents/by-request',
-
-  // ==========================================
-  // TRAVEL DESK ENDPOINTS (SPEC v1)
-  // ==========================================
-  TRAVEL_BOOK: '/travel/book',
-
-  // ==========================================
-  // DASHBOARD ENDPOINTS (SPEC v1)
-  // ==========================================
-  DASHBOARD_STATS: '/dashboard/stats',
-  DASHBOARD_RECENT: '/dashboard/recent',
-
-  // ==========================================
-  // NOTIFICATION ENDPOINTS (SPEC v1)
-  // ==========================================
-  NOTIFICATIONS_GET: '/notifications',
-  NOTIFICATIONS_MARK_READ: '/notifications/mark-read',
-
-  // ==========================================
-  // LEGACY ENDPOINTS (FOR BACKWARD COMPATIBILITY)
-  // ==========================================
+  // Authentication
   AUTH: {
-    REGISTER: '/auth/register',
-    LOGIN: '/api/auth/login',
-    LOGOUT: '/auth/logout',
-    REFRESH_TOKEN: '/auth/refresh',
-    GET_PROFILE: '/auth/profile',
-    UPDATE_PROFILE: '/auth/profile',
-    CHANGE_PASSWORD: '/auth/change-password',
-    FORGOT_PASSWORD: '/auth/forgot-password',
-    RESET_PASSWORD: '/auth/reset-password',
-    VERIFY_EMAIL: '/auth/verify-email'
+    LOGIN: '/api/LoginRequest',
+    GET_ROLES: '/api/GetRollMaster',
   },
 
-  // ==========================================
-  // DASHBOARD ENDPOINTS
-  // ==========================================
-  DASHBOARD: {
-    STATS: '/dashboard/stats',
-    EMPLOYEE_STATS: '/dashboard/employee/stats',
-    MANAGER_STATS: '/dashboard/manager/stats',
-    TRAVEL_DESK_STATS: '/dashboard/travel-desk/stats',
-    FINANCE_STATS: '/dashboard/finance/stats'
+  // Employee
+  EMPLOYEE: {
+    GET_DATA: '/api/employee/GetEmployeeData',
+    GET_TRAVEL: '/api/employee/TravelDetailByEmpId',
+    ADD_DOCUMENT: '/api/employee/AddDocument',
+    UPDATE_DOCUMENT: '/api/employee/UpdateDocument',
   },
 
-  // ==========================================
-  // TRAVEL REQUEST ENDPOINTS
-  // ==========================================
-  TRAVEL_REQUESTS: {
-    LIST: '/travel-requests',
-    CREATE: '/travel-requests',
-    GET: '/travel-requests/:id',
-    UPDATE: '/travel-requests/:id',
-    DELETE: '/travel-requests/:id',
-    SUBMIT: '/travel-requests/:id/submit',
-    CANCEL: '/travel-requests/:id/cancel',
-    TIMELINE: '/travel-requests/:id/timeline',
-    MY_REQUESTS: '/travel-requests/my-requests',
-    TEAM_REQUESTS: '/travel-requests/team-requests'
+  // Manager
+  MANAGER: {
+    GET_TEAM: '/api/manager/GetEmployeesByRptId',
+    GET_TEAM_TRAVEL: '/api/manager/TravelDetailByRptId',
+    INSERT_TRAVEL: '/api/manager/InsertTravelDetail',
   },
 
-  // ==========================================
-  // APPROVAL ENDPOINTS
-  // ==========================================
-  APPROVALS: {
-    PENDING: '/approvals/pending',
-    HISTORY: '/approvals/history',
-    GET: '/approvals/:id',
-    APPROVE: '/approvals/:id/approve',
-    REJECT: '/approvals/:id/reject',
-    DELEGATE: '/approvals/:id/delegate',
-    ADD_COMMENT: '/approvals/:id/comment',
-    BULK_APPROVE: '/approvals/bulk-approve',
-    BULK_REJECT: '/approvals/bulk-reject'
+  // HelpDesk / Travel Desk
+  HELPDESK: {
+    GET_EMPLOYEE_DOCUMENTS: '/api/HelpDesk/GetEmployeeDocuments',
   },
 
-  // ==========================================
-  // DOCUMENT ENDPOINTS
-  // ==========================================
+  // Travel
+  TRAVEL: {
+    UPDATE_STATUS: '/api/UpdateTravelStatus',
+  },
+
+  // Documents
   DOCUMENTS: {
-    LIST: '/documents',
-    UPLOAD: '/documents/upload',
-    GET: '/documents/:id',
-    DOWNLOAD: '/documents/:id/download',
-    DELETE: '/documents/:id',
-    VERIFY: '/documents/:id/verify',
-    REJECT: '/documents/:id/reject',
-    OCR_STATUS: '/documents/:id/ocr-status',
-    BY_REQUEST: '/documents/request/:requestId'
+    GET_ALL_TYPES: '/api/GetAllDocumentsList',
   },
+};
 
-  // ==========================================
-  // BOOKING ENDPOINTS
-  // ==========================================
-  BOOKINGS: {
-    LIST: '/bookings',
-    CREATE: '/bookings',
-    GET: '/bookings/:id',
-    UPDATE: '/bookings/:id',
-    CANCEL: '/bookings/:id',
-    BY_REQUEST: '/bookings/request/:requestId',
-    CONFIRM: '/bookings/:id/confirm'
-  },
+// ============================================
+// STATUS CODES (from your TMS_TravelMaster.Status)
+// ============================================
+const TRAVEL_STATUS = {
+  PENDING: 0,
+  SUBMITTED: 1,
+  MANAGER_APPROVED: 2,
+  COMPLETED: 3,
+  REJECTED: 4,
+};
 
-  // ==========================================
-  // EXPENSE ENDPOINTS
-  // ==========================================
-  EXPENSES: {
-    LIST: '/expenses',
-    CREATE: '/expenses',
-    GET: '/expenses/:id',
-    UPDATE: '/expenses/:id',
-    DELETE: '/expenses/:id',
-    SUBMIT: '/expenses/:id/submit',
-    APPROVE: '/expenses/:id/approve',
-    REJECT: '/expenses/:id/reject',
-    REIMBURSE: '/expenses/:id/reimburse',
-    BY_REQUEST: '/expenses/request/:requestId',
-    MY_EXPENSES: '/expenses/my-expenses',
-    PENDING_REIMBURSEMENT: '/expenses/pending-reimbursement'
-  },
+const TRAVEL_STATUS_LABELS = {
+  0: 'Pending',
+  1: 'Submitted',
+  2: 'Manager Approved',
+  3: 'Completed',
+  4: 'Rejected',
+};
 
-  // ==========================================
-  // AI RECOMMENDATION ENDPOINTS
-  // ==========================================
-  AI: {
-    FLIGHT_RECOMMENDATIONS: '/ai/flight-recommendations',
-    HOTEL_RECOMMENDATIONS: '/ai/hotel-recommendations',
-    DOCUMENT_EXTRACT: '/ai/document-extract',
-    EXPENSE_ANOMALY_CHECK: '/ai/expense-anomaly-check',
-    ITINERARY_SUGGESTIONS: '/ai/itinerary-suggestions'
-  },
-
-  // ==========================================
-  // NOTIFICATION ENDPOINTS
-  // ==========================================
-  NOTIFICATIONS: {
-    LIST: '/notifications',
-    GET: '/notifications/:id',
-    MARK_READ: '/notifications/:id/read',
-    MARK_ALL_READ: '/notifications/mark-all-read',
-    UNREAD_COUNT: '/notifications/unread-count',
-    PREFERENCES: '/notifications/preferences',
-    DELETE: '/notifications/:id'
-  },
-
-  // ==========================================
-  // USER MANAGEMENT ENDPOINTS (ADMIN)
-  // ==========================================
-  USERS: {
-    LIST: '/users',
-    GET: '/users/:id',
-    CREATE: '/users',
-    UPDATE: '/users/:id',
-    DELETE: '/users/:id',
-    ACTIVATE: '/users/:id/activate',
-    DEACTIVATE: '/users/:id/deactivate',
-    RESET_PASSWORD: '/users/:id/reset-password'
-  },
-
-  // ==========================================
-  // REPORTS ENDPOINTS
-  // ==========================================
-  REPORTS: {
-    TRAVEL_SUMMARY: '/reports/travel-summary',
-    EXPENSE_SUMMARY: '/reports/expense-summary',
-    DEPARTMENT_REPORT: '/reports/department',
-    USER_REPORT: '/reports/user/:userId',
-    EXPORT_CSV: '/reports/export/csv',
-    EXPORT_PDF: '/reports/export/pdf'
-  }
+// ============================================
+// ROLE MAPPING
+// ============================================
+const ROLE_ID_MAP = {
+  101: 'EMPLOYEE',
+  102: 'MANAGER',
+  103: 'TRAVEL_DESK',
+  104: 'AVP',
+  105: 'SVP',
 };
 
 // ============================================
 // HELPER FUNCTIONS
 // ============================================
-
-/**
- * Replace path parameters in endpoint URL
- * @param {string} endpoint - Endpoint with :params
- * @param {object} params - Parameters to replace
- * @returns {string} - Endpoint with replaced params
- */
 const replaceParams = (endpoint, params = {}) => {
   let url = endpoint;
   Object.keys(params).forEach(key => {
@@ -271,12 +107,6 @@ const replaceParams = (endpoint, params = {}) => {
   return url;
 };
 
-/**
- * Build full URL with query parameters
- * @param {string} endpoint - API endpoint
- * @param {object} queryParams - Query parameters
- * @returns {string} - Full URL with query string
- */
 const buildUrl = (endpoint, queryParams = {}) => {
   const url = API_BASE_URL + endpoint;
   const params = new URLSearchParams();
@@ -294,7 +124,6 @@ const buildUrl = (endpoint, queryParams = {}) => {
 // ============================================
 // EXPORTS
 // ============================================
-
 const apiConfig = {
   USE_MOCK_API,
   API_BASE_URL,
@@ -304,13 +133,15 @@ const apiConfig = {
   RETRY_DELAY,
   HEADERS,
   ENDPOINTS,
+  TRAVEL_STATUS,
+  TRAVEL_STATUS_LABELS,
+  ROLE_ID_MAP,
   replaceParams,
   buildUrl
 };
 
 export default apiConfig;
 
-// Named exports for convenience
 export {
   USE_MOCK_API,
   API_BASE_URL,
@@ -320,6 +151,9 @@ export {
   RETRY_DELAY,
   HEADERS,
   ENDPOINTS,
+  TRAVEL_STATUS,
+  TRAVEL_STATUS_LABELS,
+  ROLE_ID_MAP,
   replaceParams,
   buildUrl
 };
