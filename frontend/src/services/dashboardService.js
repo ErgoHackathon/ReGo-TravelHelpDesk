@@ -1,64 +1,128 @@
-// services/dashboardService.js
+/**
+ * Dashboard Service
+ */
 
-// Mock icons can be simple strings or you can import MUI icons if needed
-import { People, PendingActions, CheckCircle, TrendingUp } from '@mui/icons-material';
+import employeeService from './employeeService';
+import managerService from './managerService';
 
-// Mock dashboard stats
-export const getDashboardStats = async () => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve({
-        data: [
-          { title: 'Team Requests', value: 12, icon: <People />, color: '#b91c1c' },
-          { title: 'Pending My Approval', value: 5, icon: <PendingActions />, color: '#FFA726' },
-          { title: 'Approved Today', value: 8, icon: <CheckCircle />, color: '#4CAF50' },
-          { title: 'Budget Used', value: '₹3.2L', icon: <TrendingUp />, color: '#2196F3' },
-        ],
-      });
-    }, 500); // simulate network delay
-  });
+const dashboardService = {
+  /**
+   * Get dashboard statistics
+   */
+  getDashboardStats: async (role, userId) => {
+    console.log('🟢 Getting dashboard stats for:', { role, userId });
+
+    if (!userId) {
+      console.warn('⚠️ No userId provided');
+      return getEmptyStats();
+    }
+
+    try {
+      let travels = [];
+
+      // ✅ FIX: Different API based on role
+      if (role === 'MANAGER' || role === 'AVP' || role === 'SVP' || role === 'CHRO') {
+        // Managers see team's travel requests
+        travels = await managerService.getTeamTravel(userId);
+      } else {
+        // Employees see their own travel requests
+        travels = await employeeService.getEmployeeTravel(userId);
+      }
+
+      // Calculate stats
+      const stats = {
+        totalRequests: travels.length,
+        pending: travels.filter(t => t.status === 0 || t.status === 1).length,
+        approved: travels.filter(t => t.status === 2).length,
+        completed: travels.filter(t => t.status === 3).length,
+        rejected: travels.filter(t => t.status === 4).length,
+      };
+
+      // Format for display
+      const formattedStats = [
+        { title: 'Total Requests', value: stats.totalRequests, iconKey: 'Flight', color: 'primary', trend: '' },
+        { title: 'Pending', value: stats.pending, iconKey: 'PendingActions', color: 'warning', trend: '' },
+        { title: 'Approved', value: stats.approved, iconKey: 'CheckCircle', color: 'success', trend: '' },
+        { title: 'Rejected', value: stats.rejected, iconKey: 'Cancel', color: 'error', trend: '' }
+      ];
+
+      console.log('📊 Stats calculated:', stats);
+      return { ...stats, stats: formattedStats };
+
+    } catch (error) {
+      console.error('❌ Error getting stats:', error);
+      return getEmptyStats();
+    }
+  },
+
+  /**
+   * Get pending approvals (for managers only)
+   */
+  getPendingApprovals: async (managerId) => {
+    console.log('🟢 Getting pending approvals for:', managerId);
+
+    if (!managerId) {
+      console.warn('⚠️ No managerId provided');
+      return [];
+    }
+
+    try {
+      const travels = await managerService.getTeamTravel(managerId);
+      const pending = travels.filter(t => t.status === 0 || t.status === 1);
+      console.log('📊 Pending approvals:', pending.length);
+      return pending;
+    } catch (error) {
+      console.error('❌ Error getting pending approvals:', error);
+      return [];
+    }
+  },
+
+  /**
+   * Get recent travel requests
+   */
+  getRecentRequests: async (empId, role) => {
+    console.log('🟢 Getting recent requests for:', { empId, role });
+
+    if (!empId) return [];
+
+    try {
+      let travels = [];
+
+      if (role === 'MANAGER' || role === 'AVP' || role === 'SVP' || role === 'CHRO') {
+        travels = await managerService.getTeamTravel(empId);
+      } else {
+        travels = await employeeService.getEmployeeTravel(empId);
+      }
+
+      return travels.slice(0, 5);
+    } catch (error) {
+      console.error('❌ Error getting recent requests:', error);
+      return [];
+    }
+  },
+
+  /**
+   * Get pending requests for Travel Desk
+   */
+  getPendingRequests: async () => {
+    // TODO: Need backend API for this
+    return [];
+  }
 };
 
-// Mock pending approvals
-export const getPendingApprovals = async () => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve({
-        data: [
-          { 
-            id: 'TR-2025-015', 
-            employee: 'Rahul Sharma', 
-            destination: 'Singapore', 
-            amount: '₹85,000',
-            urgency: 'high',
-            date: '2025-12-10'
-          },
-          { 
-            id: 'TR-2025-016', 
-            employee: 'Priya Patel', 
-            destination: 'Dubai, UAE', 
-            amount: '₹65,000',
-            urgency: 'medium',
-            date: '2025-12-15'
-          },
-          { 
-            id: 'TR-2025-017', 
-            employee: 'Amit Kumar', 
-            destination: 'Mumbai, India', 
-            amount: '₹22,000',
-            urgency: 'low',
-            date: '2025-12-20'
-          },
-          { 
-            id: 'TR-2025-018', 
-            employee: 'Neha Singh', 
-            destination: 'London, UK', 
-            amount: '₹1,25,000',
-            urgency: 'high',
-            date: '2025-12-08'
-          }
-        ],
-      });
-    }, 500); // simulate network delay
-  });
-};
+// Helper
+const getEmptyStats = () => ({
+  totalRequests: 0,
+  pending: 0,
+  approved: 0,
+  completed: 0,
+  rejected: 0,
+  stats: [
+    { title: 'Total Requests', value: 0, iconKey: 'Flight', color: 'primary', trend: '' },
+    { title: 'Pending', value: 0, iconKey: 'PendingActions', color: 'warning', trend: '' },
+    { title: 'Approved', value: 0, iconKey: 'CheckCircle', color: 'success', trend: '' },
+    { title: 'Rejected', value: 0, iconKey: 'Cancel', color: 'error', trend: '' }
+  ]
+});
+
+export default dashboardService;

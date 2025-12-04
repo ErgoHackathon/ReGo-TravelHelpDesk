@@ -1,165 +1,319 @@
+// pages/dashboard/TravelDeskPortal.jsx
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
 import {
   Box,
   Grid,
-  Typography,CardContent,Card
+  Typography,
+  Button,
+  Tabs,
+  Tab,
+  TextField,
+  FormControlLabel,
+  Checkbox,
+  TableBody,
+  TableCell,
+  TableRow,
+  Divider
 } from '@mui/material';
+import { CheckCircle, Flight, Hotel, Assignment } from '@mui/icons-material';
+import { fetchTravelDeskData, processBooking, addNotification } from '../../redux/slices/dashboardSlice';
+import { logout } from '../../features/authSlice';
+import BaseLayout from '../../components/layout/BaseLayout';
 import {
-
-  FlightTakeoff,
-} from '@mui/icons-material';
-import Navbar from '../../components/layout/Navbar';
-import PendingRequestModal from '../../components/PendingRequestModal';
-import SharedButton from '../../sharedComponents/buttons/SharedButton';
-import PageWrapper from '../../sharedComponents/layout/PageWrapper';
-import { SharedTypography, StatusChip, CommonDashboard } from '../../sharedComponents';
-import UserAvatar from '../../sharedComponents/avatars/UserAvatars';
-import { fetchTravelDeskData } from '../../redux/slices/dashboardSlice';
-
+  Navbar,
+  SharedTypography,
+  StatusChip,
+  LoadingSpinner,
+  UserAvatar,
+  SharedCard,
+  SharedTable,
+  TableHeader,
+  SharedButton,
+  SharedModal
+} from '../../components/shared';
+import { toast } from 'react-toastify';
 
 const TravelDeskPortal = () => {
-    const dispatch = useDispatch();
-    const { user } = useSelector((state) => state.auth);
-    const [pendingRequestModalOpen, setPendingRequestModalOpen] = useState(false);
-    const {  pendingRequests } = useSelector((state) => state.dashboard);
-    const [selectedId, setSelectedId] = useState(null);
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const { user } = useSelector((state) => state.auth);
+  const { pendingRequests, loading } = useSelector((state) => state.dashboard);
 
-    useEffect(() => {
-        dispatch(fetchTravelDeskData());
-      }, [dispatch]);
+  const [tabValue, setTabValue] = useState(0);
+  const [showBookingModal, setShowBookingModal] = useState(false);
+  const [selectedRequest, setSelectedRequest] = useState(null);
 
-    const handleViewRequest = (id) =>{
-      setSelectedId(id);
-      setPendingRequestModalOpen(true)
+  // Booking Form State
+  const [bookingData, setBookingData] = useState({
+    airline: '',
+    flightNumber: '',
+    pnr: '',
+    cost: '',
+    hotelName: '',
+    checkIn: '',
+    checkOut: '',
+    visaProcessed: false,
+    insuranceAdded: false
+  });
+
+  useEffect(() => {
+    dispatch(fetchTravelDeskData());
+  }, [dispatch]);
+
+  const handleLogout = async () => {
+    await dispatch(logout());
+    navigate('/login', { replace: true });
+  };
+
+  const handleProcessBooking = (request) => {
+    setSelectedRequest(request);
+    setShowBookingModal(true);
+  };
+
+  const handleConfirmBooking = () => {
+    if (!bookingData.pnr || !bookingData.airline) {
+      toast.error("Please enter Flight details (Airline & PNR)");
+      return;
     }
 
-    return (
-      <CommonDashboard>
-        <PendingRequestModal
-          open={pendingRequestModalOpen}
-          onClose={() => setPendingRequestModalOpen(false)}
-          requestId={selectedId}
-        />
+    dispatch(processBooking({ id: selectedRequest.id, bookingDetails: bookingData }));
+    dispatch(addNotification(`Booking confirmed for request ${selectedRequest.id}`));
 
-        <PageWrapper>
-          {/* Top Section */}
-          <Box
-            sx={{
-              display: "flex",
-              justifyContent: "space-between",
-              flexWrap: "wrap",
-              alignItems: "center",
-              mb: 4,
-            }}
-          >
-            {/* Welcome Section */}
-            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-              <UserAvatar firstName={user.firstName} lastName={user.lastName} />
+    toast.success("Booking Confirmed & Employee Notified");
+    setShowBookingModal(false);
+    setBookingData({
+      airline: '', flightNumber: '', pnr: '', cost: '',
+      hotelName: '', checkIn: '', checkOut: '',
+      visaProcessed: false, insuranceAdded: false
+    });
+  };
 
-              <Box>
-                <SharedTypography>Welcome, {user.firstName}!</SharedTypography>
+  if (loading) {
+    return <LoadingSpinner />;
+  }
 
-                <Box sx={{ display: "flex", gap: 1 }}>
-                  <StatusChip
-                    label={user.role.replace("_", " ")}
-                    color="#b22a2a"
-                  />
+  const pendingBookings = (pendingRequests || []).filter(r => r.status !== 'BOOKING_COMPLETED');
+  const completedBookings = (pendingRequests || []).filter(r => r.status === 'BOOKING_COMPLETED');
 
-                  {user.department && (
-                    <StatusChip
-                      label={`Team Lead - ${user.department}`}
-                      color="#f5f5f5"
-                    />
-                  )}
-                </Box>
-              </Box>
-            </Box>
+  return (
+    <BaseLayout variant="dashboard">
+      <Navbar user={user} onLogout={handleLogout} />
 
-            {/* Raise Travel Request Button */}
-            <SharedButton
-              variant="contained"
-              startIcon={<FlightTakeoff />}
-              sx={{
-                bgcolor: "#b22a2a",
-                "&:hover": { bgcolor: "#8b1f1f" },
-                minWidth: 200,
-              }}
-              // onClick={handleRaiseNewRequest}
-            >
-              New Booking
-            </SharedButton>
+      <Box sx={{ p: 3 }}>
+        {/* Header */}
+        <Box sx={{ mb: 4, display: 'flex', alignItems: 'center', gap: 2 }}>
+          <UserAvatar firstName={user?.firstName} lastName={user?.lastName} size="large" />
+          <Box>
+            <SharedTypography variant="pageTitle">Travel Desk Portal</SharedTypography>
+            <StatusChip label="Travel Desk" variant="default" />
           </Box>
-          <Grid container spacing={3} mb={4}>
-            <Grid item xs={12} sm={8} md={12}>
-              <Typography variant="h5" sx={{ fontSize: "1.8rem" }}>
-                Travel Desk Portal
-              </Typography>
-              <Card
-                sx={{
-                  p: 3,
-                  border: "1.5px solid",
-                  borderColor: "#b91c1c",
-                  borderTop: `7px solid #b91c1c`,
-                }}
-              >
-                <CardContent>
-                  <Typography variant="h5" sx={{ fontSize: "1.8rem" }}>
-                    Pending requests for review
-                  </Typography>
-                  {console.log(pendingRequests)}
-                  {pendingRequests?.map((req, index) => (
-                    <Card
-                      key={index}
-                      sx={{
-                        mb: 2,
-                        p: 2,
-                        border: "1px solid #e5e7eb",
-                        backgroundColor: req.isPriority ? "#fee2e2" : "#ffffff",
-                      }}
-                    >
-                      <Grid
-                        container
-                        justifyContent="space-between"
-                        alignItems="center"
+        </Box>
+
+        {/* Tabs */}
+        <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
+          <Tabs value={tabValue} onChange={(e, v) => setTabValue(v)} textColor="primary" indicatorColor="primary">
+            <Tab label={`Pending Bookings (${pendingBookings.length})`} />
+            <Tab label={`Completed Bookings (${completedBookings.length})`} />
+          </Tabs>
+        </Box>
+
+        {/* Pending Bookings Tab */}
+        {tabValue === 0 && (
+          <SharedCard variant="dashboard">
+            <SharedTable>
+              <TableHeader columns={[
+                { id: 'id', label: 'Request ID' },
+                { id: 'employee', label: 'Employee' },
+                { id: 'destination', label: 'Destination' },
+                { id: 'dates', label: 'Travel Dates' },
+                { id: 'status', label: 'Status' },
+                { id: 'action', label: 'Action' }
+              ]} />
+              <TableBody>
+                {pendingBookings.length > 0 ? pendingBookings.map((req) => (
+                  <TableRow key={req.id}>
+                    <TableCell>{req.id}</TableCell>
+                    <TableCell>{req.employee}</TableCell>
+                    <TableCell>{req.destination}</TableCell>
+                    <TableCell>{req.departure}</TableCell>
+                    <TableCell><StatusChip label={req.status} /></TableCell>
+                    <TableCell>
+                      <SharedButton
+                        variant="contained"
+                        size="small"
+                        startIcon={<Assignment />}
+                        onClick={() => handleProcessBooking(req)}
+                        sx={{ bgcolor: '#ea580c', '&:hover': { bgcolor: '#c2410c' } }}
                       >
-                        <Grid item>
-                          <Typography
-                            sx={{ fontWeight: "bold", fontSize: "1.2rem" }}
-                          >
-                            {req.id}: {req.employee} to {req.destination}
-                          </Typography>
+                        Process Booking
+                      </SharedButton>
+                    </TableCell>
+                  </TableRow>
+                )) : (
+                  <TableRow>
+                    <TableCell colSpan={6} align="center" sx={{ py: 4, color: '#64748b' }}>
+                      No pending bookings. Good job!
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </SharedTable>
+          </SharedCard>
+        )}
 
-                          <Typography sx={{ fontSize: "1rem", color: "#555" }}>
-                            Departure: {req.departure} | Status: {req.status}
-                          </Typography>
-                        </Grid>
+        {/* Completed Bookings Tab */}
+        {tabValue === 1 && (
+          <SharedCard variant="dashboard">
+            <SharedTable>
+              <TableHeader columns={[
+                { id: 'id', label: 'Request ID' },
+                { id: 'employee', label: 'Employee' },
+                { id: 'destination', label: 'Destination' },
+                { id: 'details', label: 'Booking Details' },
+                { id: 'status', label: 'Status' }
+              ]} />
+              <TableBody>
+                {completedBookings.length > 0 ? completedBookings.map((req) => (
+                  <TableRow key={req.id}>
+                    <TableCell>{req.id}</TableCell>
+                    <TableCell>{req.employee}</TableCell>
+                    <TableCell>{req.destination}</TableCell>
+                    <TableCell>
+                      <Box>
+                        <Typography variant="caption" display="block" fontWeight={600}>Flight: {req.bookingDetails?.airline || 'N/A'}</Typography>
+                        <Typography variant="caption" display="block" color="text.secondary">PNR: {req.bookingDetails?.pnr || 'N/A'}</Typography>
+                      </Box>
+                    </TableCell>
+                    <TableCell><StatusChip label="COMPLETED" color="success" /></TableCell>
+                  </TableRow>
+                )) : (
+                  <TableRow>
+                    <TableCell colSpan={5} align="center" sx={{ py: 4, color: '#64748b' }}>
+                      No completed bookings yet.
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </SharedTable>
+          </SharedCard>
+        )}
 
-                        <Grid item>
-                          <SharedButton
-                            variant="contained"
-                            sx={{
-                              backgroundColor: "#16a34a",
-                              "&:hover": { backgroundColor: "#15803d" },
-                              mr: 2,
-                            }}
-                          >
-                            Complete & Notify Manager
-                          </SharedButton>
+        {/* Process Booking Modal */}
+        <SharedModal
+          open={showBookingModal}
+          onClose={() => setShowBookingModal(false)}
+          title={`Process Booking for ${selectedRequest?.id}`}
+          maxWidth="md"
+        >
+          <Box sx={{ mt: 2 }}>
+            <Typography variant="subtitle2" sx={{ mb: 3, p: 2, bgcolor: '#f1f5f9', borderRadius: 2, border: '1px solid #e2e8f0' }}>
+              <strong>Traveler:</strong> {selectedRequest?.employee} &nbsp;•&nbsp; <strong>Destination:</strong> {selectedRequest?.destination}
+            </Typography>
 
-                          <SharedButton variant="outlined" onClick={() => handleViewRequest(req.id)} >View</SharedButton>
-                        </Grid>
-                      </Grid>
-                    </Card>
-                  ))}
-                  <Typography sx={{ fontSize: "1.2rem" }}></Typography>
-                </CardContent>
-              </Card>
+            <Grid container spacing={3}>
+              {/* Flight Section */}
+              <Grid item xs={12}>
+                <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2, color: '#1e293b' }}>
+                  <Flight color="primary" /> Flight Details
+                </Typography>
+                <Grid container spacing={2}>
+                  <Grid item xs={6}>
+                    <TextField
+                      fullWidth label="Airline" size="small"
+                      value={bookingData.airline}
+                      onChange={(e) => setBookingData({ ...bookingData, airline: e.target.value })}
+                    />
+                  </Grid>
+                  <Grid item xs={6}>
+                    <TextField
+                      fullWidth label="Flight Number" size="small"
+                      value={bookingData.flightNumber}
+                      onChange={(e) => setBookingData({ ...bookingData, flightNumber: e.target.value })}
+                    />
+                  </Grid>
+                  <Grid item xs={6}>
+                    <TextField
+                      fullWidth label="PNR / Booking Ref" size="small"
+                      value={bookingData.pnr}
+                      onChange={(e) => setBookingData({ ...bookingData, pnr: e.target.value })}
+                    />
+                  </Grid>
+                  <Grid item xs={6}>
+                    <TextField
+                      fullWidth label="Total Cost" size="small" type="number"
+                      value={bookingData.cost}
+                      onChange={(e) => setBookingData({ ...bookingData, cost: e.target.value })}
+                    />
+                  </Grid>
+                </Grid>
+              </Grid>
+
+              <Grid item xs={12}><Divider /></Grid>
+
+              {/* Hotel Section */}
+              <Grid item xs={12}>
+                <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2, color: '#1e293b' }}>
+                  <Hotel color="primary" /> Hotel Details
+                </Typography>
+                <Grid container spacing={2}>
+                  <Grid item xs={12}>
+                    <TextField
+                      fullWidth label="Hotel Name" size="small"
+                      value={bookingData.hotelName}
+                      onChange={(e) => setBookingData({ ...bookingData, hotelName: e.target.value })}
+                    />
+                  </Grid>
+                  <Grid item xs={6}>
+                    <TextField
+                      fullWidth label="Check-in" type="date" size="small" InputLabelProps={{ shrink: true }}
+                      value={bookingData.checkIn}
+                      onChange={(e) => setBookingData({ ...bookingData, checkIn: e.target.value })}
+                    />
+                  </Grid>
+                  <Grid item xs={6}>
+                    <TextField
+                      fullWidth label="Check-out" type="date" size="small" InputLabelProps={{ shrink: true }}
+                      value={bookingData.checkOut}
+                      onChange={(e) => setBookingData({ ...bookingData, checkOut: e.target.value })}
+                    />
+                  </Grid>
+                </Grid>
+              </Grid>
+
+              <Grid item xs={12}>
+                <Box sx={{ display: 'flex', gap: 3, p: 2, bgcolor: '#f8fafc', borderRadius: 2 }}>
+                  <FormControlLabel
+                    control={<Checkbox checked={bookingData.visaProcessed} onChange={(e) => setBookingData({ ...bookingData, visaProcessed: e.target.checked })} />}
+                    label="Visa Processed"
+                  />
+                  <FormControlLabel
+                    control={<Checkbox checked={bookingData.insuranceAdded} onChange={(e) => setBookingData({ ...bookingData, insuranceAdded: e.target.checked })} />}
+                    label="Travel Insurance Added"
+                  />
+                </Box>
+              </Grid>
             </Grid>
-          </Grid>
-        </PageWrapper>
-      </CommonDashboard>
-    );
-}
+
+            <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 4 }}>
+              <Button variant="outlined" onClick={() => setShowBookingModal(false)} sx={{ color: '#64748b' }}>Cancel</Button>
+              <Button variant="outlined" onClick={() => toast.info("Draft Saved")}>Save Draft</Button>
+              <Button
+                variant="contained"
+                color="success"
+                startIcon={<CheckCircle />}
+                onClick={handleConfirmBooking}
+                sx={{ px: 3 }}
+              >
+                Submit & Notify Manager
+              </Button>
+            </Box>
+          </Box>
+        </SharedModal>
+      </Box>
+    </BaseLayout>
+  );
+};
 
 export default TravelDeskPortal;
