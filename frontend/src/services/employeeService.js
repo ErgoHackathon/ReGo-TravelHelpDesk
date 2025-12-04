@@ -1,12 +1,10 @@
 /**
  * Employee Service
- * Handles all employee-specific API calls
+ * Clean service - uses apiService for data
  */
 
-import apiClient from '../api/client';
-import apiConfig from '../config/apiConfig';
+import api from './apiService';
 
-// Status labels
 const TRAVEL_STATUS_LABELS = {
   0: 'Pending',
   1: 'Submitted',
@@ -17,34 +15,16 @@ const TRAVEL_STATUS_LABELS = {
 
 const employeeService = {
   /**
-   * Get employee profile data
-   * API: POST /api/employee/GetEmployeeData (FormData)
+   * Get employee profile
    */
   getEmployeeProfile: async (idOrEmail) => {
-    if (apiConfig.USE_MOCK_API) {
-      console.log('🔵 Using MOCK API for getEmployeeProfile');
-      return {
-        empId: '787',
-        empName: 'Abhishek Kumar',
-        email: idOrEmail,
-        rptEmpId: '828',
-        refRoleId: 101,
-      };
-    }
+    const response = await api.getEmployeeData(idOrEmail);
 
-    console.log('🟢 Getting employee profile for:', idOrEmail);
-
-    const formData = new FormData();
-    formData.append('IDorEmail', idOrEmail);
-
-    const response = await apiClient.post('/api/employee/GetEmployeeData', formData);
-    console.log('Employee API response:', response.data);
-
-    const data = response.data?.result;
-
-    if (!data || response.data?.status !== 'Success') {
+    if (response.status !== 'Success' || !response.result) {
       throw new Error('Failed to fetch employee profile');
     }
+
+    const data = response.result;
 
     return {
       empId: data.empId,
@@ -56,122 +36,59 @@ const employeeService = {
   },
 
   /**
-   * Get employee travel details
-   * API: POST /api/employee/TravelDetailByEmpId?id=xxx (Query Parameter)
+   * Get employee travel
    */
   getEmployeeTravel: async (empId) => {
-    if (apiConfig.USE_MOCK_API) {
-      console.log('🔵 Using MOCK API for getEmployeeTravel');
-      return [
-        {
-          id: 'tr-001',
-          empId: empId,
-          destination: 'Berlin, Germany',
-          departureDate: '2025-12-01',
-          returnDate: '2025-12-05',
-          status: 1,
-          statusLabel: 'Submitted',
-          purpose: 'Client meeting'
-        }
-      ];
-    }
+    if (!empId) return [];
 
-    console.log('🟢 Getting travel details for empId:', empId);
+    const response = await api.getTravelDetailByEmpId(empId);
 
-    if (!empId) {
-      console.warn('⚠️ No empId provided');
+    if (response.status === 'Functional Failure' || !response.result) {
       return [];
     }
 
-    try {
-      // ✅ FIX: Use query parameter (not FormData)
-      const response = await apiClient.post(
-        `/api/employee/TravelDetailByEmpId?id=${empId}`,
-        null  // Empty body
-      );
+    const result = response.result;
+    const travels = Array.isArray(result) ? result : [result];
 
-      console.log('Travel API response:', response.data);
-
-      // Handle no data
-      if (response.data?.status === 'Functional Failure' || !response.data?.result) {
-        console.log('📭 No travel data found for employee');
-        return [];
-      }
-
-      if (response.data?.status !== 'Success') {
-        console.warn('⚠️ Unexpected response:', response.data);
-        return [];
-      }
-
-      // ✅ FIX: API returns single object, convert to array
-      const result = response.data.result;
-      const travels = Array.isArray(result) ? result : [result];
-
-      // Map to frontend format
-      return travels.map((travel, index) => ({
-        id: `${travel.empId}-${index}`,
-        empId: travel.empId,
-        country: travel.country,
-        city: travel.city,
-        destination: `${travel.city}, ${travel.country}`,
-        remark: travel.remark,
-        purpose: travel.remark,
-        suggestedDate: travel.suggestedDate,
-        travelStartDate: travel.travelStartDate,
-        travelEndDate: travel.travelEndDate,
-        departureDate: travel.travelStartDate,
-        returnDate: travel.travelEndDate,
-        status: travel.status,
-        statusLabel: TRAVEL_STATUS_LABELS[travel.status] || 'Unknown',
-        rptEmpId: travel.rptEmpId
-      }));
-
-    } catch (error) {
-      console.error('❌ Error fetching travel details:', error);
-      return [];
-    }
+    return travels.map((travel, index) => ({
+      id: `${travel.empId}-${index}`,
+      empId: travel.empId,
+      country: travel.country,
+      city: travel.city,
+      destination: `${travel.city}, ${travel.country}`,
+      purpose: travel.remark,
+      departureDate: travel.travelStartDate,
+      returnDate: travel.travelEndDate,
+      status: travel.status,
+      statusLabel: TRAVEL_STATUS_LABELS[travel.status] || 'Unknown',
+      rptEmpId: travel.rptEmpId
+    }));
   },
 
   /**
-   * Add document for employee
-   * API: POST /api/employee/AddDocument (FormData)
+   * Add document
    */
   addDocument: async (empId, documentId, document) => {
-    console.log('🟢 Adding document:', { empId, documentId });
+    const response = await api.addDocument(empId, documentId, document);
 
-    const formData = new FormData();
-    formData.append('empId', empId);
-    formData.append('documentId', documentId);
-    formData.append('document', document);
-
-    const response = await apiClient.post('/api/employee/AddDocument', formData);
-    
-    if (response.data?.status !== 'Success') {
+    if (response.status !== 'Success') {
       throw new Error('Failed to add document');
     }
 
-    return response.data.result;
+    return response.result;
   },
 
   /**
-   * Update document for employee
-   * API: POST /api/employee/UpdateDocument (FormData)
+   * Update document
    */
   updateDocument: async (empId, documentId, document) => {
-    console.log('🟢 Updating document:', { empId, documentId });
+    const response = await api.updateDocument(empId, documentId, document);
 
-    const formData = new FormData();
-    formData.append('empId', empId);
-    formData.append('documentId', documentId);
-    formData.append('document', document);
-
-    const response = await apiClient.post('/api/employee/UpdateDocument', formData);
-    
-    if (response.data?.status !== 'Success') {
+    if (response.status !== 'Success') {
       throw new Error('Failed to update document');
     }
 
-    return response.data.result;
+    return response.result;
   }
 };
 

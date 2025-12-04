@@ -1,119 +1,73 @@
 /**
  * Document Service
  * Handles all document-related API calls
- * Connected to real backend APIs
  */
 
-import apiClient from '../api/client';
-import apiConfig from '../config/apiConfig';
+import api from './apiService';
 
 const documentService = {
   /**
    * Get all document types
    * API: GET /api/GetAllDocumentsList
+   * Response: { status: "Success", result: [{ documentID, documentName }] }
    */
   getAllDocumentTypes: async () => {
-    if (apiConfig.USE_MOCK_API) {
-      console.log('🔵 Using MOCK API for getAllDocumentTypes');
-      return [
-        { id: 1, name: 'Passport' },
-        { id: 2, name: 'Invitation Letter' },
-        { id: 3, name: 'Cover Letter' },
-        { id: 4, name: 'KT plan' },
-        { id: 5, name: 'Hotel Booking' },
-        { id: 6, name: 'Flight Booking' },
-        { id: 7, name: 'Travel Insurance' },
-        { id: 8, name: 'Visa Form' },
-        { id: 9, name: 'Letter of Intent' }
-      ];
-    }
+    console.log('📄 Getting all document types');
 
-    console.log('🟢 Getting all document types');
+    const response = await api.getAllDocumentsList();
 
-    const response = await apiClient.get('/api/GetAllDocumentsList');
-    console.log('Document types response:', response.data);
-
-    if (response.data?.status !== 'Success' || !response.data?.result) {
+    if (response.status !== 'Success' || !response.result) {
       throw new Error('Failed to fetch document types');
     }
 
-    return response.data.result.map(doc => ({
+    // Transform to frontend format
+    return response.result.map(doc => ({
       id: doc.documentID,
       name: doc.documentName
     }));
   },
 
   /**
-   * Get employee documents (HelpDesk)
-   * API: POST /api/HelpDesk/GetEmployeeDocuments
-   * @param {string} empId - Employee ID
-   * @param {number} docId - Document type ID
+   * Convert file to Base64 string
+   * @param {File} file - File object
+   * @returns {Promise<string>} - Base64 encoded string
    */
-  getEmployeeDocument: async (empId, docId) => {
-    if (apiConfig.USE_MOCK_API) {
-      console.log('🔵 Using MOCK API for getEmployeeDocument');
-      return null;
-    }
+  fileToBase64: (file) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
 
-    console.log('🟢 Getting employee document:', { empId, docId });
+      reader.onload = () => {
+        // Get base64 string (remove data:xxx;base64, prefix)
+        const base64String = reader.result.split(',')[1];
+        resolve(base64String);
+      };
 
-    const formData = new FormData();
-    formData.append('empId', empId);
-    formData.append('DocId', docId);
+      reader.onerror = (error) => {
+        reject(error);
+      };
 
-    const response = await apiClient.post('/api/HelpDesk/GetEmployeeDocuments', formData);
-    console.log('Employee document response:', response.data);
-
-    if (response.data?.status !== 'Success') {
-      return null;
-    }
-
-    return response.data.result;
+      reader.readAsDataURL(file);
+    });
   },
 
   /**
-   * Get all documents for an employee
-   * @param {string} empId - Employee ID
+   * Validate file type and size
+   * @param {File} file - File object
+   * @returns {object} - { valid: boolean, error: string | null }
    */
-  getAllEmployeeDocuments: async (empId) => {
-    if (apiConfig.USE_MOCK_API) {
-      console.log('🔵 Using MOCK API for getAllEmployeeDocuments');
-      return [];
+  validateFile: (file) => {
+    const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg', 'application/pdf'];
+    const maxSize = 5 * 1024 * 1024; // 5MB
+
+    if (!allowedTypes.includes(file.type)) {
+      return { valid: false, error: 'Only PNG, JPG, and PDF files are allowed' };
     }
 
-    console.log('🟢 Getting all documents for employee:', empId);
-
-    // Get all document types first
-    const docTypes = await documentService.getAllDocumentTypes();
-    
-    // Fetch each document
-    const documents = [];
-    for (const docType of docTypes) {
-      try {
-        const doc = await documentService.getEmployeeDocument(empId, docType.id);
-        if (doc) {
-          documents.push({
-            ...docType,
-            document: doc,
-            status: 'uploaded'
-          });
-        } else {
-          documents.push({
-            ...docType,
-            document: null,
-            status: 'pending'
-          });
-        }
-      } catch (error) {
-        documents.push({
-          ...docType,
-          document: null,
-          status: 'pending'
-        });
-      }
+    if (file.size > maxSize) {
+      return { valid: false, error: 'File size must be less than 5MB' };
     }
 
-    return documents;
+    return { valid: true, error: null };
   },
 
   /**
@@ -121,81 +75,108 @@ const documentService = {
    * API: POST /api/employee/AddDocument
    * @param {string} empId - Employee ID
    * @param {number} documentId - Document type ID
-   * @param {File} document - Document file
+   * @param {File} file - Document file
    */
-  addDocument: async (empId, documentId, document) => {
-    if (apiConfig.USE_MOCK_API) {
-      console.log('🔵 Using MOCK API for addDocument');
-      return { success: true };
+  addDocument: async (empId, documentId, file) => {
+    console.log('📄 Adding document:', { empId, documentId, fileName: file.name });
+
+    // Validate file
+    const validation = documentService.validateFile(file);
+    if (!validation.valid) {
+      throw new Error(validation.error);
     }
 
-    console.log('🟢 Adding document:', { empId, documentId });
+    // Convert file to Base64
+    const fileBase64 = await documentService.fileToBase64(file);
+    console.log('📄 File converted to Base64, length:', fileBase64.length);
 
-    const formData = new FormData();
-    formData.append('empId', empId);
-    formData.append('documentId', documentId);
-    formData.append('document', document);
+    // Call API
+    const response = await api.addDocument(empId, documentId, fileBase64);
 
-    const response = await apiClient.post('/api/employee/AddDocument', formData);
-    console.log('Add document response:', response.data);
-
-    if (response.data?.status !== 'Success') {
-      throw new Error('Failed to add document');
+    if (response.status !== 'Success') {
+      throw new Error(response.result || 'Failed to upload document');
     }
 
-    return response.data.result;
+    return response.result;
   },
 
   /**
    * Update document for employee
    * API: POST /api/employee/UpdateDocument
+   * @param {string} empId - Employee ID
+   * @param {number} documentId - Document type ID
+   * @param {File} file - Document file
    */
-  updateDocument: async (empId, documentId, document) => {
-    if (apiConfig.USE_MOCK_API) {
-      console.log('🔵 Using MOCK API for updateDocument');
-      return { success: true };
+  updateDocument: async (empId, documentId, file) => {
+    console.log('📄 Updating document:', { empId, documentId, fileName: file.name });
+
+    // Validate file
+    const validation = documentService.validateFile(file);
+    if (!validation.valid) {
+      throw new Error(validation.error);
     }
 
-    console.log('🟢 Updating document:', { empId, documentId });
+    // Convert file to Base64
+    const fileBase64 = await documentService.fileToBase64(file);
 
-    const formData = new FormData();
-    formData.append('empId', empId);
-    formData.append('documentId', documentId);
-    formData.append('document', document);
+    // Call API
+    const response = await api.updateDocument(empId, documentId, fileBase64);
 
-    const response = await apiClient.post('/api/employee/UpdateDocument', formData);
-    console.log('Update document response:', response.data);
-
-    if (response.data?.status !== 'Success') {
-      throw new Error('Failed to update document');
+    if (response.status !== 'Success') {
+      throw new Error(response.result || 'Failed to update document');
     }
 
-    return response.data.result;
+    return response.result;
   },
 
   /**
-   * Upload or update document
-   * Automatically chooses add or update based on existing document
+   * Get employee document
+   * API: POST /api/HelpDesk/GetEmployeeDocuments
+   * @param {string} empId - Employee ID
+   * @param {number} docId - Document type ID
    */
-  uploadDocument: async (empId, documentId, document) => {
-    const existing = await documentService.getEmployeeDocument(empId, documentId);
-    
-    if (existing) {
-      return documentService.updateDocument(empId, documentId, document);
-    } else {
-      return documentService.addDocument(empId, documentId, document);
+  getEmployeeDocument: async (empId, docId) => {
+    console.log('📄 Getting employee document:', { empId, docId });
+
+    const response = await api.getEmployeeDocuments(empId, docId);
+
+    if (response.status !== 'Success') {
+      return null;
     }
+
+    return response.result;
+  },
+  // Add this function to documentService.js
+
+/**
+ * Get all uploaded documents for an employee
+ * @param {string} empId - Employee ID
+ */
+getEmployeeUploadedDocuments: async (empId) => {
+  console.log('📄 Getting all uploaded documents for:', empId);
+
+  const response = await api.getEmployeeAllDocuments(empId);
+
+  if (response.status !== 'Success') {
+    return [];
+  }
+
+  return response.result || [];
+},
+
+  /**
+   * Upload or update document (auto-detect)
+   * @param {string} empId - Employee ID
+   * @param {number} documentId - Document type ID
+   * @param {File} file - Document file
+   * @param {boolean} isUpdate - Whether this is an update
+   */
+  uploadDocument: async (empId, documentId, file, isUpdate = false) => {
+    if (isUpdate) {
+      return documentService.updateDocument(empId, documentId, file);
+    }
+    return documentService.addDocument(empId, documentId, file);
   }
 };
 
 export default documentService;
-
-// Named exports for convenience
-export const {
-  getAllDocumentTypes,
-  getEmployeeDocument,
-  getAllEmployeeDocuments,
-  addDocument,
-  updateDocument,
-  uploadDocument
-} = documentService;

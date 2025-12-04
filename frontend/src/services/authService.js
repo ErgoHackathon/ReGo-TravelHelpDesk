@@ -1,282 +1,88 @@
 /**
  * Authentication Service
  * Handles all authentication-related API calls
- * Automatically switches between mock and real API based on environment
  */
 
-import apiClient from '../api/client';
-import mockDataService from './mockDataService';
-import apiConfig, { ENDPOINTS } from '../config/apiConfig';
+import api from './apiService';
+import apiConfig from '../config/apiConfig';
 import { STORAGE_KEYS } from '../utils/constants';
-import { ROLE_ID_MAP, ROLES } from '../utils/constants';
 import employeeService from './employeeService';
+
+// Role mapping
+const ROLE_ID_MAP = {
+  101: 'EMPLOYEE',
+  102: 'MANAGER',
+  103: 'TRAVEL_DESK',
+  104: 'AVP',
+  105: 'SVP',
+};
 
 const authService = {
   /**
-   * Login user with backend integration
+   * Login user
    * @param {object} credentials - { email, password }
    * @returns {Promise<object>} - { user, token, refreshToken }
    */
-login: async (credentials) => {
-  if (apiConfig.USE_MOCK_API) {
-    console.log('🔵 Using MOCK API for login');
-    const response = await mockDataService.login(credentials);
+  login: async (credentials) => {
+    console.log('🔐 Attempting login for:', credentials.email);
 
-    if (response.data.success) {
-      const { user, token, refreshToken } = response.data.data;
-      localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(user));
-      localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, token);
-      if (refreshToken) localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, refreshToken);
-      console.log('✅ Login successful:', user.email);
-      return { user, token, refreshToken };
-    }
-    throw new Error(response.data.error?.message || 'Login failed');
-  }
+    // Step 1: Call Login API
+    const loginResponse = await api.login(credentials.email, credentials.password);
+    console.log('Login API response:', loginResponse);
 
-  // Real backend login flow
-  console.log('🟢 Using REAL API for login');
-
-  // ✅ FIX: Use FormData instead of query params
-  const formData = new FormData();
-  formData.append('username', credentials.email);
-  formData.append('password', credentials.password);
-
-  // Step 1: Call Auth/Login to get roleId
-  const loginResponse = await apiClient.post('/api/LoginRequest', formData);
-
-  console.log('Login API response:', loginResponse.data);
-
-  // Extract roleId from response
-  const loginData = loginResponse.data;
-  const roleId = Number(loginData?.result ?? loginData?.roleId ?? 0);
-
-  if (!roleId || loginData.status !== 'Success') {
-    throw new Error('Login failed - invalid credentials');
-  }
-
-  // Step 2: Fetch employee master data
-  const empData = await employeeService.getEmployeeProfile(credentials.email);
-
-  // Step 3: Map roleId to frontend role
-  const roleCode = ROLE_ID_MAP[roleId] || ROLES.EMPLOYEE;
-
-  // Step 4: Build user object
-  const user = {
-    empId: empData.empId,
-    email: credentials.email,
-    fullName: empData.empName,
-    name: empData.empName,
-    role: roleCode,
-    roleId: roleId,
-    refRoleId: empData.refRoleId,
-    rptEmpId: empData.rptEmpId,
-    department: empData.department,
-    designation: empData.designation
-  };
-
-  const token = 'dummy-token';
-  const refreshToken = null;
-
-  // Store in localStorage
-  localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(user));
-  localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, token);
-  if (refreshToken) localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, refreshToken);
-
-  console.log('✅ Login successful:', user.email, 'Role:', user.role);
-  return { user, token, refreshToken };
-},
-
-  /**
-   * Register a new user
-   * @param {object} userData - User registration data
-   * @returns {Promise<object>} - { user, token, refreshToken }
-   */
-  register: async (userData) => {
-    let response;
-
-    if (apiConfig.USE_MOCK_API) {
-      console.log('🔵 Using MOCK API for register');
-      response = await mockDataService.register(userData);
-    } else {
-      console.log('🟢 Using REAL API for register');
-      response = await apiClient.post(ENDPOINTS.AUTH.REGISTER, userData);
+    // Check login success
+    if (loginResponse.status !== 'Success' || !loginResponse.result) {
+      throw new Error('Invalid email or password');
     }
 
-    if (response.data.success) {
-      const { user, token, refreshToken } = response.data.data;
+    const roleId = Number(loginResponse.result);
+    console.log('✅ Login successful, roleId:', roleId);
 
-      // Store in localStorage
-      localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(user));
-      localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, token);
-      localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, refreshToken);
+    // Step 2: Get employee profile
+    const empData = await employeeService.getEmployeeProfile(credentials.email);
+    console.log('Employee data:', empData);
 
-      console.log('✅ Registration successful:', user.email);
-      return response.data.data;
-    }
+    // Step 3: Map roleId to frontend role
+    const roleCode = ROLE_ID_MAP[roleId] || 'EMPLOYEE';
 
-    throw new Error(response.data.error?.message || 'Registration failed');
-  },
+    // Step 4: Build user object
+    const user = {
+      empId: empData.empId,
+      email: credentials.email,
+      fullName: empData.empName,
+      name: empData.empName,
+      role: roleCode,
+      roleId: roleId,
+      refRoleId: empData.refRoleId || roleId,
+      rptEmpId: empData.rptEmpId,
+      department: empData.department || '',
+      designation: empData.designation || ''
+    };
 
+    const token = `token_${Date.now()}`;
+    const refreshToken = `refresh_${Date.now()}`;
 
-  /**
-   * Get user profile
-   * @returns {Promise<object>} - User object
-   */
-  getProfile: async () => {
-    let response;
+    // Store in localStorage
+    localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(user));
+    localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, token);
+    localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, refreshToken);
 
-    if (apiConfig.USE_MOCK_API) {
-      console.log('🔵 Using MOCK API for getProfile');
-      response = await mockDataService.getProfile();
-    } else {
-      console.log('🟢 Using REAL API for getProfile');
-      response = await apiClient.get(ENDPOINTS.AUTH.GET_PROFILE);
-    }
+    console.log('✅ Login complete:', user.email, 'Role:', user.role);
 
-    if (response.data.success) {
-      const user = response.data.data;
-
-      // Map numeric role ID to frontend role string
-      const roleName = ROLE_ID_MAP[user.refRoleId] || ROLES.EMPLOYEE;
-      const userWithRole = { ...user, role: roleName };
-
-      // Update localStorage
-      localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(userWithRole));
-
-      return userWithRole;
-    }
-
-    throw new Error('Failed to get profile');
+    return { user, token, refreshToken };
   },
 
   /**
    * Logout user
-   * @returns {Promise<void>}
    */
   logout: async () => {
-    try {
-      if (apiConfig.USE_MOCK_API) {
-        console.log('🔵 Using MOCK API for logout');
-        await mockDataService.logout();
-      } else {
-        console.log('🟢 Using REAL API for logout');
-        await apiClient.post(ENDPOINTS.AUTH.LOGOUT);
-      }
-    } finally {
-      // Clear localStorage even if API call fails
-      authService.clearLocalStorage();
-      console.log('✅ Logged out successfully');
-    }
-  },
-
-  /**
-   * Refresh access token
-   * @returns {Promise<object>} - { token }
-   */
-  refreshToken: async () => {
-    const refreshToken = localStorage.getItem(STORAGE_KEYS.REFRESH_TOKEN);
-
-    if (!refreshToken) {
-      throw new Error('No refresh token available');
-    }
-
-    if (apiConfig.USE_MOCK_API) {
-      // For mock, just return the existing token
-      const token = localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
-      return { token };
-    }
-
-    const response = await apiClient.post(ENDPOINTS.AUTH.REFRESH_TOKEN, { refreshToken });
-
-    if (response.data.success) {
-      const { token } = response.data.data;
-      localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, token);
-      return { token };
-    }
-
-    throw new Error('Token refresh failed');
-  },
-
-  /**
-   * Get user profile
-   * @returns {Promise<object>} - User object
-   */
-  getProfile: async () => {
-    let response;
-
-    if (apiConfig.USE_MOCK_API) {
-      console.log('🔵 Using MOCK API for getProfile');
-      response = await mockDataService.getProfile();
-    } else {
-      console.log('🟢 Using REAL API for getProfile');
-      response = await apiClient.get(ENDPOINTS.AUTH.GET_PROFILE);
-    }
-
-    if (response.data.success) {
-      const user = response.data.data;
-
-      // Update localStorage
-      localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(user));
-
-      return user;
-    }
-
-    throw new Error('Failed to get profile');
-  },
-
-  /**
-   * Update user profile
-   * @param {object} updates - Profile updates
-   * @returns {Promise<object>} - Updated user object
-   */
-  updateProfile: async (updates) => {
-    let response;
-
-    if (apiConfig.USE_MOCK_API) {
-      console.log('🔵 Using MOCK API for updateProfile');
-      response = await mockDataService.updateProfile(updates);
-    } else {
-      console.log('🟢 Using REAL API for updateProfile');
-      response = await apiClient.put(ENDPOINTS.AUTH.UPDATE_PROFILE, updates);
-    }
-
-    if (response.data.success) {
-      const user = response.data.data;
-
-      // Update localStorage
-      localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(user));
-
-      return user;
-    }
-
-    throw new Error('Failed to update profile');
-  },
-
-  /**
-   * Change password
-   * @param {object} passwords - { currentPassword, newPassword }
-   * @returns {Promise<void>}
-   */
-  changePassword: async (passwords) => {
-    let response;
-
-    if (apiConfig.USE_MOCK_API) {
-      console.log('🔵 Using MOCK API for changePassword');
-      // Mock doesn't actually change password
-      response = { data: { success: true } };
-    } else {
-      console.log('🟢 Using REAL API for changePassword');
-      response = await apiClient.post(ENDPOINTS.AUTH.CHANGE_PASSWORD, passwords);
-    }
-
-    if (!response.data.success) {
-      throw new Error(response.data.error?.message || 'Failed to change password');
-    }
+    console.log('🔐 Logging out');
+    authService.clearLocalStorage();
+    return { success: true };
   },
 
   /**
    * Get current user from localStorage
-   * @returns {object|null} - User object or null
    */
   getCurrentUser: () => {
     const userStr = localStorage.getItem(STORAGE_KEYS.USER);
@@ -292,7 +98,6 @@ login: async (credentials) => {
 
   /**
    * Get access token from localStorage
-   * @returns {string|null} - Access token or null
    */
   getAccessToken: () => {
     return localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
@@ -300,7 +105,6 @@ login: async (credentials) => {
 
   /**
    * Check if user is authenticated
-   * @returns {boolean} - True if authenticated
    */
   isAuthenticated: () => {
     const token = authService.getAccessToken();
@@ -315,6 +119,23 @@ login: async (credentials) => {
     localStorage.removeItem(STORAGE_KEYS.USER);
     localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
     localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
+  },
+
+  /**
+   * Get user profile
+   */
+  getProfile: async () => {
+    const user = authService.getCurrentUser();
+    if (!user) throw new Error('Not authenticated');
+    return user;
+  },
+
+  /**
+   * Refresh token (placeholder)
+   */
+  refreshToken: async () => {
+    const token = authService.getAccessToken();
+    return { token };
   }
 };
 
