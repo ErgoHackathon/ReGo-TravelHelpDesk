@@ -40,6 +40,7 @@ const documentService = {
         // Get base64 string (remove data:xxx;base64, prefix)
         const base64String = reader.result.split(',')[1];
         resolve(base64String);
+        console.log("base64String|---",base64String);
       };
 
       reader.onerror = (error) => {
@@ -121,6 +122,8 @@ const documentService = {
 
     // Call API
     const response = await api.updateDocument(empId, documentId, fileBase64);
+    console.log("fileBase64|---",fileBase64);
+    console.log("fileBase64 response|---",response);
 
     if (response.status !== 'Success') {
       throw new Error(response.result || 'Failed to update document');

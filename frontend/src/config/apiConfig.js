@@ -6,7 +6,7 @@
 // ============================================
 // MOCK API TOGGLE
 // ============================================
-const USE_MOCK_API = true; // ✅ Set to FALSE to use real API
+const USE_MOCK_API = false; // ✅ Set to FALSE to use real API
 
 // ============================================
 // API BASE URL

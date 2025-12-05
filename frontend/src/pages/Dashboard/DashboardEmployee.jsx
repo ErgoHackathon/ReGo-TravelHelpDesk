@@ -390,124 +390,309 @@ const DashboardEmployee = () => {
       {/* ============================================ */}
       {/* DOCUMENTS LIST MODAL */}
       {/* ============================================ */}
-      <SharedModal
-        open={showDocumentsModal}
-        onClose={() => setShowDocumentsModal(false)}
-        title="Upload Required Documents"
-        maxWidth="md"
+      {/* ============================================ */}
+{/* DOCUMENTS LIST MODAL - MODERN DESIGN */}
+{/* ============================================ */}
+<SharedModal
+  open={showDocumentsModal}
+  onClose={() => setShowDocumentsModal(false)}
+  title="Upload Required Documents"
+  maxWidth="md"
+  fullWidth
+>
+  {loadingDocs ? (
+    <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+      <CircularProgress />
+    </Box>
+  ) : (
+    <Box sx={{ width: '100%' }}>
+      {/* Header Card with Progress */}
+      <Box
+        sx={{
+          background: 'linear-gradient(135deg, #b91c1c 0%, #764ba2 100%)',
+          borderRadius: 3,
+          p: 3,
+          mb: 3,
+          color: 'white',
+        }}
       >
-        {loadingDocs ? (
-          <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
-            <CircularProgress />
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <CloudUpload sx={{ fontSize: 28 }} />
+            <Typography variant="h6" fontWeight={600}>
+              Document Upload Center
+            </Typography>
           </Box>
-        ) : (
-          <>
-            {/* Info Alert */}
-            <Alert severity="info" sx={{ mb: 3 }}>
-              Please upload all required documents. Supported formats: <strong>PNG, JPG, PDF</strong> (Max 5MB)
-            </Alert>
+          <Chip
+            label={`${uploadStats.uploaded}/${uploadStats.total} Completed`}
+            sx={{
+              bgcolor: 'rgba(255,255,255,0.2)',
+              color: 'white',
+              fontWeight: 600,
+              '& .MuiChip-label': { px: 2 }
+            }}
+          />
+        </Box>
+        
+        <Typography variant="body2" sx={{ opacity: 0.9, mb: 2 }}>
+          Please upload all required documents. Supported formats: PNG, JPG, PDF (Max 5MB)
+        </Typography>
+        
+        {/* Progress Bar */}
+        <Box sx={{ position: 'relative' }}>
+          <LinearProgress
+            variant="determinate"
+            value={uploadStats.percentage}
+            sx={{
+              height: 10,
+              borderRadius: 5,
+              bgcolor: 'rgba(255,255,255,0.3)',
+              '& .MuiLinearProgress-bar': {
+                borderRadius: 5,
+                bgcolor: '#4ade80',
+              }
+            }}
+          />
+          <Typography 
+            variant="caption" 
+            sx={{ 
+              position: 'absolute', 
+              right: 0, 
+              top: 14,
+              opacity: 0.9 
+            }}
+          >
+            {Math.round(uploadStats.percentage)}% Complete
+          </Typography>
+        </Box>
+      </Box>
 
-            {/* Progress Bar */}
-            <Box sx={{ mb: 3 }}>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                <Typography variant="body2" color="text.secondary">
-                  Upload Progress
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  {uploadStats.uploaded} / {uploadStats.total} documents
-                </Typography>
-              </Box>
-              <LinearProgress
-                variant="determinate"
-                value={uploadStats.percentage}
-                sx={{ height: 8, borderRadius: 4 }}
-              />
-            </Box>
+      {/* Documents Grid */}
+      <Box sx={{ 
+        maxHeight: '50vh', 
+        overflowY: 'auto',
+        pr: 1,
+        '&::-webkit-scrollbar': {
+          width: '6px',
+        },
+        '&::-webkit-scrollbar-track': {
+          background: '#f1f5f9',
+          borderRadius: '3px',
+        },
+        '&::-webkit-scrollbar-thumb': {
+          background: '#cbd5e1',
+          borderRadius: '3px',
+          '&:hover': {
+            background: '#94a3b8',
+          }
+        },
+      }}>
+        <Grid container spacing={2}>
+          {documentTypes.map((doc, index) => {
+            const uploaded = uploadedDocuments[doc.id];
+            
+            return (
+              <Grid item xs={12} key={doc.id}>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 2,
+                    p: 2,
+                    borderRadius: 2,
+                    border: '1px solid',
+                    borderColor: uploaded ? '#bbf7d0' : '#e2e8f0',
+                    bgcolor: uploaded ? '#f0fdf4' : '#fafafa',
+                    transition: 'all 0.3s ease',
+                    '&:hover': {
+                      borderColor: uploaded ? '#86efac' : '#b91c1c',
+                      boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+                      transform: 'translateY(-2px)',
+                    }
+                  }}
+                >
+                  {/* Document Icon */}
+                  <Box
+                    sx={{
+                      width: 50,
+                      height: 50,
+                      borderRadius: 2,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      bgcolor: uploaded ? '#dcfce7' : '#fee2e2',
+                      color: uploaded ? '#16a34a' : '#b91c1c',
+                      flexShrink: 0,
+                    }}
+                  >
+                    {uploaded ? (
+                      <CheckCircle sx={{ fontSize: 28 }} />
+                    ) : (
+                      <Description sx={{ fontSize: 28 }} />
+                    )}
+                  </Box>
 
-            {/* Documents Table */}
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell>Document Name</TableCell>
-                  <TableCell>Status</TableCell>
-                  <TableCell>File Info</TableCell>
-                  <TableCell align="center">Action</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {documentTypes.map((doc) => {
-                  const uploaded = uploadedDocuments[doc.id];
-                  const status = uploaded ? 'UPLOADED' : 'PENDING';
+                  {/* Document Info */}
+                  <Box sx={{ flexGrow: 1, minWidth: 0 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+                      <Typography 
+                        variant="subtitle1" 
+                        fontWeight={600}
+                        sx={{ 
+                          color: '#1e293b',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap'
+                        }}
+                      >
+                        {doc.name}
+                      </Typography>
+                      <Chip
+                        size="small"
+                        label={uploaded ? 'UPLOADED' : 'PENDING'}
+                        sx={{
+                          height: 20,
+                          fontSize: '0.65rem',
+                          fontWeight: 600,
+                          bgcolor: uploaded ? '#dcfce7' : '#fef3c7',
+                          color: uploaded ? '#16a34a' : '#d97706',
+                          border: 'none',
+                        }}
+                      />
+                    </Box>
+                    
+                    {uploaded ? (
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+                        <Typography variant="caption" sx={{ color: '#64748b' }}>
+                          📄 {uploaded.fileName}
+                        </Typography>
+                        <Typography variant="caption" sx={{ color: '#94a3b8' }}>
+                          •
+                        </Typography>
+                        <Typography variant="caption" sx={{ color: '#64748b' }}>
+                          {formatFileSize(uploaded.fileSize)}
+                        </Typography>
+                        <Typography variant="caption" sx={{ color: '#94a3b8' }}>
+                          •
+                        </Typography>
+                        <Typography variant="caption" sx={{ color: '#16a34a' }}>
+                          ✓ {new Date(uploaded.uploadedAt).toLocaleTimeString()}
+                        </Typography>
+                      </Box>
+                    ) : (
+                      <Typography variant="caption" sx={{ color: '#94a3b8' }}>
+                        No file uploaded yet • Click to upload
+                      </Typography>
+                    )}
+                  </Box>
 
-                  return (
-                    <TableRow key={doc.id} hover>
-                      <TableCell>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <Description color={uploaded ? 'success' : 'action'} />
-                          <Typography fontWeight={500}>{doc.name}</Typography>
-                        </Box>
-                      </TableCell>
-                      <TableCell>
-                        <Chip
-                          icon={uploaded ? <CheckCircle /> : <ErrorIcon />}
-                          label={status}
-                          color={uploaded ? 'success' : 'warning'}
-                          size="small"
-                          variant="outlined"
-                        />
-                      </TableCell>
-                      <TableCell>
-                        {uploaded ? (
-                          <Box>
-                            <Typography variant="body2">{uploaded.fileName}</Typography>
-                            <Typography variant="caption" color="text.secondary">
-                              {formatFileSize(uploaded.fileSize)} • {new Date(uploaded.uploadedAt).toLocaleTimeString()}
-                            </Typography>
-                          </Box>
-                        ) : (
-                          <Typography variant="body2" color="text.secondary">
-                            No file uploaded
-                          </Typography>
-                        )}
-                      </TableCell>
-                      <TableCell align="center">
-                        <Button
-                          variant={uploaded ? 'outlined' : 'contained'}
-                          size="small"
-                          startIcon={<CloudUpload />}
-                          onClick={() => openUploadModal(doc)}
-                          color={uploaded ? 'primary' : 'error'}
-                          sx={!uploaded ? { bgcolor: '#b91c1c', '&:hover': { bgcolor: '#991b1b' } } : {}}
-                        >
-                          {uploaded ? 'Re-upload' : 'Upload'}
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
+                  {/* Upload Button */}
+                  <Button
+                    variant={uploaded ? 'outlined' : 'contained'}
+                    size="small"
+                    onClick={() => openUploadModal(doc)}
+                    startIcon={uploaded ? <UploadFile /> : <CloudUpload />}
+                    sx={{
+                      minWidth: 110,
+                      borderRadius: 2,
+                      textTransform: 'none',
+                      fontWeight: 600,
+                      flexShrink: 0,
+                      ...(uploaded ? {
+                        borderColor: '#16a34a',
+                        color: '#16a34a',
+                        '&:hover': {
+                          borderColor: '#15803d',
+                          bgcolor: '#f0fdf4',
+                        }
+                      } : {
+                        bgcolor: '#b91c1c',
+                        '&:hover': {
+                          bgcolor: '#991b1b',
+                        }
+                      })
+                    }}
+                  >
+                    {uploaded ? 'Replace' : 'Upload'}
+                  </Button>
+                </Box>
+              </Grid>
+            );
+          })}
+        </Grid>
+      </Box>
 
-            {/* Submit Button */}
-            <Box sx={{ mt: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <Button onClick={() => setShowDocumentsModal(false)} color="inherit">
-                Close
-              </Button>
-              <Button
-                variant="contained"
-                color="success"
-                disabled={uploadStats.uploaded === 0}
-                onClick={() => {
-                  showSnackbarMessage('Documents submitted successfully!', 'success');
-                  setShowDocumentsModal(false);
-                }}
-              >
-                Submit All Documents ({uploadStats.uploaded}/{uploadStats.total})
-              </Button>
-            </Box>
-          </>
-        )}
-      </SharedModal>
+      {/* Footer Actions */}
+      <Box 
+        sx={{ 
+          mt: 3, 
+          pt: 3,
+          borderTop: '1px solid #e2e8f0',
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: 2
+        }}
+      >
+        <Button 
+          onClick={() => setShowDocumentsModal(false)} 
+          sx={{ 
+            color: '#64748b',
+            '&:hover': { bgcolor: '#f1f5f9' }
+          }}
+        >
+          Cancel
+        </Button>
+        
+        <Box sx={{ display: 'flex', gap: 2 }}>
+          <Button
+            variant="outlined"
+            onClick={() => {
+              // Save draft functionality
+              showSnackbarMessage('Progress saved!', 'info');
+            }}
+            sx={{ 
+              borderColor: '#e2e8f0',
+              color: '#64748b',
+              '&:hover': { 
+                borderColor: '#cbd5e1',
+                bgcolor: '#f8fafc'
+              }
+            }}
+          >
+            Save Draft
+          </Button>
+          
+          <Button
+            variant="contained"
+            disabled={uploadStats.uploaded === 0}
+            onClick={() => {
+              showSnackbarMessage('Documents submitted successfully!', 'success');
+              setShowDocumentsModal(false);
+            }}
+            startIcon={<CheckCircle />}
+            sx={{
+              bgcolor: uploadStats.uploaded === uploadStats.total ? '#16a34a' : '#3b82f6',
+              '&:hover': {
+                bgcolor: uploadStats.uploaded === uploadStats.total ? '#15803d' : '#2563eb',
+              },
+              '&.Mui-disabled': {
+                bgcolor: '#e2e8f0',
+                color: '#94a3b8'
+              }
+            }}
+          >
+            {uploadStats.uploaded === uploadStats.total 
+              ? 'Submit All Documents' 
+              : `Submit (${uploadStats.uploaded}/${uploadStats.total})`
+            }
+          </Button>
+        </Box>
+      </Box>
+    </Box>
+  )}
+</SharedModal>
 
       {/* ============================================ */}
       {/* FILE UPLOAD MODAL (Drag & Drop) */}
