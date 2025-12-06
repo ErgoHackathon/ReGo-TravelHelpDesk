@@ -48,15 +48,15 @@ import BaseLayout from '../../components/layout/BaseLayout';
 
 // Icon Mapping
 const ICON_MAP = {
-  'Flight': <FlightTakeoff />,
-  'FlightTakeoff': <FlightTakeoff />,
-  'Group': <Group />,
-  'People': <People />,
-  'Assignment': <Assignment />,
-  'PendingActions': <PendingActions />,
-  'CheckCircle': <CheckCircle />,
-  'Cancel': <Cancel />,
-  'AttachMoney': <AttachMoney />
+  'Flight': <FlightTakeoff sx={{fontSize: 35}}/>,
+  'FlightTakeoff': <FlightTakeoff sx={{fontSize: 35}}/>,
+  'Group': <Group sx={{fontSize: 35}}/>,
+  'People': <People sx={{fontSize: 35}}/>,
+  'Assignment': <Assignment sx={{fontSize: 35}}/>,
+  'PendingActions': <PendingActions sx={{fontSize: 35}}/>,
+  'CheckCircle': <CheckCircle sx={{fontSize: 35}}/>,
+  'Cancel': <Cancel sx={{fontSize: 35}}/>,
+  'AttachMoney': <AttachMoney sx={{fontSize: 35}}/>
 };
 
 const DashboardManager = () => {
@@ -167,7 +167,8 @@ const DashboardManager = () => {
             { title: 'Pending Approvals', value: 5, iconKey: 'Assignment' },
             { title: 'Total Reports', value: 12, iconKey: 'Group' }
           ]).map((stat, index) => (
-            <Grid item xs={12} sm={6} md={4} key={index}>
+            <Grid item xs={12} sm={6} md={12/stats.length}
+             key={index}>
               <StatDisplay
                 title={stat.title}
                 value={stat.value}
@@ -294,7 +295,7 @@ const DashboardManager = () => {
               <Table size="small">
                 <TableHead sx={{ bgcolor: '#f8fafc' }}>
                   <TableRow>
-                    <TableCell padding="checkbox"><Checkbox size="small" /></TableCell>
+                    <TableCell padding="checkbox"></TableCell>
                     <TableCell sx={{ fontWeight: 600 }}>Employee Name</TableCell>
                     <TableCell sx={{ fontWeight: 600 }}>Departure Date</TableCell>
                     <TableCell sx={{ fontWeight: 600 }}>Arrival Date</TableCell>

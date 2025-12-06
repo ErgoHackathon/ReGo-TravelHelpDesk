@@ -344,7 +344,7 @@ const DashboardEmployee = () => {
             </Box>
           </SharedCard>
         ) : (
-          <SharedCard sx={{ textAlign: 'center', py: 4 }}>
+          <SharedCard variant={"dashboard"} sx={{ textAlign: 'center', py: 4 }}>
             <Flight sx={{ fontSize: 48, color: '#cbd5e1', mb: 2 }} />
             <Typography variant="h6" color="text.secondary">
               No active travel applications
