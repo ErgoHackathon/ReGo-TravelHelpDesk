@@ -1,0 +1,404 @@
+Swagger response of backend 
+
+Employee
+
+
+POST
+/api/Employee/GetEmployeeData
+
+Parameters
+Cancel
+Name	Description
+IDorEmail
+string
+(query)
+128
+Execute
+Clear
+Responses
+Curl
+
+curl -X 'POST' \
+  'https://localhost:7133/api/Employee/GetEmployeeData?IDorEmail=128' \
+  -H 'accept: */*' \
+  -d ''
+Request URL
+https://localhost:7133/api/Employee/GetEmployeeData?IDorEmail=128
+Server response
+Code	Details
+200	
+Response body
+Download
+{
+  "status": "Success",
+  "result": {
+    "empId": "128",
+    "name": "Rahul Mehta",
+    "email": "rahul.mehta@demo.com",
+    "rptEmpId": "600"
+  }
+}
+Response headers
+ access-control-allow-credentials: true 
+ access-control-allow-origin: https://localhost:7133 
+ content-type: application/json; charset=utf-8 
+ date: Wed,03 Dec 2025 12:45:18 GMT 
+ server: Kestrel 
+ vary: Origin 
+ 
+ 
+ 
+2nd . 
+POST
+/api/Employee/TravelDetailByEmpId
+
+Parameters
+Cancel
+Name	Description
+id
+string
+(query)
+320
+Execute
+Clear
+Responses
+Curl
+
+curl -X 'POST' \
+  'https://localhost:7133/api/Employee/TravelDetailByEmpId?id=320' \
+  -H 'accept: */*' \
+  -d ''
+Request URL
+https://localhost:7133/api/Employee/TravelDetailByEmpId?id=320
+Server response
+Code	Details
+200	
+Response body
+Download
+{
+  "status": "Success",
+  "result": {
+    "empId": "320",
+    "country": "Germany",
+    "city": "Hamburg",
+    "remark": "Training session",
+    "suggestedDate": "2025-11-26T00:00:00",
+    "travelStartDate": "2025-12-15T00:00:00",
+    "travelEndDate": "2025-12-18T00:00:00",
+    "status": 1,
+    "rptEmpId": "200"
+  }
+}
+Response headers
+ access-control-allow-credentials: true 
+ access-control-allow-origin: https://localhost:7133 
+ content-type: application/json; charset=utf-8 
+ date: Wed,03 Dec 2025 12:46:08 GMT 
+ server: Kestrel 
+ vary: Origin 
+ 
+ 
+ 3rd 
+ Home
+
+
+GET
+/api/GetRollMaster
+
+Parameters
+Cancel
+No parameters
+
+Execute
+Clear
+Responses
+Curl
+
+curl -X 'GET' \
+  'https://localhost:7133/api/GetRollMaster' \
+  -H 'accept: */*'
+Request URL
+https://localhost:7133/api/GetRollMaster
+Server response
+Code	Details
+200	
+Response body
+Download
+{
+  "status": "Success",
+  "result": [
+    {
+      "rollID": 101,
+      "rollName": "Employee"
+    },
+    {
+      "rollID": 102,
+      "rollName": "Manager"
+    },
+    {
+      "rollID": 103,
+      "rollName": "Helpdesk"
+    },
+    {
+      "rollID": 104,
+      "rollName": "DVP/AVP"
+    },
+    {
+      "rollID": 105,
+      "rollName": "SVP"
+    }
+  ]
+}
+Response headers
+ content-type: application/json; charset=utf-8 
+ date: Wed,03 Dec 2025 12:30:27 GMT 
+ server: Kestrel 
+ 
+ 4th
+ POST
+/api/auth/login
+
+Parameters
+Cancel
+Name	Description
+username
+string
+(query)
+rahul.mehta@demo.com
+password
+string
+(query)
+Rahul@123
+Execute
+Clear
+Responses
+Curl
+
+curl -X 'POST' \
+  'https://localhost:7133/api/auth/login?username=rahul.mehta%40demo.com&password=Rahul%40123' \
+  -H 'accept: */*' \
+  -d ''
+Request URL
+https://localhost:7133/api/auth/login?username=rahul.mehta%40demo.com&password=Rahul%40123
+Server response
+Code	Details
+200	
+Response body
+Download
+{
+  "status": "Success",
+  "result": 104
+}
+Response headers
+ access-control-allow-credentials: true 
+ access-control-allow-origin: https://localhost:7133 
+ content-type: application/json; charset=utf-8 
+ date: Wed,03 Dec 2025 12:47:21 GMT 
+ server: Kestrel 
+ vary: Origin 
+ 
+ 
+ 5th 
+ POST
+/api/UpdateTravelStatus
+
+Parameters
+Cancel
+Name	Description
+empId
+string
+(query)
+104
+status
+integer($int32)
+(query)
+3
+Execute
+Clear
+Responses
+Curl
+
+curl -X 'POST' \
+  'https://localhost:7133/api/UpdateTravelStatus?empId=104&status=3' \
+  -H 'accept: */*' \
+  -d ''
+Request URL
+https://localhost:7133/api/UpdateTravelStatus?empId=104&status=3
+Server response
+Code	Details
+200	
+Response body
+Download
+{
+  "status": "Success",
+  "result": "Updated"
+}
+Response headers
+ access-control-allow-credentials: true 
+ access-control-allow-origin: https://localhost:7133 
+ content-type: application/json; charset=utf-8 
+ date: Wed,03 Dec 2025 12:49:24 GMT 
+ server: Kestrel 
+ vary: Origin 
+ 
+ 
+ Db table of TravelMaster
+ EmpId	Country	City	Remark	SuggestedDate	TravelStartDate	TravelEndDate	Status	RptEmpId
+104	Germany	Frankfurt	Conference	2025-11-25	2025-12-05	2025-12-08	3	20
+12	Germany	Berlin	Client meeting	2025-11-28	2025-12-01	2025-12-05	1	828
+22	Germany	Berlin	string	2025-11-28	2025-11-28	2025-11-28	1	828
+282	Germany	Berlin	string	2025-11-28	2025-11-28	2025-11-28	1	828
+320	Germany	Hamburg	Training session	2025-11-26	2025-12-15	2025-12-18	1	200
+436	Germany	Munich	Project kickoff	2025-11-27	2025-12-10	2025-12-20	2	128
+787	Germany	Berlin	Client meeting	2025-11-28	2025-12-01	2025-12-05	2	828
+82	Germany	Berlin	string	2025-11-28	2025-11-28	2025-11-28	1	828
+
+
+6th
+POST
+/api/Manager/GetEmployeesByRptId
+
+Parameters
+Cancel
+Name	Description
+ID
+string
+(query)
+128
+Execute
+Clear
+Responses
+Curl
+
+curl -X 'POST' \
+  'https://localhost:7133/api/Manager/GetEmployeesByRptId?ID=128' \
+  -H 'accept: */*' \
+  -d ''
+Request URL
+https://localhost:7133/api/Manager/GetEmployeesByRptId?ID=128
+Server response
+Code	Details
+200	
+Response body
+Download
+{
+  "status": "Success",
+  "result": [
+    {
+      "empId": "436",
+      "name": "Priya Sharma",
+      "email": "priya.sharma@demo.com"
+    }
+  ]
+}
+Response headers
+ access-control-allow-credentials: true 
+ access-control-allow-origin: https://localhost:7133 
+ content-type: application/json; charset=utf-8 
+ date: Wed,03 Dec 2025 12:50:30 GMT 
+ server: Kestrel 
+ vary: Origin 
+ 
+ 7th
+ POST
+/api/Manager/TravelDetailByRptId
+
+Parameters
+Cancel
+Name	Description
+id
+string
+(query)
+128
+Execute
+Clear
+Responses
+Curl
+
+curl -X 'POST' \
+  'https://localhost:7133/api/Manager/TravelDetailByRptId?id=128' \
+  -H 'accept: */*' \
+  -d ''
+Request URL
+https://localhost:7133/api/Manager/TravelDetailByRptId?id=128
+Server response
+Code	Details
+200	
+Response body
+Download
+{
+  "status": "Success",
+  "result": [
+    {
+      "empId": "436",
+      "country": "Germany",
+      "city": "Munich",
+      "remark": "Project kickoff",
+      "suggestedDate": "2025-11-27T00:00:00",
+      "travelStartDate": "2025-12-10T00:00:00",
+      "travelEndDate": "2025-12-20T00:00:00",
+      "status": 2,
+      "rptEmpId": "128"
+    }
+  ]
+}
+Response headers
+
+
+
+POST
+/api/Manager/InsertTravelDetail
+
+Parameters
+Cancel
+Reset
+No parameters
+
+Request body
+
+application/json
+[
+  {
+    "empId": "string",
+    "country": "string",
+    "city": "string",
+    "remark": "string",
+    "suggestedDate": "2025-12-03T12:51:16.412Z",
+    "travelStartDate": "2025-12-03T12:51:16.412Z",
+    "travelEndDate": "2025-12-03T12:51:16.412Z",
+    "status": 0,
+    "rptEmpId": "string"
+  }
+]
+Execute
+Responses
+Code	Description	Links
+200	
+OK
+
+No links
+
+
+
+schemas
+Schemas
+TravelMaster{
+empId	string
+nullable: true
+country*	string
+maxLength: 100
+minLength: 0
+city*	string
+maxLength: 100
+minLength: 0
+remark	string
+maxLength: 500
+minLength: 0
+nullable: true
+suggestedDate	string($date-time)
+travelStartDate	string($date-time)
+travelEndDate	string($date-time)
+status	integer($int32)
+rptEmpId*	string
+minLength: 1
+}

@@ -1,0 +1,64 @@
+ssms Table 
+query 
+Select * from TMS_TravelMaster
+Select * from TMS_DocumentMaster
+Select * from TMS_EmployeeMaster
+Select * from TMS_EmployeeDocumentMaster
+Select * from TMS_LoginMaster
+Select * from TMS_RollMaster
+
+Table output of query
+
+EmpId	Country	City	Remark	SuggestedDate	TravelStartDate	TravelEndDate	Status	RptEmpId
+104	Germany	Frankfurt	Conference	2025-11-25	2025-12-05	2025-12-08	3	20
+12	Germany	Berlin	Client meeting	2025-11-28	2025-12-01	2025-12-05	1	828
+22	Germany	Berlin	string	2025-11-28	2025-11-28	2025-11-28	1	828
+282	Germany	Berlin	string	2025-11-28	2025-11-28	2025-11-28	1	828
+320	Germany	Hamburg	Training session	2025-11-26	2025-12-15	2025-12-18	1	200
+436	Germany	Munich	Project kickoff	2025-11-27	2025-12-10	2025-12-20	2	128
+787	Germany	Berlin	Client meeting	2025-11-28	2025-12-01	2025-12-05	2	828
+82	Germany	Berlin	string	2025-11-28	2025-11-28	2025-11-28	1	828
+
+DocumentID	DocumentName
+1	Passport
+2	Invitation Letter
+3	Cover Letter
+4	KT plan
+5	Hotel Booking
+6	Flight Booking
+7	Travel Insurance
+8	Visa Form
+9	Letter of Intent
+
+EmpId	Name	Email	RptEmpId	RefRoleId	CreatedOn	CreatedBy	UpdatedOn	UpdatedBy
+108	vikash Kumar	vikash.kumar@demo.com	828	101	2025-11-27 12:01:42.5633333	System	NULL	NULL
+128	Rahul Mehta	rahul.mehta@demo.com	600	104	2025-11-27 11:38:18.7100000	System	NULL	NULL
+2	Akash Kumar	Akash.Kumar@demo.com	1	105	2025-11-27 11:38:18.7100000	System	NULL	NULL
+320	Vikram Singh	vikram.singh@demo.com		103	2025-11-27 11:38:18.7100000	System	NULL	NULL
+436	Priya Sharma	priya.sharma@demo.com	128	101	2025-11-27 11:38:18.7100000	System	NULL	NULL
+787	Abhishek Kumar	abhishek.kumar@demo.com	828	101	2025-11-27 11:38:18.7100000	System	NULL	NULL
+828	Sneha Patel	sneha.patel@demo.com	200	102	2025-11-27 11:38:18.7100000	System	NULL	NULL
+
+
+EmpDocId	EmpId	DocumentID	Document	CreatedOn	CreatedBy	UpdatedOn	UpdatedBy
+1	787	2	0x51554A44524556475230684A536B744D545535505546465355315256566C645957566F784D6A4D304E5459334F446B7759574A6A5A47566D5A326870616D7473625735766348467963335231646E643465586F3D	2025-12-02 10:54:12.8233333	Abhi	NULL	NULL
+2	787	1	0x4142434445464748494A4B4C4D4E4F505152535455565758595A313233343536373839306162636465666768696A6B6C6D6E6F707172737475767778797A	NULL	NULL	NULL	NULL
+3	787	3	0x4142434445464748494A4B4C4D4E4F505152535455565758595A313233343536373839306162636465666768696A6B6C6D6E6F707172737475767778797A	NULL	NULL	NULL	NULL
+4	787	4	0x4142434445464748494A4B4C4D4E4F505152535455565758595A313233343536373839306162636465666768696A6B6C6D6E6F707172737475767778797A	NULL	NULL	NULL	NULL
+
+
+EmpId	Name	Email	Password	RptEmpId	RefRoleId	CreatedOn	CreatedBy	UpdatedOn	UpdatedBy
+128	Rahul Mehta	rahul.mehta@demo.com	Rahul@123	600	104	2025-11-27 11:39:23.3800000	System	NULL	NULL
+2	Akash Kumar	akash.kumar@demo.com	Akash@123	1	105	2025-11-27 11:39:23.3800000	System	NULL	NULL
+320	Vikram Singh	vikram.singh@demo.com	Vikram@123		103	2025-11-27 11:39:23.3800000	System	NULL	NULL
+436	Priya Sharma	priya.sharma@demo.com	Priya@123	128	101	2025-11-27 11:39:23.3800000	System	NULL	NULL
+787	Abhishek Kumar	abhishek.kumar@demo.com	Pass@123	828	101	2025-11-27 11:39:23.3800000	System	NULL	NULL
+828	Sneha Patel	sneha.patel@demo.com	Sneha@123	200	102	2025-11-27 11:39:23.3800000	System	NULL	NULL
+
+
+RollID	RollName
+101	Employee
+102	Manager
+103	Helpdesk
+104	DVP/AVP
+105	SVP
