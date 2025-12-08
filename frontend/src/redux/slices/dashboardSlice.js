@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import dashboardService from '../../services/dashboardService';
+import managerService from '../../services/managerService';
 
 // Fallback stats
 const fallbackStats = [
@@ -25,6 +26,21 @@ export const fetchDashboardData = createAsyncThunk(
 
     // Get stats
     const statsData = await dashboardService.getDashboardStats(userRole, userId);
+    console.log("statsData:::::::: ", statsData)
+
+    // Get all employees under MANAGER, AVP, SVP or CHRO
+    let allEmployees = []
+    if (userRole === 'MANAGER' || userRole === 'AVP' || userRole === 'SVP' || userRole === 'CHRO') {
+      allEmployees = await managerService.getTeam(userId)
+      console.log("allEmployees::::::::::: ", allEmployees)
+    }
+
+    // Get all the travel details
+    let getAllDetails = []
+    if (userRole === 'MANAGER' || userRole === 'AVP' || userRole === 'SVP' || userRole === 'CHRO') {
+      getAllDetails = await dashboardService.getAllDetails(userId)
+      console.log("getAllDetails::::::::::: ", getAllDetails)
+    }
 
     // Only get pending approvals for managers
     let pendingApprovals = [];
@@ -39,6 +55,8 @@ export const fetchDashboardData = createAsyncThunk(
     return {
       stats: statsData?.stats || fallbackStats,
       pendingApprovals: pendingApprovals || [],
+      getAllDetails: getAllDetails || [],
+      allEmployees: allEmployees || [],
       activeRequest: activeRequest,
       recentRequests: recentRequests || []
     };
@@ -61,6 +79,8 @@ export const fetchTravelDeskData = createAsyncThunk(
 const initialState = {
   stats: fallbackStats,
   pendingApprovals: [],
+  getAllDetails: [],
+  allEmployees: [],
   recentRequests: [],
   loading: false,
   error: null,
@@ -143,6 +163,8 @@ const dashboardSlice = createSlice({
       .addCase(fetchDashboardData.fulfilled, (state, action) => {
         state.loading = false;
         state.stats = action.payload.stats;
+        state.getAllDetails = action.payload.getAllDetails;
+        state.allEmployees = action.payload.allEmployees;
         state.pendingApprovals = action.payload.pendingApprovals;
         state.activeRequest = action.payload.activeRequest;
         state.recentRequests = action.payload.recentRequests;

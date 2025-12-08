@@ -34,7 +34,7 @@ const managerService = {
     console.log('🟢 Getting team for managerId:', managerId);
 
     const formData = new FormData();
-    formData.append('ID', managerId);
+    formData.append('RptId', managerId);
 
     const response = await apiClient.post('/api/manager/GetEmployeesByRptId', formData);
     console.log('Team API response:', response.data);
@@ -80,7 +80,7 @@ const managerService = {
     console.log('🟢 Getting team travel for managerId:', managerId);
 
     const formData = new FormData();
-    formData.append('id', managerId);
+    formData.append('RptId', managerId.toString());
 
     const response = await apiClient.post('/api/manager/TravelDetailByRptId', formData);
     console.log('Team travel API response:', response.data);
