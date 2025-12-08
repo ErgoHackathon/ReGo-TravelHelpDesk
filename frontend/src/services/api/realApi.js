@@ -91,6 +91,7 @@ const realApi = {
   // POST /api/employee/AddDocument
   addDocument: async (empId, documentId, document) => {
     console.log('🟢 REAL: POST /api/employee/AddDocument');
+    console.log("Emp id ",empId + "document id ",documentId+"document",document);
 
     const formData = new FormData();
     formData.append('empId', empId);
