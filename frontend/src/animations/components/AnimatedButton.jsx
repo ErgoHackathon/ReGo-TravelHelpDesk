@@ -1,34 +1,42 @@
-// ===========================================
-// ANIMATED BUTTON COMPONENT
-// ===========================================
-// Enhanced button with hover lift and icon animation
-// ===========================================
-
+// animations/components/AnimatedButton.jsx
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Button } from '@mui/material';
-import { buttonVariants, iconVariants } from '../variants';
+import { buttonVariants, primaryButtonVariants, iconVariants } from '../variants';
+import { prefersReducedMotion } from '../config/animationConfig';
 
 const AnimatedButton = ({
   children,
+  variant = 'default',
   startIcon,
   endIcon,
   animateIcon = true,
   sx = {},
   ...props
 }) => {
-  const MotionButton = motion.create ? motion.create(Button) : motion(Button);
+  const reducedMotion = prefersReducedMotion();
+  const MotionButton = motion(Button);
+  
+  const selectedVariant = variant === 'primary' ? primaryButtonVariants : buttonVariants;
+
+  if (reducedMotion) {
+    return (
+      <Button startIcon={startIcon} endIcon={endIcon} sx={sx} {...props}>
+        {children}
+      </Button>
+    );
+  }
 
   return (
     <MotionButton
-      variants={buttonVariants}
+      variants={selectedVariant}
       initial="initial"
       whileHover="hover"
       whileTap="tap"
       sx={{
         position: 'relative',
         overflow: 'hidden',
-        ...sx
+        ...sx,
       }}
       startIcon={
         startIcon && animateIcon ? (
@@ -38,7 +46,9 @@ const AnimatedButton = ({
           >
             {startIcon}
           </motion.span>
-        ) : startIcon
+        ) : (
+          startIcon
+        )
       }
       endIcon={
         endIcon && animateIcon ? (
@@ -48,25 +58,13 @@ const AnimatedButton = ({
           >
             {endIcon}
           </motion.span>
-        ) : endIcon
+        ) : (
+          endIcon
+        )
       }
       {...props}
     >
       {children}
-
-      {/* Ripple effect overlay */}
-      <motion.span
-        style={{
-          position: 'absolute',
-          inset: 0,
-          background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent)',
-          transform: 'translateX(-100%)',
-        }}
-        whileHover={{
-          transform: 'translateX(100%)',
-          transition: { duration: 0.6, ease: 'easeInOut' }
-        }}
-      />
     </MotionButton>
   );
 };

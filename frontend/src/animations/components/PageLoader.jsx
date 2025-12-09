@@ -1,9 +1,4 @@
-// ===========================================
-// PAGE LOADER COMPONENT
-// ===========================================
-// Full-page loading with animated plane
-// ===========================================
-
+// animations/components/PageLoader.jsx
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Box, Typography } from '@mui/material';
@@ -22,74 +17,62 @@ const PageLoader = ({ message = 'Loading...' }) => {
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: '#fef2f2',
-        zIndex: 9999
+        backgroundColor: 'rgba(255, 255, 255, 0.98)',
+        zIndex: 9999,
       }}
     >
-      {/* Animated plane */}
+      {/* Animated plane with subtle movement */}
       <motion.div
         animate={{
-          x: [-100, 100, -100],
-          y: [0, -20, 0],
-          rotate: [0, 5, -5, 0]
+          y: [0, -8, 0],
         }}
         transition={{
-          duration: 3,
+          duration: 1.5,
           repeat: Infinity,
-          ease: "easeInOut"
+          ease: 'easeInOut',
         }}
       >
-        <Flight sx={{ fontSize: 60, color: '#b91c1c' }} />
+        <motion.div
+          animate={{
+            rotate: [0, 2, -2, 0],
+          }}
+          transition={{
+            duration: 2,
+            repeat: Infinity,
+            ease: 'easeInOut',
+          }}
+        >
+          <Flight sx={{ fontSize: 48, color: '#b91c1c' }} />
+        </motion.div>
       </motion.div>
 
-      {/* Flight path line */}
-      <Box sx={{ width: 200, height: 2, mt: 2, position: 'relative', overflow: 'hidden' }}>
+      {/* Subtle line animation */}
+      <Box sx={{ width: 120, height: 2, mt: 3, bgcolor: '#f1f5f9', borderRadius: 1, overflow: 'hidden' }}>
         <motion.div
           style={{
-            position: 'absolute',
-            width: '100%',
+            width: '40%',
             height: '100%',
-            background: 'linear-gradient(90deg, transparent, #b91c1c, transparent)'
+            background: 'linear-gradient(90deg, transparent, #b91c1c, transparent)',
+            borderRadius: 4,
           }}
-          animate={{ x: ['-100%', '100%'] }}
-          transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
+          animate={{ x: ['-100%', '350%'] }}
+          transition={{
+            duration: 1.2,
+            repeat: Infinity,
+            ease: 'easeInOut',
+          }}
         />
       </Box>
 
-      {/* Loading text */}
+      {/* Loading text with fade */}
       <motion.div
-        initial={{ opacity: 0 }}
         animate={{ opacity: [0.5, 1, 0.5] }}
         transition={{ duration: 1.5, repeat: Infinity }}
       >
-        <Typography 
-          variant="body1" 
-          sx={{ mt: 3, color: '#b91c1c', fontWeight: 500 }}
-        >
+        <Typography variant="body2" sx={{ mt: 2, color: '#64748b', fontWeight: 500 }}>
           {message}
         </Typography>
       </motion.div>
-
-      {/* Dots animation */}
-      <Box sx={{ display: 'flex', gap: 1, mt: 2 }}>
-        {[0, 1, 2].map(i => (
-          <motion.div
-            key={i}
-            style={{
-              width: 8,
-              height: 8,
-              borderRadius: '50%',
-              backgroundColor: '#b91c1c'
-            }}
-            animate={{ scale: [1, 1.5, 1], opacity: [0.3, 1, 0.3] }}
-            transition={{
-              duration: 1,
-              repeat: Infinity,
-              delay: i * 0.2
-            }}
-          />
-        ))}
-      </Box>
     </Box>
   );
 };

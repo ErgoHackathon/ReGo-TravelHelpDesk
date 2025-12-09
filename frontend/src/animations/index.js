@@ -1,9 +1,10 @@
+// animations/index.js
 // ===========================================
-// ANIMATION SYSTEM - MAIN EXPORT
+// PROFESSIONAL ANIMATION SYSTEM
 // ===========================================
-// Import everything from here
-// Usage: import { AnimatedPage, cardVariants } from '../animations';
-// ===========================================
+
+// Configuration
+export * from './config/animationConfig';
 
 // Components
 export * from './components';

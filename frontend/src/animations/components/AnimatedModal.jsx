@@ -1,135 +1,90 @@
+// animations/components/AnimatedModal.jsx
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Modal, Box, IconButton } from '@mui/material';
+import { Dialog, DialogTitle, DialogContent, IconButton, Typography, Box } from '@mui/material';
 import { Close } from '@mui/icons-material';
-
-const backdropVariants = {
-  hidden: { opacity: 0 },
-  visible: { opacity: 1 }
-};
-
-const modalVariants = {
-  hidden: {
-    opacity: 0,
-    scale: 0.8,
-    y: 50
-  },
-  visible: {
-    opacity: 1,
-    scale: 1,
-    y: 0,
-    transition: {
-      type: "spring",
-      stiffness: 300,
-      damping: 25
-    }
-  },
-  exit: {
-    opacity: 0,
-    scale: 0.8,
-    y: 50,
-    transition: {
-      duration: 0.2
-    }
-  }
-};
+import { modalBackdropVariants, modalContentVariants } from '../variants';
+import { prefersReducedMotion } from '../config/animationConfig';
 
 const AnimatedModal = ({
   open,
   onClose,
+  title,
   children,
-  maxWidth = 600,
+  maxWidth = 'md',
+  fullWidth = true,
   showCloseButton = true,
-  sx = {}
 }) => {
+  const reducedMotion = prefersReducedMotion();
+
   return (
     <AnimatePresence>
       {open && (
-        <Modal
+        <Dialog
           open={open}
           onClose={onClose}
-          closeAfterTransition
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            p: 2
+          maxWidth={maxWidth}
+          fullWidth={fullWidth}
+          PaperProps={{
+            component: reducedMotion ? 'div' : motion.div,
+            ...(reducedMotion
+              ? {}
+              : {
+                  variants: modalContentVariants,
+                  initial: 'initial',
+                  animate: 'animate',
+                  exit: 'exit',
+                }),
+            sx: {
+              borderRadius: 3,
+              maxHeight: '90vh',
+              m: 2,
+              overflow: 'hidden',
+            },
+          }}
+          BackdropProps={{
+            component: reducedMotion ? 'div' : motion.div,
+            ...(reducedMotion
+              ? {}
+              : {
+                  variants: modalBackdropVariants,
+                  initial: 'initial',
+                  animate: 'animate',
+                  exit: 'exit',
+                }),
           }}
         >
-          <motion.div
-            variants={backdropVariants}
-            initial="hidden"
-            animate="visible"
-            exit="hidden"
-            style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          {/* Header */}
+          <Box
+            sx={{
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'center'
+              justifyContent: 'space-between',
+              p: 2.5,
+              borderBottom: '1px solid #e2e8f0',
             }}
-            onClick={onClose}
           >
-            <motion.div
-              variants={modalVariants}
-              initial="hidden"
-              animate="visible"
-              exit="exit"
-              onClick={(e) => e.stopPropagation()}
-              style={{
-                width: '100%',
-                maxWidth: maxWidth,
-                maxHeight: '90vh',
-                overflow: 'auto'
-              }}
-            >
-              <Box
-                sx={{
-                  bgcolor: 'background.paper',
-                  borderRadius: 3,
-                  boxShadow: '0 25px 50px rgba(0, 0, 0, 0.25)',
-                  position: 'relative',
-                  p: 4,
-                  ...sx
-                }}
-              >
-                {/* Close button */}
-                {showCloseButton && (
-                  <motion.div
-                    initial={{ opacity: 0, rotate: -90 }}
-                    animate={{ opacity: 1, rotate: 0 }}
-                    transition={{ delay: 0.2 }}
-                    style={{
-                      position: 'absolute',
-                      top: 16,
-                      right: 16
-                    }}
-                  >
-                    <IconButton
-                      onClick={onClose}
-                      sx={{
-                        bgcolor: 'rgba(185, 28, 28, 0.1)',
-                        '&:hover': {
-                          bgcolor: 'rgba(185, 28, 28, 0.2)',
-                          transform: 'rotate(90deg)'
-                        },
-                        transition: 'all 0.3s ease'
-                      }}
-                    >
-                      <Close sx={{ color: '#b91c1c' }} />
-                    </IconButton>
-                  </motion.div>
-                )}
+            <Typography variant="h6" component="div" fontWeight={600} sx={{ color: '#1e293b' }}>
+              {title}
+            </Typography>
+            {showCloseButton && (
+              <motion.div whileHover={{ rotate: 90 }} transition={{ duration: 0.2 }}>
+                <IconButton
+                  onClick={onClose}
+                  size="small"
+                  sx={{
+                    color: '#64748b',
+                    '&:hover': { bgcolor: '#fee2e2', color: '#b91c1c' },
+                  }}
+                >
+                  <Close />
+                </IconButton>
+              </motion.div>
+            )}
+          </Box>
 
-                {children}
-              </Box>
-            </motion.div>
-          </motion.div>
-        </Modal>
+          <DialogContent sx={{ p: 3 }}>{children}</DialogContent>
+        </Dialog>
       )}
     </AnimatePresence>
   );
