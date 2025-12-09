@@ -1,45 +1,41 @@
-// ===========================================
-// ANIMATED PAGE WRAPPER
-// ===========================================
-// Wrap your page content with this component
-// for automatic enter/exit animations
-// ===========================================
-
+// animations/components/AnimatedPage.jsx
 import React from 'react';
 import { motion } from 'framer-motion';
-import { pageVariants } from '../variants';
+import { pageVariants, dashboardPageVariants, authPageVariants } from '../variants';
+import { prefersReducedMotion } from '../config/animationConfig';
 
-const AnimatedPage = ({ 
-  children, 
-  variant = 'default', // 'default', 'slide', 'fade'
+const AnimatedPage = ({
+  children,
+  variant = 'default',
   className = '',
-  style = {}
+  style = {},
 }) => {
+  const reducedMotion = prefersReducedMotion();
+
   const variants = {
     default: pageVariants,
-    slide: {
-      initial: { x: 100, opacity: 0 },
-      animate: { x: 0, opacity: 1, transition: { duration: 0.5 } },
-      exit: { x: -100, opacity: 0, transition: { duration: 0.3 } }
+    dashboard: dashboardPageVariants,
+    auth: authPageVariants,
+    none: {
+      initial: {},
+      animate: {},
+      exit: {},
     },
-    fade: {
-      initial: { opacity: 0 },
-      animate: { opacity: 1, transition: { duration: 0.4 } },
-      exit: { opacity: 0, transition: { duration: 0.2 } }
-    }
   };
+
+  const selectedVariant = reducedMotion ? variants.none : variants[variant];
 
   return (
     <motion.div
-      variants={variants[variant]}
+      variants={selectedVariant}
       initial="initial"
       animate="animate"
       exit="exit"
       className={className}
-      style={{ 
-        width: '100%', 
+      style={{
+        width: '100%',
         minHeight: '100vh',
-        ...style 
+        ...style,
       }}
     >
       {children}

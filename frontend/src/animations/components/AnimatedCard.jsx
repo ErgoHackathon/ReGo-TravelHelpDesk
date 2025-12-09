@@ -1,36 +1,50 @@
-// ===========================================
-// ANIMATED CARD COMPONENT
-// ===========================================
-// Cards with entrance animation and hover effects
-// ===========================================
-
+// animations/components/AnimatedCard.jsx
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Card } from '@mui/material';
-import { cardVariants } from '../variants';
+import { cardVariants, glowCardVariants, statCardVariants } from '../variants';
+import { prefersReducedMotion } from '../config/animationConfig';
 
-const AnimatedCard = ({ 
-  children, 
+const variantMap = {
+  default: cardVariants,
+  glow: glowCardVariants,
+  stat: statCardVariants,
+};
+
+const AnimatedCard = ({
+  children,
+  variant = 'default',
   delay = 0,
   enableHover = true,
   sx = {},
-  ...props 
+  ...props
 }) => {
+  const reducedMotion = prefersReducedMotion();
+  const selectedVariant = variantMap[variant] || cardVariants;
+
+  if (reducedMotion) {
+    return (
+      <Card sx={{ height: '100%', ...sx }} {...props}>
+        {children}
+      </Card>
+    );
+  }
+
   return (
     <motion.div
-      variants={cardVariants}
+      variants={selectedVariant}
       initial="initial"
       animate="animate"
       whileHover={enableHover ? "hover" : undefined}
       whileTap={enableHover ? "tap" : undefined}
-      transition={{ delay }}
+      custom={delay}
       style={{ height: '100%' }}
     >
       <Card
         sx={{
           height: '100%',
-          transition: 'box-shadow 0.3s ease',
-          ...sx
+          transition: 'box-shadow 0.2s ease',
+          ...sx,
         }}
         {...props}
       >

@@ -1,52 +1,58 @@
-// ===========================================
-// ANIMATED COUNTER COMPONENT
-// ===========================================
-// Numbers that count up from 0
-// ===========================================
+// animations/components/AnimatedCounter.jsx
+import React, { useEffect, useState, useRef } from 'react';
+import { motion, useInView, useSpring, useTransform } from 'framer-motion';
+import { prefersReducedMotion } from '../config/animationConfig';
 
-import React from 'react';
-import { useSpring, animated } from '@react-spring/web';
-import { useInView } from 'framer-motion';
-import { useRef } from 'react';
-
-const AnimatedCounter = ({ 
-  value, 
-  duration = 2000,
+const AnimatedCounter = ({
+  value,
+  duration = 1.5,
   prefix = '',
   suffix = '',
   decimals = 0,
   style = {},
-  className = ''
+  className = '',
 }) => {
   const ref = useRef(null);
-  const isInView = useInView(ref, { once: true, margin: "-50px" });
-  
-  // Parse the value (handle strings like "₹3.2L")
-  const numericValue = typeof value === 'string' 
-    ? parseFloat(value.replace(/[^0-9.]/g, '')) || 0
-    : value;
+  const isInView = useInView(ref, { once: true, margin: '-50px' });
+  const reducedMotion = prefersReducedMotion();
 
-  const { number } = useSpring({
-    from: { number: 0 },
-    to: { number: isInView ? numericValue : 0 },
-    delay: 200,
-    config: { duration }
+  // Parse numeric value
+  const numericValue =
+    typeof value === 'string'
+      ? parseFloat(value.replace(/[^0-9.-]/g, '')) || 0
+      : value;
+
+  const springValue = useSpring(0, {
+    stiffness: 50,
+    damping: 20,
+    duration: duration * 1000,
   });
 
-  // Extract suffix from original value if it's a string
-  const extractedSuffix = typeof value === 'string' 
-    ? value.replace(/[0-9.,]/g, '').trim() 
-    : suffix;
+  const displayValue = useTransform(springValue, (latest) => {
+    const formatted = decimals > 0 ? latest.toFixed(decimals) : Math.floor(latest).toLocaleString();
+    return `${prefix}${formatted}${suffix}`;
+  });
+
+  useEffect(() => {
+    if (isInView && !reducedMotion) {
+      springValue.set(numericValue);
+    }
+  }, [isInView, numericValue, springValue, reducedMotion]);
+
+  if (reducedMotion) {
+    return (
+      <span ref={ref} style={style} className={className}>
+        {prefix}
+        {decimals > 0 ? numericValue.toFixed(decimals) : numericValue.toLocaleString()}
+        {suffix}
+      </span>
+    );
+  }
 
   return (
-    <animated.span ref={ref} style={style} className={className}>
-      {number.to(n => {
-        const formatted = decimals > 0 
-          ? n.toFixed(decimals) 
-          : Math.floor(n).toLocaleString();
-        return `${prefix}${formatted}${extractedSuffix || suffix}`;
-      })}
-    </animated.span>
+    <motion.span ref={ref} style={style} className={className}>
+      {displayValue}
+    </motion.span>
   );
 };
 

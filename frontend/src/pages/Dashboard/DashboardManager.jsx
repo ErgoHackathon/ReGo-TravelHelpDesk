@@ -14,7 +14,8 @@ import {
   Table,
   Typography,
   Button,
-  Stack
+  Stack,
+  Skeleton
 } from '@mui/material';
 import {
   FlightTakeoff,
@@ -50,6 +51,84 @@ import realApi from '../../services/api/realApi';
 import managerService from '../../services/managerService';
 import { toast } from 'react-toastify';
 
+// Animation variants
+const pageVariants = {
+  initial: { opacity: 0 },
+  animate: { 
+    opacity: 1,
+    transition: {
+      duration: 0.4,
+      when: "beforeChildren",
+      staggerChildren: 0.08
+    }
+  },
+  exit: { opacity: 0, transition: { duration: 0.2 } }
+};
+
+const cardVariants = {
+  initial: { opacity: 0, y: 16 },
+  animate: { 
+    opacity: 1, 
+    y: 0,
+    transition: { duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }
+  },
+  hover: {
+    y: -4,
+    boxShadow: "0 12px 24px -8px rgba(0, 0, 0, 0.15)",
+    transition: { duration: 0.2 }
+  }
+};
+
+const statCardVariants = {
+  initial: { opacity: 0, y: 20, scale: 0.95 },
+  animate: (index) => ({
+    opacity: 1,
+    y: 0,
+    scale: 1,
+    transition: {
+      duration: 0.4,
+      delay: index * 0.1,
+      ease: [0.25, 0.46, 0.45, 0.94]
+    }
+  }),
+  hover: {
+    y: -4,
+    scale: 1.02,
+    transition: { duration: 0.2 }
+  }
+};
+
+const tableRowVariants = {
+  initial: { opacity: 0, x: -10 },
+  animate: (index) => ({
+    opacity: 1,
+    x: 0,
+    transition: {
+      duration: 0.3,
+      delay: index * 0.05,
+      ease: [0, 0, 0.2, 1]
+    }
+  }),
+  hover: {
+    backgroundColor: "rgba(185, 28, 28, 0.03)",
+    x: 4,
+    transition: { duration: 0.2 }
+  }
+};
+
+const filterButtonVariants = {
+  initial: { scale: 1 },
+  hover: { scale: 1.05 },
+  tap: { scale: 0.95 },
+  selected: { scale: 1, backgroundColor: "#1e293b" }
+};
+
+const buttonVariants = {
+  initial: { scale: 1 },
+  hover: { scale: 1.02, transition: { duration: 0.2 } },
+  tap: { scale: 0.98, transition: { duration: 0.1 } }
+};
+
 // Icon Mapping
 const ICON_MAP = {
   'Flight': <FlightTakeoff sx={{ fontSize: 35 }} />,
@@ -61,6 +140,28 @@ const ICON_MAP = {
   'CheckCircle': <CheckCircle sx={{ fontSize: 35 }} />,
   'Cancel': <Cancel sx={{ fontSize: 35 }} />,
   'AttachMoney': <AttachMoney sx={{ fontSize: 35 }} />
+};
+
+// Animated Stat Card Component
+const AnimatedStatCard = ({ stat, index }) => {
+  return (
+    <motion.div
+      variants={statCardVariants}
+      custom={index}
+      initial="initial"
+      animate="animate"
+      whileHover="hover"
+      style={{ height: '100%' }}
+    >
+      <StatDisplay
+        title={stat.title}
+        value={stat.value}
+        icon={ICON_MAP[stat.iconKey] || <FlightTakeoff />}
+        trend={stat.trend}
+        color={stat.color}
+      />
+    </motion.div>
+  );
 };
 
 const DashboardManager = () => {
@@ -216,8 +317,26 @@ const DashboardManager = () => {
         }
       }}
     >
-      {label}
-    </Button>
+      <Button
+        variant={filterStatus === value ? "contained" : "outlined"}
+        size="small"
+        onClick={() => setFilterStatus(value)}
+        sx={{
+          borderRadius: 5,
+          textTransform: 'none',
+          borderColor: filterStatus === value ? 'transparent' : '#e2e8f0',
+          bgcolor: filterStatus === value ? '#1e293b' : 'transparent',
+          color: filterStatus === value ? '#fff' : '#64748b',
+          transition: 'all 0.2s ease',
+          '&:hover': {
+            bgcolor: filterStatus === value ? '#0f172a' : '#f1f5f9',
+            borderColor: filterStatus === value ? 'transparent' : '#cbd5e1'
+          }
+        }}
+      >
+        {label}
+      </Button>
+    </motion.div>
   );
 
   if (loading) {
@@ -250,22 +369,51 @@ const DashboardManager = () => {
             />
           </Box>
 
-          <Box sx={{ flexGrow: 1 }} />
+              <Box sx={{ flexGrow: 1 }} />
 
-          {/* Raise Travel Request Button */}
-          <SharedButton
-            variant="contained"
-            startIcon={<FlightTakeoff />}
-            sx={{
-              bgcolor: "#b22a2a",
-              "&:hover": { bgcolor: "#8b1f1f" },
-              minWidth: 200,
-            }}
-            onClick={() => setShowRaiseRequestModal(true)}
+              {/* Raise Travel Request Button */}
+              <motion.div
+                variants={buttonVariants}
+                whileHover="hover"
+                whileTap="tap"
+              >
+                <SharedButton
+                  variant="contained"
+                  startIcon={<FlightTakeoff />}
+                  sx={{
+                    bgcolor: "#b22a2a",
+                    "&:hover": { bgcolor: "#8b1f1f" },
+                    minWidth: 200,
+                  }}
+                  onClick={() => setShowRaiseRequestModal(true)}
+                >
+                  Raise Travel Request
+                </SharedButton>
+              </motion.div>
+            </Box>
+          </motion.div>
+
+          {/* Stats */}
+          <Grid container spacing={3} sx={{ mb: 4 }}>
+            {displayStats.map((stat, index) => (
+              <Grid item xs={12} sm={6} md={4} key={index}>
+                <AnimatedStatCard stat={stat} index={index} />
+              </Grid>
+            ))}
+          </Grid>
+
+          {/* Recent Application Status Table */}
+          <motion.div
+            variants={cardVariants}
+            initial="initial"
+            animate="animate"
+            whileHover="hover"
           >
-            Raise Travel Request
-          </SharedButton>
-        </Box>
+            <SharedCard variant="dashboard">
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3, flexWrap: 'wrap', gap: 2 }}>
+                <SharedTypography variant="cardTitle">
+                  Recent Application Status
+                </SharedTypography>
 
         {/* Stats */}
         <Grid container spacing={3} sx={{ mb: 4 }}>
@@ -367,10 +515,15 @@ const DashboardManager = () => {
         maxWidth="md"
         fullWidth
       >
-        <Box sx={{ mt: 1 }}>
-          <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 3 }}>
-            Fill in the details below to submit a new travel request for your team.
-          </Typography>
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+        >
+          <Box sx={{ mt: 1 }}>
+            <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 3 }}>
+              Fill in the details below to submit a new travel request for your team.
+            </Typography>
 
           <Grid container spacing={3} sx={{ mb: 4 }}>
             <Grid item xs={12} sm={4}>
@@ -406,12 +559,16 @@ const DashboardManager = () => {
                 onChange={(e) => setRemark(e.target.value)}
               />
             </Grid>
-          </Grid>
 
-          <Box sx={{ mb: 2 }}>
-            <Typography variant="h6" sx={{ fontSize: '1rem', fontWeight: 600, mb: 2 }}>
-              Select Employees and Dates
-            </Typography>
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+            >
+              <Box sx={{ mb: 2 }}>
+                <Typography variant="h6" sx={{ fontSize: '1rem', fontWeight: 600, mb: 2 }}>
+                  Select Employees and Dates
+                </Typography>
 
             <Box sx={{ border: '1px solid #e2e8f0', borderRadius: 2, overflow: 'hidden' }}>
               <Table size="small">
@@ -498,10 +655,35 @@ const DashboardManager = () => {
               }}
               sx={{ bgcolor: '#b91c1c', '&:hover': { bgcolor: '#991b1b' }, px: 4 }}
             >
-              Review & Submit Request
-            </SharedButton>
+              <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 4 }}>
+                <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                  <SharedButton
+                    variant="outlined"
+                    onClick={() => setShowRaiseRequestModal(false)}
+                    sx={{ 
+                      borderColor: '#e2e8f0', 
+                      color: '#64748b', 
+                      '&:hover': { borderColor: '#cbd5e1', bgcolor: '#f8fafc' } 
+                    }}
+                  >
+                    Cancel
+                  </SharedButton>
+                </motion.div>
+                <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                  <SharedButton
+                    variant="contained"
+                    onClick={() => {
+                      setShowRaiseRequestModal(false);
+                    }}
+                    sx={{ bgcolor: '#b91c1c', '&:hover': { bgcolor: '#991b1b' }, px: 4 }}
+                  >
+                    Review & Submit Request
+                  </SharedButton>
+                </motion.div>
+              </Box>
+            </motion.div>
           </Box>
-        </Box>
+        </motion.div>
       </SharedModal>
     </BaseLayout>
   );
