@@ -24,6 +24,7 @@ const dashboardService = {
       if (role === 'MANAGER' || role === 'AVP' || role === 'SVP' || role === 'CHRO') {
         // Managers see team's travel requests
         travels = await managerService.getTeamTravel(userId);
+        console.log("travels:::::::: ", travels)
       } else {
         // Employees see their own travel requests
         travels = await employeeService.getEmployeeTravel(userId);
@@ -38,6 +39,8 @@ const dashboardService = {
         rejected: travels.filter(t => t.status === 4).length,
       };
 
+      console.log("stats here:::::::: ", stats)
+
       // Format for display
       const formattedStats = [
         { title: 'Total Requests', value: stats.totalRequests, iconKey: 'Flight', color: 'primary', trend: '' },
@@ -47,6 +50,8 @@ const dashboardService = {
       ];
 
       console.log('📊 Stats calculated:', stats);
+
+      console.log("formattedStats:::::::: ", formattedStats)
       return { ...stats, stats: formattedStats };
 
     } catch (error) {
@@ -71,6 +76,42 @@ const dashboardService = {
       const pending = travels.filter(t => t.status === 0 || t.status === 1);
       console.log('📊 Pending approvals:', pending.length);
       return pending;
+    } catch (error) {
+      console.error('❌ Error getting pending approvals:', error);
+      return [];
+    }
+  },
+
+  getAllDetails: async (managerId) => {
+    console.log('🟢 Getting all requests for:', managerId);
+
+    if (!managerId) {
+      console.warn('⚠️ No managerId provided');
+      return [];
+    }
+
+    try {
+      const travels = await managerService.getTeamTravel(managerId);
+      // const pending = travels.filter(t => t.status === 0 || t.status === 1);
+      // console.log('📊 Pending approvals:', pending.length);
+      // travels?.forEach(async travel => {
+      //   const employeeDetails = await employeeService.getEmployeeProfile(travel.empId)
+      //   console.log("employeeDetails:::::::::: ", employeeDetails)
+      //   {...travel, }
+      // });
+
+      const travelsWithEmployeeDetails = await Promise.all(travels.map(async travel => {
+        const employeeDetails = await employeeService.getEmployeeProfile(travel?.empId);
+        console.log("employeeDetails:::::::::: ", employeeDetails);
+        
+        // Return a new object that combines travel and employeeDetails
+        return {
+            ...travel, // Spread the existing travel properties
+            employeeDetails // Add the employee details
+        };
+    }));
+
+      return travelsWithEmployeeDetails;
     } catch (error) {
       console.error('❌ Error getting pending approvals:', error);
       return [];

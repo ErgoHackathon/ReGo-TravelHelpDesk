@@ -1,8 +1,7 @@
 // pages/dashboard/DashboardManager.jsx
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { json, useNavigate } from 'react-router-dom';
 import {
   Box,
   Grid,
@@ -28,7 +27,8 @@ import {
   People,
   PendingActions,
   AttachMoney,
-  FilterList
+  FilterList,
+  ConnectingAirportsOutlined
 } from '@mui/icons-material';
 import { fetchDashboardData } from '../../redux/slices/dashboardSlice';
 import { logout } from '../../features/authSlice';
@@ -47,6 +47,9 @@ import {
   UserAvatar
 } from '../../components/shared';
 import BaseLayout from '../../components/layout/BaseLayout';
+import realApi from '../../services/api/realApi';
+import managerService from '../../services/managerService';
+import { toast } from 'react-toastify';
 
 // Animation variants
 const pageVariants = {
@@ -128,15 +131,15 @@ const buttonVariants = {
 
 // Icon Mapping
 const ICON_MAP = {
-  'Flight': <FlightTakeoff />,
-  'FlightTakeoff': <FlightTakeoff />,
-  'Group': <Group />,
-  'People': <People />,
-  'Assignment': <Assignment />,
-  'PendingActions': <PendingActions />,
-  'CheckCircle': <CheckCircle />,
-  'Cancel': <Cancel />,
-  'AttachMoney': <AttachMoney />
+  'Flight': <FlightTakeoff sx={{ fontSize: 35 }} />,
+  'FlightTakeoff': <FlightTakeoff sx={{ fontSize: 35 }} />,
+  'Group': <Group sx={{ fontSize: 35 }} />,
+  'People': <People sx={{ fontSize: 35 }} />,
+  'Assignment': <Assignment sx={{ fontSize: 35 }} />,
+  'PendingActions': <PendingActions sx={{ fontSize: 35 }} />,
+  'CheckCircle': <CheckCircle sx={{ fontSize: 35 }} />,
+  'Cancel': <Cancel sx={{ fontSize: 35 }} />,
+  'AttachMoney': <AttachMoney sx={{ fontSize: 35 }} />
 };
 
 // Animated Stat Card Component
@@ -165,15 +168,34 @@ const DashboardManager = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { user } = useSelector((state) => state.auth);
-  const { stats, pendingApprovals, loading } = useSelector((state) => state.dashboard);
+  console.log("user in here::::::::::   ", user)
+  const { stats, pendingApprovals, getAllDetails, allEmployees, loading } = useSelector((state) => state.dashboard);
   const [showRaiseRequestModal, setShowRaiseRequestModal] = useState(false);
+  const [checkedEmployees, setCheckedEmployees] = useState([]);
+  const [dates, setDates] = useState({});
+  const [country, setCountry] = useState("")
+  const [city, setCity] = useState("")
+  const [remark, setRemark] = useState("")
+  const [requestSubmit, setRequestSubmit] = useState(false)
+  const [requestSubmitStatus, setRequestSubmitStatus] = useState(0);
 
   // Filter State
-  const [filterStatus, setFilterStatus] = useState('ALL');
+  const [filterStatus, setFilterStatus] = useState('PENDING');
+  console.log("pendingApprovals::::::::  ", pendingApprovals)
+  console.log("stats on dashboard:::::::::  ", stats)
+  console.log("getAllDetails on dash:::::::: ", getAllDetails)
+
+  // useEffect(())
+
+  const travellingEmployeeIds = new Set(getAllDetails.map(employee => employee?.empId))
+  const emplyeesNotOnTravel = allEmployees.filter(employee => !travellingEmployeeIds.has(employee?.empId))
+
+  console.log("emplyeesNotOnTravel:::::::::  ", emplyeesNotOnTravel)
 
   useEffect(() => {
     dispatch(fetchDashboardData());
-  }, [dispatch]);
+    // dispatch(realApi.getTravelDetailByRptId(user?.empId))
+  }, [dispatch, requestSubmit]);
 
   const handleLogout = async () => {
     await dispatch(logout());
@@ -184,26 +206,116 @@ const DashboardManager = () => {
     navigate(`/application/${id}`);
   };
 
-  // Filter Logic
-  const getFilteredApprovals = () => {
-    if (filterStatus === 'ALL') return pendingApprovals;
+  const resetFields = () => {
+    setCountry('');
+    setCity('');
+    setRemark('');
+    setDates({});
+    setCheckedEmployees([]);
+  };
 
-    return pendingApprovals.filter(req => {
-      if (filterStatus === 'PENDING') return req.status.includes('REVIEW') || req.status === 'PENDING';
-      if (filterStatus === 'APPROVED') return req.status.includes('APPROVED');
-      if (filterStatus === 'REJECTED') return req.status === 'REJECTED';
-      return req.status === filterStatus;
+  const handleCloseModal = () => {
+    resetFields(); // Reset fields when closing the modal
+    setShowRaiseRequestModal(false);
+  }
+
+  const handleCheckboxChange = (employeeId) => {
+    setCheckedEmployees((prev) => {
+      if (prev.includes(employeeId)) {
+        return prev.filter(id => id !== employeeId); // Uncheck
+      } else {
+        return [...prev, employeeId]; // Check
+      }
     });
   };
 
+  const getTodayDate = () => {
+    const today = new Date();
+    return today.toISOString().split('T')[0]; // Format YYYY-MM-DD
+  };
+
+  const handleDateChange = (employeeId, dateType, value) => {
+
+    setDates((prev) => ({
+      ...prev,
+      [employeeId]: {
+        ...prev[employeeId],
+        [dateType]: value,
+      },
+    }));
+  };
+
+  const handleSubmitRequest = () => {
+    const jsonData = checkedEmployees.map(employeeId => ({
+      empId: employeeId,
+      // name: allEmployees.find(emp => emp.empId === employeeId).name,
+      country: country,
+      city: city,
+      travelStartDate: dates[employeeId]?.startDate || null, // Get start date
+      travelEndDate: dates[employeeId]?.endDate || null,     // Get end date
+      status: 1,
+      rptEmpId: user.empId,
+      remark: remark
+    }));
+
+    console.log("request submit details here", JSON.stringify(jsonData)); // This will log the JSON object
+    jsonData.forEach(async (travelRequest) => {
+      const response = await managerService.createTravelRequest(travelRequest)
+      console.log("response::::::::: ", response)
+      if (response !== 'Inserted') {
+        setRequestSubmitStatus(1)
+      }
+    })
+    if (requestSubmitStatus === 0) {
+      toast.success('Request Submitted')
+    } else {
+      toast.error('Request Failed')
+    }
+    setShowRaiseRequestModal(false)
+    setRequestSubmit(true)
+
+    // Here you can also send jsonData to your API or handle it as needed
+  }
+
+  // Filter Logic
+  const getFilteredApprovals = () => {
+
+    if (filterStatus === 'ALL') {
+      return getAllDetails;
+    }
+    const statusMap = {
+      PENDING: 1,
+      APPROVED: 2,
+      REJECTED: 3
+    };
+    const targetStatus = statusMap[filterStatus];
+    return getAllDetails.filter(req => req.status === targetStatus);
+  };
+
+  const handleFilter = (value) => {
+    console.log("Selected filter value: ", value);
+    setFilterStatus(value);
+  };
+
   const filteredApprovals = getFilteredApprovals();
+  console.log("filteredApprovals::::::::: ", filteredApprovals)
 
   const FilterButton = ({ label, value }) => (
-    <motion.div
-      variants={filterButtonVariants}
-      initial="initial"
-      whileHover="hover"
-      whileTap="tap"
+    <Button
+      variant={filterStatus === value ? "contained" : "outlined"}
+      size="small"
+      onClick={() => handleFilter(value)}
+      sx={{
+        borderRadius: 5,
+        textTransform: 'none',
+        borderColor: filterStatus === value ? 'transparent' : '#e2e8f0',
+        bgcolor: filterStatus === value ? '#1e293b' : 'transparent',
+        color: filterStatus === value ? '#fff' : '#64748b',
+        '&:hover': {
+          bgcolor: filterStatus === value ? '#0f172a' : '#f1f5f9',
+          borderColor: filterStatus === value ? 'transparent' : '#cbd5e1'
+        }
+      }}
     >
       <Button
         variant={filterStatus === value ? "contained" : "outlined"}
@@ -231,54 +343,31 @@ const DashboardManager = () => {
     return <LoadingSpinner />;
   }
 
-  const defaultStats = [
-    { title: 'Requests Raised', value: 24, iconKey: 'FlightTakeoff' },
-    { title: 'Pending Approvals', value: 5, iconKey: 'Assignment' },
-    { title: 'Total Reports', value: 12, iconKey: 'Group' }
-  ];
+  const firstName = user?.name.split(" ")[0];
+  const lastName = user?.name.split(" ")[1];
 
-  const displayStats = stats && stats.length > 0 ? stats : defaultStats;
 
   return (
     <BaseLayout variant="dashboard">
       <Navbar user={user} onLogout={handleLogout} />
 
-      <motion.div
-        variants={pageVariants}
-        initial="initial"
-        animate="animate"
-        exit="exit"
-      >
-        <Box sx={{ p: 3 }}>
-          {/* Header */}
-          <motion.div variants={cardVariants}>
-            <Box sx={{ mb: 4, display: 'flex', alignItems: 'center', gap: 2 }}>
-              <motion.div
-                initial={{ scale: 0, rotate: -180 }}
-                animate={{ scale: 1, rotate: 0 }}
-                transition={{ type: "spring", stiffness: 200, damping: 15 }}
-              >
-                <UserAvatar
-                  firstName={user?.firstName}
-                  lastName={user?.lastName}
-                  size="large"
-                />
-              </motion.div>
-              <Box>
-                <SharedTypography variant="pageTitle">
-                  {user?.role === 'MANAGER' ? 'Manager Dashboard' : `${user?.role} Dashboard`}
-                </SharedTypography>
-                <motion.div
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.2 }}
-                >
-                  <StatusChip
-                    label={`${user?.role} - ${user?.department}`}
-                    variant="default"
-                  />
-                </motion.div>
-              </Box>
+      <Box sx={{ p: 3 }}>
+        {/* Header */}
+        <Box sx={{ mb: 4, display: 'flex', alignItems: 'center', gap: 2 }}>
+          <UserAvatar
+            firstName={firstName}
+            lastName={lastName}
+            size="large"
+          />
+          <Box>
+            <SharedTypography variant="pageTitle">
+              {user?.role === 'MANAGER' ? 'Manager Dashboard' : `${user?.role} Dashboard`}
+            </SharedTypography>
+            <StatusChip
+              label={`${user?.role} - ${user?.department}`}
+              variant="default"
+            />
+          </Box>
 
               <Box sx={{ flexGrow: 1 }} />
 
@@ -326,117 +415,102 @@ const DashboardManager = () => {
                   Recent Application Status
                 </SharedTypography>
 
-                {/* Filter Bar */}
-                <Stack direction="row" spacing={1} sx={{ overflowX: 'auto', pb: 1 }}>
-                  <FilterButton label="All" value="ALL" />
-                  <FilterButton label="Pending" value="PENDING" />
-                  <FilterButton label="Approved" value="APPROVED" />
-                  <FilterButton label="Rejected" value="REJECTED" />
-                  <FilterButton label="Manager Review" value="MANAGER_REVIEW" />
-                  {(user?.role === 'AVP' || user?.role === 'SVP') && (
-                    <FilterButton label="Travel Desk" value="TRAVEL_DESK_REVIEW" />
-                  )}
-                </Stack>
-              </Box>
+        {/* Stats */}
+        <Grid container spacing={3} sx={{ mb: 4 }}>
+          {(stats && stats.length > 0 ? stats : [
+            { title: 'Requests Raised', value: 24, iconKey: 'FlightTakeoff' },
+            { title: 'Pending Approvals', value: 5, iconKey: 'Assignment' },
+            { title: 'Total Reports', value: 12, iconKey: 'Group' }
+          ]).map((stat, index) => (
+            <Grid item xs={12} sm={6} md={12 / stats.length}
+              key={index}>
+              <StatDisplay
+                title={stat.title}
+                value={stat.value}
+                icon={ICON_MAP[stat.iconKey] || <FlightTakeoff />}
+                trend={stat.trend}
+                color={stat.color}
+              />
+            </Grid>
+          ))}
+        </Grid>
 
-              <SharedTable>
-                <TableHeader
-                  columns={[
-                    { id: 'id', label: 'Request ID' },
-                    { id: 'employee', label: 'Employee' },
-                    { id: 'destination', label: 'Destination' },
-                    { id: 'status', label: 'Status' },
-                    { id: 'actions', label: 'Action' }
-                  ]}
-                />
+        {/* Recent Application Status Table */}
+        <SharedCard variant="dashboard">
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3, flexWrap: 'wrap', gap: 2 }}>
+            <SharedTypography variant="cardTitle">
+              Recent Application Status
+            </SharedTypography>
 
-                <TableBody>
-                  <AnimatePresence mode="popLayout">
-                    {filteredApprovals.length > 0 ? filteredApprovals.map((request, index) => (
-                      <motion.tr
-                        key={request.id}
-                        variants={tableRowVariants}
-                        custom={index}
-                        initial="initial"
-                        animate="animate"
-                        whileHover="hover"
-                        exit={{ opacity: 0, x: -20, transition: { duration: 0.2 } }}
-                        layout
-                        style={{ display: 'table-row' }}
-                      >
-                        <TableCell>
-                          <motion.span
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            transition={{ delay: index * 0.05 }}
-                          >
-                            {request.id}
-                          </motion.span>
-                        </TableCell>
-                        <TableCell>{request.employee}</TableCell>
-                        <TableCell>{request.destination}</TableCell>
-                        <TableCell>
-                          <motion.div
-                            initial={{ scale: 0 }}
-                            animate={{ scale: 1 }}
-                            transition={{ type: "spring", stiffness: 500, delay: index * 0.05 + 0.1 }}
-                          >
-                            <StatusChip label={request.status || 'PENDING_MANAGER'} />
-                          </motion.div>
-                        </TableCell>
-                        <TableCell>
-                          <motion.div
-                            whileHover={{ scale: 1.02 }}
-                            whileTap={{ scale: 0.98 }}
-                          >
-                            <SharedButton
-                              variant="outlined"
-                              size="small"
-                              endIcon={<ArrowForward fontSize="small" />}
-                              onClick={() => handleViewDetails(request.id)}
-                              sx={{
-                                borderColor: '#e2e8f0',
-                                color: '#64748b',
-                                '&:hover': {
-                                  borderColor: '#b91c1c',
-                                  color: '#b91c1c',
-                                  bgcolor: '#fef2f2'
-                                }
-                              }}
-                            >
-                              View Details
-                            </SharedButton>
-                          </motion.div>
-                        </TableCell>
-                      </motion.tr>
-                    )) : (
-                      <motion.tr
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        style={{ display: 'table-row' }}
-                      >
-                        <TableCell colSpan={5} align="center" sx={{ py: 4, color: '#64748b' }}>
-                          <motion.div
-                            initial={{ y: 10 }}
-                            animate={{ y: 0 }}
-                          >
-                            No requests found matching filter "{filterStatus}"
-                          </motion.div>
-                        </TableCell>
-                      </motion.tr>
-                    )}
-                  </AnimatePresence>
-                </TableBody>
-              </SharedTable>
-            </SharedCard>
-          </motion.div>
-        </Box>
-      </motion.div>
+            {/* Filter Bar */}
+            <Stack direction="row" spacing={1} sx={{ overflowX: 'auto', pb: 1 }}>
+              <FilterButton label="All" value="ALL" />
+              <FilterButton label="Pending" value="PENDING" />
+              <FilterButton label="Approved" value="APPROVED" />
+              <FilterButton label="Rejected" value="REJECTED" />
+              <FilterButton label="Manager Review" value="MANAGER_REVIEW" />
+              {(user?.role === 'AVP' || user?.role === 'SVP') && (
+                <FilterButton label="Travel Desk" value="TRAVEL_DESK_REVIEW" />
+              )}
+            </Stack>
+          </Box>
+
+          <SharedTable>
+            <TableHeader
+              columns={[
+                { id: 'id', label: 'Request ID' },
+                { id: 'employee', label: 'Employee' },
+                { id: 'destination', label: 'Destination' },
+                { id: 'status', label: 'Status' },
+                { id: 'actions', label: 'Action' }
+              ]}
+            />
+
+            <TableBody>
+              {filteredApprovals.length > 0 ? filteredApprovals.map((request) => (
+                <TableRow key={request.id}>
+                  <TableCell>{request.id}</TableCell>
+                  <TableCell>{request.employeeDetails?.empName}</TableCell>
+                  <TableCell>{request.destination}</TableCell>
+                  <TableCell>
+                    {/* <StatusChip label={request.status || 'PENDING_MANAGER'} /> */}
+                  </TableCell>
+                  <TableCell>
+                    <SharedButton
+                      variant="outlined"
+                      size="small"
+                      endIcon={<ArrowForward fontSize="small" />}
+                      onClick={() => handleViewDetails(request.id)}
+                      sx={{
+                        borderColor: '#e2e8f0',
+                        color: '#64748b',
+                        '&:hover': {
+                          borderColor: '#b91c1c',
+                          color: '#b91c1c',
+                          bgcolor: '#fef2f2'
+                        }
+                      }}
+                    >
+                      View Details
+                    </SharedButton>
+                  </TableCell>
+                </TableRow>
+              )) : (
+                <TableRow>
+                  <TableCell colSpan={5} align="center" sx={{ py: 4, color: '#64748b' }}>
+                    No requests found matching filter "{filterStatus}"
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </SharedTable>
+        </SharedCard>
+      </Box>
 
       {/* Raise New Request Modal */}
       <SharedModal
         open={showRaiseRequestModal}
-        onClose={() => setShowRaiseRequestModal(false)}
+        onClose={() => handleCloseModal()}
         title="Raise New Travel Request"
         maxWidth="md"
         fullWidth
@@ -451,37 +525,39 @@ const DashboardManager = () => {
               Fill in the details below to submit a new travel request for your team.
             </Typography>
 
-            <Grid container spacing={3} sx={{ mb: 4 }}>
-              <Grid item xs={12} sm={6}>
-                <motion.div
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.1 }}
-                >
-                  <TextField
-                    fullWidth
-                    label="Destination City/Country"
-                    variant="outlined"
-                    placeholder="e.g. London, UK"
-                    InputLabelProps={{ shrink: true }}
-                  />
-                </motion.div>
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <motion.div
-                  initial={{ opacity: 0, x: 10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.15 }}
-                >
-                  <TextField
-                    fullWidth
-                    label="Reason for Travel"
-                    variant="outlined"
-                    placeholder="e.g. Client Meeting"
-                    InputLabelProps={{ shrink: true }}
-                  />
-                </motion.div>
-              </Grid>
+          <Grid container spacing={3} sx={{ mb: 4 }}>
+            <Grid item xs={12} sm={4}>
+              <TextField
+                fullWidth
+                label="Destination Country"
+                variant="outlined"
+                placeholder="e.g. Germany"
+                InputLabelProps={{ shrink: true }}
+                value={country}
+                onChange={(e) => setCountry(e.target.value)}
+              />
+            </Grid>
+            <Grid item xs={12} sm={4}>
+              <TextField
+                fullWidth
+                label="Destination City"
+                variant="outlined"
+                placeholder="e.g. Berlin"
+                InputLabelProps={{ shrink: true }}
+                value={city}
+                onChange={(e) => setCity(e.target.value)}
+              />
+            </Grid>
+            <Grid item xs={12} sm={4}>
+              <TextField
+                fullWidth
+                label="Reason for Travel"
+                variant="outlined"
+                placeholder="e.g. Client Meeting"
+                InputLabelProps={{ shrink: true }}
+                value={remark}
+                onChange={(e) => setRemark(e.target.value)}
+              />
             </Grid>
 
             <motion.div
@@ -494,57 +570,90 @@ const DashboardManager = () => {
                   Select Employees and Dates
                 </Typography>
 
-                <Box sx={{ border: '1px solid #e2e8f0', borderRadius: 2, overflow: 'hidden' }}>
-                  <Table size="small">
-                    <TableHead sx={{ bgcolor: '#f8fafc' }}>
-                      <TableRow>
-                        <TableCell padding="checkbox"><Checkbox size="small" /></TableCell>
-                        <TableCell sx={{ fontWeight: 600 }}>Employee Name</TableCell>
-                        <TableCell sx={{ fontWeight: 600 }}>Departure Date</TableCell>
-                        <TableCell sx={{ fontWeight: 600 }}>Arrival Date</TableCell>
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {['John Doe', 'Jane Smith'].map((name, index) => (
-                        <motion.tr
-                          key={name}
-                          initial={{ opacity: 0, x: -10 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          transition={{ delay: 0.25 + index * 0.05 }}
-                          style={{ display: 'table-row' }}
-                        >
-                          <TableCell padding="checkbox"><Checkbox size="small" /></TableCell>
-                          <TableCell>{name}</TableCell>
-                          <TableCell>
-                            <TextField 
-                              type="date" 
-                              size="small" 
-                              fullWidth 
-                              variant="standard" 
-                              InputProps={{ disableUnderline: true }} 
-                            />
-                          </TableCell>
-                          <TableCell>
-                            <TextField 
-                              type="date" 
-                              size="small" 
-                              fullWidth 
-                              variant="standard" 
-                              InputProps={{ disableUnderline: true }} 
-                            />
-                          </TableCell>
-                        </motion.tr>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </Box>
-              </Box>
-            </motion.div>
+            <Box sx={{ border: '1px solid #e2e8f0', borderRadius: 2, overflow: 'hidden' }}>
+              <Table size="small">
+                <TableHead sx={{ bgcolor: '#f8fafc' }}>
+                  <TableRow>
+                    <TableCell padding="checkbox"></TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>Employee Name</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>Departure Date</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>Arrival Date</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {emplyeesNotOnTravel.length > 0 ? emplyeesNotOnTravel.map((employee) => {
+                    const startDate = dates[employee.empId]?.startDate || '';
+                    const endDate = dates[employee.empId]?.endDate || '';
+                    return (
 
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.35 }}
+                      <TableRow key={employee.id}>
+                        <TableCell padding="checkbox">
+                          {console.log("employee.id::::::: ", employee.empId)}
+                          <Checkbox
+                            size="small"
+                            checked={checkedEmployees.includes(employee.empId)}
+                            onChange={() => handleCheckboxChange(employee.empId)} />
+                        </TableCell>
+                        <TableCell>
+                          {employee.name}
+                        </TableCell>
+                        <TableCell>
+                          <TextField type="date"
+                            size="small"
+                            fullWidth
+                            variant="standard"
+                            InputProps={{ disableUnderline: true }}
+                            onChange={(e) => handleDateChange(employee.empId, 'startDate', e.target.value)}
+                            inputProps={{
+                              min: getTodayDate(), // Disable past dates
+                            }}
+                            value={startDate}
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <TextField
+                            type="date"
+                            size="small"
+                            fullWidth
+                            variant="standard"
+                            InputProps={{ disableUnderline: true }}
+                            onChange={(e) => handleDateChange(employee.empId, 'endDate', e.target.value)}
+                            inputProps={{
+                              min: startDate ? startDate : getTodayDate(), // Disable dates before the selected start date
+                            }}
+                            value={endDate}
+                          />
+                        </TableCell>
+                      </TableRow>
+                    )
+                  }) : (
+                    <TableRow>
+                      <TableCell colSpan={5} align="center" sx={{ py: 4, color: '#64748b' }}>
+                        No requests found
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </Box>
+          </Box>
+
+          <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 4 }}>
+            <SharedButton
+              variant="outlined"
+              onClick={() => handleCloseModal(false)}
+              sx={{ borderColor: '#e2e8f0', color: '#64748b', '&:hover': { borderColor: '#cbd5e1', bgcolor: '#f8fafc' } }}
+            >
+              Cancel
+            </SharedButton>
+            <SharedButton
+              variant="contained"
+              // disabled={!(country&&city&&name)}
+              onClick={() => {
+                // setShowRaiseRequestModal(false);
+                handleSubmitRequest()
+              }}
+              sx={{ bgcolor: '#b91c1c', '&:hover': { bgcolor: '#991b1b' }, px: 4 }}
             >
               <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 4 }}>
                 <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
