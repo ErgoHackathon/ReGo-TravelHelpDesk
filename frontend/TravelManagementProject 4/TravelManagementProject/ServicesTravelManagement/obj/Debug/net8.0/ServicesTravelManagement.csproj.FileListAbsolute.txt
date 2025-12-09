@@ -1,0 +1,214 @@
+C:\Users\10020821\OneDrive - ERGO Group AG\Documents\ServicesTravelManagement\bin\Debug\net8.0\DataTravelManagement.deps.json
+C:\Users\10020821\OneDrive - ERGO Group AG\Documents\ServicesTravelManagement\bin\Debug\net8.0\DataTravelManagement.runtimeconfig.json
+C:\Users\10020821\OneDrive - ERGO Group AG\Documents\ServicesTravelManagement\bin\Debug\net8.0\DataTravelManagement.exe
+C:\Users\10020821\OneDrive - ERGO Group AG\Documents\ServicesTravelManagement\bin\Debug\net8.0\ServicesTravelManagement.exe
+C:\Users\10020821\OneDrive - ERGO Group AG\Documents\ServicesTravelManagement\bin\Debug\net8.0\ServicesTravelManagement.deps.json
+C:\Users\10020821\OneDrive - ERGO Group AG\Documents\ServicesTravelManagement\bin\Debug\net8.0\ServicesTravelManagement.runtimeconfig.json
+C:\Users\10020821\OneDrive - ERGO Group AG\Documents\ServicesTravelManagement\bin\Debug\net8.0\ServicesTravelManagement.dll
+C:\Users\10020821\OneDrive - ERGO Group AG\Documents\ServicesTravelManagement\bin\Debug\net8.0\ServicesTravelManagement.pdb
+C:\Users\10020821\OneDrive - ERGO Group AG\Documents\ServicesTravelManagement\bin\Debug\net8.0\Azure.Core.dll
+C:\Users\10020821\OneDrive - ERGO Group AG\Documents\ServicesTravelManagement\bin\Debug\net8.0\Azure.Identity.dll
+C:\Users\10020821\OneDrive - ERGO Group AG\Documents\ServicesTravelManagement\bin\Debug\net8.0\Microsoft.Bcl.AsyncInterfaces.dll
+C:\Users\10020821\OneDrive - ERGO Group AG\Documents\ServicesTravelManagement\bin\Debug\net8.0\Microsoft.Data.SqlClient.dll
+C:\Users\10020821\OneDrive - ERGO Group AG\Documents\ServicesTravelManagement\bin\Debug\net8.0\Microsoft.EntityFrameworkCore.dll
+C:\Users\10020821\OneDrive - ERGO Group AG\Documents\ServicesTravelManagement\bin\Debug\net8.0\Microsoft.EntityFrameworkCore.Abstractions.dll
+C:\Users\10020821\OneDrive - ERGO Group AG\Documents\ServicesTravelManagement\bin\Debug\net8.0\Microsoft.EntityFrameworkCore.Relational.dll
+C:\Users\10020821\OneDrive - ERGO Group AG\Documents\ServicesTravelManagement\bin\Debug\net8.0\Microsoft.EntityFrameworkCore.SqlServer.dll
+C:\Users\10020821\OneDrive - ERGO Group AG\Documents\ServicesTravelManagement\bin\Debug\net8.0\Microsoft.Extensions.Caching.Abstractions.dll
+C:\Users\10020821\OneDrive - ERGO Group AG\Documents\ServicesTravelManagement\bin\Debug\net8.0\Microsoft.Extensions.Caching.Memory.dll
+C:\Users\10020821\OneDrive - ERGO Group AG\Documents\ServicesTravelManagement\bin\Debug\net8.0\Microsoft.Extensions.Configuration.Abstractions.dll
+C:\Users\10020821\OneDrive - ERGO Group AG\Documents\ServicesTravelManagement\bin\Debug\net8.0\Microsoft.Extensions.DependencyInjection.dll
+C:\Users\10020821\OneDrive - ERGO Group AG\Documents\ServicesTravelManagement\bin\Debug\net8.0\Microsoft.Extensions.DependencyInjection.Abstractions.dll
+C:\Users\10020821\OneDrive - ERGO Group AG\Documents\ServicesTravelManagement\bin\Debug\net8.0\Microsoft.Extensions.Logging.dll
+C:\Users\10020821\OneDrive - ERGO Group AG\Documents\ServicesTravelManagement\bin\Debug\net8.0\Microsoft.Extensions.Logging.Abstractions.dll
+C:\Users\10020821\OneDrive - ERGO Group AG\Documents\ServicesTravelManagement\bin\Debug\net8.0\Microsoft.Extensions.Options.dll
+C:\Users\10020821\OneDrive - ERGO Group AG\Documents\ServicesTravelManagement\bin\Debug\net8.0\Microsoft.Extensions.Primitives.dll
+C:\Users\10020821\OneDrive - ERGO Group AG\Documents\ServicesTravelManagement\bin\Debug\net8.0\Microsoft.Identity.Client.dll
+C:\Users\10020821\OneDrive - ERGO Group AG\Documents\ServicesTravelManagement\bin\Debug\net8.0\Microsoft.Identity.Client.Extensions.Msal.dll
+C:\Users\10020821\OneDrive - ERGO Group AG\Documents\ServicesTravelManagement\bin\Debug\net8.0\Microsoft.IdentityModel.Abstractions.dll
+C:\Users\10020821\OneDrive - ERGO Group AG\Documents\ServicesTravelManagement\bin\Debug\net8.0\Microsoft.IdentityModel.JsonWebTokens.dll
+C:\Users\10020821\OneDrive - ERGO Group AG\Documents\ServicesTravelManagement\bin\Debug\net8.0\Microsoft.IdentityModel.Logging.dll
+C:\Users\10020821\OneDrive - ERGO Group AG\Documents\ServicesTravelManagement\bin\Debug\net8.0\Microsoft.IdentityModel.Protocols.dll
+C:\Users\10020821\OneDrive - ERGO Group AG\Documents\ServicesTravelManagement\bin\Debug\net8.0\Microsoft.IdentityModel.Protocols.OpenIdConnect.dll
+C:\Users\10020821\OneDrive - ERGO Group AG\Documents\ServicesTravelManagement\bin\Debug\net8.0\Microsoft.IdentityModel.Tokens.dll
+C:\Users\10020821\OneDrive - ERGO Group AG\Documents\ServicesTravelManagement\bin\Debug\net8.0\Microsoft.SqlServer.Server.dll
+C:\Users\10020821\OneDrive - ERGO Group AG\Documents\ServicesTravelManagement\bin\Debug\net8.0\Microsoft.Win32.SystemEvents.dll
+C:\Users\10020821\OneDrive - ERGO Group AG\Documents\ServicesTravelManagement\bin\Debug\net8.0\System.Configuration.ConfigurationManager.dll
+C:\Users\10020821\OneDrive - ERGO Group AG\Documents\ServicesTravelManagement\bin\Debug\net8.0\System.Drawing.Common.dll
+C:\Users\10020821\OneDrive - ERGO Group AG\Documents\ServicesTravelManagement\bin\Debug\net8.0\System.IdentityModel.Tokens.Jwt.dll
+C:\Users\10020821\OneDrive - ERGO Group AG\Documents\ServicesTravelManagement\bin\Debug\net8.0\System.Memory.Data.dll
+C:\Users\10020821\OneDrive - ERGO Group AG\Documents\ServicesTravelManagement\bin\Debug\net8.0\System.Runtime.Caching.dll
+C:\Users\10020821\OneDrive - ERGO Group AG\Documents\ServicesTravelManagement\bin\Debug\net8.0\System.Security.Cryptography.ProtectedData.dll
+C:\Users\10020821\OneDrive - ERGO Group AG\Documents\ServicesTravelManagement\bin\Debug\net8.0\System.Security.Permissions.dll
+C:\Users\10020821\OneDrive - ERGO Group AG\Documents\ServicesTravelManagement\bin\Debug\net8.0\System.Windows.Extensions.dll
+C:\Users\10020821\OneDrive - ERGO Group AG\Documents\ServicesTravelManagement\bin\Debug\net8.0\runtimes\unix\lib\net6.0\Microsoft.Data.SqlClient.dll
+C:\Users\10020821\OneDrive - ERGO Group AG\Documents\ServicesTravelManagement\bin\Debug\net8.0\runtimes\win\lib\net6.0\Microsoft.Data.SqlClient.dll
+C:\Users\10020821\OneDrive - ERGO Group AG\Documents\ServicesTravelManagement\bin\Debug\net8.0\runtimes\win-arm\native\Microsoft.Data.SqlClient.SNI.dll
+C:\Users\10020821\OneDrive - ERGO Group AG\Documents\ServicesTravelManagement\bin\Debug\net8.0\runtimes\win-arm64\native\Microsoft.Data.SqlClient.SNI.dll
+C:\Users\10020821\OneDrive - ERGO Group AG\Documents\ServicesTravelManagement\bin\Debug\net8.0\runtimes\win-x64\native\Microsoft.Data.SqlClient.SNI.dll
+C:\Users\10020821\OneDrive - ERGO Group AG\Documents\ServicesTravelManagement\bin\Debug\net8.0\runtimes\win-x86\native\Microsoft.Data.SqlClient.SNI.dll
+C:\Users\10020821\OneDrive - ERGO Group AG\Documents\ServicesTravelManagement\bin\Debug\net8.0\runtimes\win\lib\net6.0\Microsoft.Win32.SystemEvents.dll
+C:\Users\10020821\OneDrive - ERGO Group AG\Documents\ServicesTravelManagement\bin\Debug\net8.0\runtimes\unix\lib\net6.0\System.Drawing.Common.dll
+C:\Users\10020821\OneDrive - ERGO Group AG\Documents\ServicesTravelManagement\bin\Debug\net8.0\runtimes\win\lib\net6.0\System.Drawing.Common.dll
+C:\Users\10020821\OneDrive - ERGO Group AG\Documents\ServicesTravelManagement\bin\Debug\net8.0\runtimes\win\lib\net6.0\System.Runtime.Caching.dll
+C:\Users\10020821\OneDrive - ERGO Group AG\Documents\ServicesTravelManagement\bin\Debug\net8.0\runtimes\win\lib\net6.0\System.Security.Cryptography.ProtectedData.dll
+C:\Users\10020821\OneDrive - ERGO Group AG\Documents\ServicesTravelManagement\bin\Debug\net8.0\runtimes\win\lib\net6.0\System.Windows.Extensions.dll
+C:\Users\10020821\OneDrive - ERGO Group AG\Documents\ServicesTravelManagement\bin\Debug\net8.0\DataTravelManagement.dll
+C:\Users\10020821\OneDrive - ERGO Group AG\Documents\ServicesTravelManagement\bin\Debug\net8.0\DataTravelManagement.pdb
+C:\Users\10020821\OneDrive - ERGO Group AG\Documents\ServicesTravelManagement\obj\Debug\net8.0\ServicesTravelManagement.csproj.AssemblyReference.cache
+C:\Users\10020821\OneDrive - ERGO Group AG\Documents\ServicesTravelManagement\obj\Debug\net8.0\ServicesTravelManagement.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\10020821\OneDrive - ERGO Group AG\Documents\ServicesTravelManagement\obj\Debug\net8.0\ServicesTravelManagement.AssemblyInfoInputs.cache
+C:\Users\10020821\OneDrive - ERGO Group AG\Documents\ServicesTravelManagement\obj\Debug\net8.0\ServicesTravelManagement.AssemblyInfo.cs
+C:\Users\10020821\OneDrive - ERGO Group AG\Documents\ServicesTravelManagement\obj\Debug\net8.0\ServicesTravelManagement.csproj.CoreCompileInputs.cache
+C:\Users\10020821\OneDrive - ERGO Group AG\Documents\ServicesTravelManagement\obj\Debug\net8.0\Services.B04B172C.Up2Date
+C:\Users\10020821\OneDrive - ERGO Group AG\Documents\ServicesTravelManagement\obj\Debug\net8.0\ServicesTravelManagement.dll
+C:\Users\10020821\OneDrive - ERGO Group AG\Documents\ServicesTravelManagement\obj\Debug\net8.0\refint\ServicesTravelManagement.dll
+C:\Users\10020821\OneDrive - ERGO Group AG\Documents\ServicesTravelManagement\obj\Debug\net8.0\ServicesTravelManagement.pdb
+C:\Users\10020821\OneDrive - ERGO Group AG\Documents\ServicesTravelManagement\obj\Debug\net8.0\ServicesTravelManagement.genruntimeconfig.cache
+C:\Users\10020821\OneDrive - ERGO Group AG\Documents\ServicesTravelManagement\obj\Debug\net8.0\ref\ServicesTravelManagement.dll
+C:\Users\10020821\OneDrive - ERGO Group AG\Documents\TravelManagementProject\ServicesTravelManagement\obj\Debug\net8.0\ServicesTravelManagement.csproj.AssemblyReference.cache
+C:\Users\10020821\OneDrive - ERGO Group AG\Documents\TravelManagementProject\ServicesTravelManagement\obj\Debug\net8.0\ServicesTravelManagement.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\10020821\OneDrive - ERGO Group AG\Documents\TravelManagementProject\ServicesTravelManagement\obj\Debug\net8.0\ServicesTravelManagement.AssemblyInfoInputs.cache
+C:\Users\10020821\OneDrive - ERGO Group AG\Documents\TravelManagementProject\ServicesTravelManagement\obj\Debug\net8.0\ServicesTravelManagement.AssemblyInfo.cs
+C:\Users\10020821\OneDrive - ERGO Group AG\Documents\TravelManagementProject\ServicesTravelManagement\obj\Debug\net8.0\ServicesTravelManagement.csproj.CoreCompileInputs.cache
+C:\Users\10020821\OneDrive - ERGO Group AG\Documents\TravelManagementProject\ServicesTravelManagement\bin\Debug\net8.0\DataTravelManagement.deps.json
+C:\Users\10020821\OneDrive - ERGO Group AG\Documents\TravelManagementProject\ServicesTravelManagement\bin\Debug\net8.0\DataTravelManagement.runtimeconfig.json
+C:\Users\10020821\OneDrive - ERGO Group AG\Documents\TravelManagementProject\ServicesTravelManagement\bin\Debug\net8.0\DataTravelManagement.exe
+C:\Users\10020821\OneDrive - ERGO Group AG\Documents\TravelManagementProject\ServicesTravelManagement\bin\Debug\net8.0\x86\leptonica-1.82.0.dll
+C:\Users\10020821\OneDrive - ERGO Group AG\Documents\TravelManagementProject\ServicesTravelManagement\bin\Debug\net8.0\x86\tesseract50.dll
+C:\Users\10020821\OneDrive - ERGO Group AG\Documents\TravelManagementProject\ServicesTravelManagement\bin\Debug\net8.0\x64\leptonica-1.82.0.dll
+C:\Users\10020821\OneDrive - ERGO Group AG\Documents\TravelManagementProject\ServicesTravelManagement\bin\Debug\net8.0\x64\tesseract50.dll
+C:\Users\10020821\OneDrive - ERGO Group AG\Documents\TravelManagementProject\ServicesTravelManagement\bin\Debug\net8.0\ServicesTravelManagement.exe
+C:\Users\10020821\OneDrive - ERGO Group AG\Documents\TravelManagementProject\ServicesTravelManagement\bin\Debug\net8.0\ServicesTravelManagement.deps.json
+C:\Users\10020821\OneDrive - ERGO Group AG\Documents\TravelManagementProject\ServicesTravelManagement\bin\Debug\net8.0\ServicesTravelManagement.runtimeconfig.json
+C:\Users\10020821\OneDrive - ERGO Group AG\Documents\TravelManagementProject\ServicesTravelManagement\bin\Debug\net8.0\ServicesTravelManagement.dll
+C:\Users\10020821\OneDrive - ERGO Group AG\Documents\TravelManagementProject\ServicesTravelManagement\bin\Debug\net8.0\ServicesTravelManagement.pdb
+C:\Users\10020821\OneDrive - ERGO Group AG\Documents\TravelManagementProject\ServicesTravelManagement\bin\Debug\net8.0\Azure.Core.dll
+C:\Users\10020821\OneDrive - ERGO Group AG\Documents\TravelManagementProject\ServicesTravelManagement\bin\Debug\net8.0\Azure.Identity.dll
+C:\Users\10020821\OneDrive - ERGO Group AG\Documents\TravelManagementProject\ServicesTravelManagement\bin\Debug\net8.0\Microsoft.Bcl.AsyncInterfaces.dll
+C:\Users\10020821\OneDrive - ERGO Group AG\Documents\TravelManagementProject\ServicesTravelManagement\bin\Debug\net8.0\Microsoft.Data.SqlClient.dll
+C:\Users\10020821\OneDrive - ERGO Group AG\Documents\TravelManagementProject\ServicesTravelManagement\bin\Debug\net8.0\Microsoft.EntityFrameworkCore.dll
+C:\Users\10020821\OneDrive - ERGO Group AG\Documents\TravelManagementProject\ServicesTravelManagement\bin\Debug\net8.0\Microsoft.EntityFrameworkCore.Abstractions.dll
+C:\Users\10020821\OneDrive - ERGO Group AG\Documents\TravelManagementProject\ServicesTravelManagement\bin\Debug\net8.0\Microsoft.EntityFrameworkCore.Relational.dll
+C:\Users\10020821\OneDrive - ERGO Group AG\Documents\TravelManagementProject\ServicesTravelManagement\bin\Debug\net8.0\Microsoft.EntityFrameworkCore.SqlServer.dll
+C:\Users\10020821\OneDrive - ERGO Group AG\Documents\TravelManagementProject\ServicesTravelManagement\bin\Debug\net8.0\Microsoft.Extensions.Caching.Abstractions.dll
+C:\Users\10020821\OneDrive - ERGO Group AG\Documents\TravelManagementProject\ServicesTravelManagement\bin\Debug\net8.0\Microsoft.Extensions.Caching.Memory.dll
+C:\Users\10020821\OneDrive - ERGO Group AG\Documents\TravelManagementProject\ServicesTravelManagement\bin\Debug\net8.0\Microsoft.Extensions.Configuration.Abstractions.dll
+C:\Users\10020821\OneDrive - ERGO Group AG\Documents\TravelManagementProject\ServicesTravelManagement\bin\Debug\net8.0\Microsoft.Extensions.DependencyInjection.dll
+C:\Users\10020821\OneDrive - ERGO Group AG\Documents\TravelManagementProject\ServicesTravelManagement\bin\Debug\net8.0\Microsoft.Extensions.DependencyInjection.Abstractions.dll
+C:\Users\10020821\OneDrive - ERGO Group AG\Documents\TravelManagementProject\ServicesTravelManagement\bin\Debug\net8.0\Microsoft.Extensions.Logging.dll
+C:\Users\10020821\OneDrive - ERGO Group AG\Documents\TravelManagementProject\ServicesTravelManagement\bin\Debug\net8.0\Microsoft.Extensions.Logging.Abstractions.dll
+C:\Users\10020821\OneDrive - ERGO Group AG\Documents\TravelManagementProject\ServicesTravelManagement\bin\Debug\net8.0\Microsoft.Extensions.Options.dll
+C:\Users\10020821\OneDrive - ERGO Group AG\Documents\TravelManagementProject\ServicesTravelManagement\bin\Debug\net8.0\Microsoft.Extensions.Primitives.dll
+C:\Users\10020821\OneDrive - ERGO Group AG\Documents\TravelManagementProject\ServicesTravelManagement\bin\Debug\net8.0\Microsoft.Identity.Client.dll
+C:\Users\10020821\OneDrive - ERGO Group AG\Documents\TravelManagementProject\ServicesTravelManagement\bin\Debug\net8.0\Microsoft.Identity.Client.Extensions.Msal.dll
+C:\Users\10020821\OneDrive - ERGO Group AG\Documents\TravelManagementProject\ServicesTravelManagement\bin\Debug\net8.0\Microsoft.IdentityModel.Abstractions.dll
+C:\Users\10020821\OneDrive - ERGO Group AG\Documents\TravelManagementProject\ServicesTravelManagement\bin\Debug\net8.0\Microsoft.IdentityModel.JsonWebTokens.dll
+C:\Users\10020821\OneDrive - ERGO Group AG\Documents\TravelManagementProject\ServicesTravelManagement\bin\Debug\net8.0\Microsoft.IdentityModel.Logging.dll
+C:\Users\10020821\OneDrive - ERGO Group AG\Documents\TravelManagementProject\ServicesTravelManagement\bin\Debug\net8.0\Microsoft.IdentityModel.Protocols.dll
+C:\Users\10020821\OneDrive - ERGO Group AG\Documents\TravelManagementProject\ServicesTravelManagement\bin\Debug\net8.0\Microsoft.IdentityModel.Protocols.OpenIdConnect.dll
+C:\Users\10020821\OneDrive - ERGO Group AG\Documents\TravelManagementProject\ServicesTravelManagement\bin\Debug\net8.0\Microsoft.IdentityModel.Tokens.dll
+C:\Users\10020821\OneDrive - ERGO Group AG\Documents\TravelManagementProject\ServicesTravelManagement\bin\Debug\net8.0\Microsoft.SqlServer.Server.dll
+C:\Users\10020821\OneDrive - ERGO Group AG\Documents\TravelManagementProject\ServicesTravelManagement\bin\Debug\net8.0\Microsoft.Win32.SystemEvents.dll
+C:\Users\10020821\OneDrive - ERGO Group AG\Documents\TravelManagementProject\ServicesTravelManagement\bin\Debug\net8.0\System.Configuration.ConfigurationManager.dll
+C:\Users\10020821\OneDrive - ERGO Group AG\Documents\TravelManagementProject\ServicesTravelManagement\bin\Debug\net8.0\System.Drawing.Common.dll
+C:\Users\10020821\OneDrive - ERGO Group AG\Documents\TravelManagementProject\ServicesTravelManagement\bin\Debug\net8.0\System.IdentityModel.Tokens.Jwt.dll
+C:\Users\10020821\OneDrive - ERGO Group AG\Documents\TravelManagementProject\ServicesTravelManagement\bin\Debug\net8.0\System.Memory.Data.dll
+C:\Users\10020821\OneDrive - ERGO Group AG\Documents\TravelManagementProject\ServicesTravelManagement\bin\Debug\net8.0\System.Runtime.Caching.dll
+C:\Users\10020821\OneDrive - ERGO Group AG\Documents\TravelManagementProject\ServicesTravelManagement\bin\Debug\net8.0\System.Security.Cryptography.ProtectedData.dll
+C:\Users\10020821\OneDrive - ERGO Group AG\Documents\TravelManagementProject\ServicesTravelManagement\bin\Debug\net8.0\System.Security.Permissions.dll
+C:\Users\10020821\OneDrive - ERGO Group AG\Documents\TravelManagementProject\ServicesTravelManagement\bin\Debug\net8.0\System.Windows.Extensions.dll
+C:\Users\10020821\OneDrive - ERGO Group AG\Documents\TravelManagementProject\ServicesTravelManagement\bin\Debug\net8.0\Tesseract.dll
+C:\Users\10020821\OneDrive - ERGO Group AG\Documents\TravelManagementProject\ServicesTravelManagement\bin\Debug\net8.0\runtimes\unix\lib\net6.0\Microsoft.Data.SqlClient.dll
+C:\Users\10020821\OneDrive - ERGO Group AG\Documents\TravelManagementProject\ServicesTravelManagement\bin\Debug\net8.0\runtimes\win\lib\net6.0\Microsoft.Data.SqlClient.dll
+C:\Users\10020821\OneDrive - ERGO Group AG\Documents\TravelManagementProject\ServicesTravelManagement\bin\Debug\net8.0\runtimes\win-arm\native\Microsoft.Data.SqlClient.SNI.dll
+C:\Users\10020821\OneDrive - ERGO Group AG\Documents\TravelManagementProject\ServicesTravelManagement\bin\Debug\net8.0\runtimes\win-arm64\native\Microsoft.Data.SqlClient.SNI.dll
+C:\Users\10020821\OneDrive - ERGO Group AG\Documents\TravelManagementProject\ServicesTravelManagement\bin\Debug\net8.0\runtimes\win-x64\native\Microsoft.Data.SqlClient.SNI.dll
+C:\Users\10020821\OneDrive - ERGO Group AG\Documents\TravelManagementProject\ServicesTravelManagement\bin\Debug\net8.0\runtimes\win-x86\native\Microsoft.Data.SqlClient.SNI.dll
+C:\Users\10020821\OneDrive - ERGO Group AG\Documents\TravelManagementProject\ServicesTravelManagement\bin\Debug\net8.0\runtimes\win\lib\net6.0\Microsoft.Win32.SystemEvents.dll
+C:\Users\10020821\OneDrive - ERGO Group AG\Documents\TravelManagementProject\ServicesTravelManagement\bin\Debug\net8.0\runtimes\unix\lib\net6.0\System.Drawing.Common.dll
+C:\Users\10020821\OneDrive - ERGO Group AG\Documents\TravelManagementProject\ServicesTravelManagement\bin\Debug\net8.0\runtimes\win\lib\net6.0\System.Drawing.Common.dll
+C:\Users\10020821\OneDrive - ERGO Group AG\Documents\TravelManagementProject\ServicesTravelManagement\bin\Debug\net8.0\runtimes\win\lib\net6.0\System.Runtime.Caching.dll
+C:\Users\10020821\OneDrive - ERGO Group AG\Documents\TravelManagementProject\ServicesTravelManagement\bin\Debug\net8.0\runtimes\win\lib\net6.0\System.Security.Cryptography.ProtectedData.dll
+C:\Users\10020821\OneDrive - ERGO Group AG\Documents\TravelManagementProject\ServicesTravelManagement\bin\Debug\net8.0\runtimes\win\lib\net6.0\System.Windows.Extensions.dll
+C:\Users\10020821\OneDrive - ERGO Group AG\Documents\TravelManagementProject\ServicesTravelManagement\bin\Debug\net8.0\DataTravelManagement.dll
+C:\Users\10020821\OneDrive - ERGO Group AG\Documents\TravelManagementProject\ServicesTravelManagement\bin\Debug\net8.0\DataTravelManagement.pdb
+C:\Users\10020821\OneDrive - ERGO Group AG\Documents\TravelManagementProject\ServicesTravelManagement\obj\Debug\net8.0\Services.B04B172C.Up2Date
+C:\Users\10020821\OneDrive - ERGO Group AG\Documents\TravelManagementProject\ServicesTravelManagement\obj\Debug\net8.0\ServicesTravelManagement.dll
+C:\Users\10020821\OneDrive - ERGO Group AG\Documents\TravelManagementProject\ServicesTravelManagement\obj\Debug\net8.0\refint\ServicesTravelManagement.dll
+C:\Users\10020821\OneDrive - ERGO Group AG\Documents\TravelManagementProject\ServicesTravelManagement\obj\Debug\net8.0\ServicesTravelManagement.pdb
+C:\Users\10020821\OneDrive - ERGO Group AG\Documents\TravelManagementProject\ServicesTravelManagement\obj\Debug\net8.0\ServicesTravelManagement.genruntimeconfig.cache
+C:\Users\10020821\OneDrive - ERGO Group AG\Documents\TravelManagementProject\ServicesTravelManagement\obj\Debug\net8.0\ref\ServicesTravelManagement.dll
+C:\Users\10020574\Downloads\TravelManagementProject 4\TravelManagementProject\ServicesTravelManagement\bin\Debug\net8.0\x86\leptonica-1.82.0.dll
+C:\Users\10020574\Downloads\TravelManagementProject 4\TravelManagementProject\ServicesTravelManagement\bin\Debug\net8.0\x86\tesseract50.dll
+C:\Users\10020574\Downloads\TravelManagementProject 4\TravelManagementProject\ServicesTravelManagement\bin\Debug\net8.0\x64\leptonica-1.82.0.dll
+C:\Users\10020574\Downloads\TravelManagementProject 4\TravelManagementProject\ServicesTravelManagement\bin\Debug\net8.0\x64\tesseract50.dll
+C:\Users\10020574\Downloads\TravelManagementProject 4\TravelManagementProject\ServicesTravelManagement\bin\Debug\net8.0\DataTravelManagement.deps.json
+C:\Users\10020574\Downloads\TravelManagementProject 4\TravelManagementProject\ServicesTravelManagement\bin\Debug\net8.0\DataTravelManagement.runtimeconfig.json
+C:\Users\10020574\Downloads\TravelManagementProject 4\TravelManagementProject\ServicesTravelManagement\bin\Debug\net8.0\DataTravelManagement.exe
+C:\Users\10020574\Downloads\TravelManagementProject 4\TravelManagementProject\ServicesTravelManagement\bin\Debug\net8.0\ServicesTravelManagement.exe
+C:\Users\10020574\Downloads\TravelManagementProject 4\TravelManagementProject\ServicesTravelManagement\bin\Debug\net8.0\ServicesTravelManagement.deps.json
+C:\Users\10020574\Downloads\TravelManagementProject 4\TravelManagementProject\ServicesTravelManagement\bin\Debug\net8.0\ServicesTravelManagement.runtimeconfig.json
+C:\Users\10020574\Downloads\TravelManagementProject 4\TravelManagementProject\ServicesTravelManagement\bin\Debug\net8.0\ServicesTravelManagement.dll
+C:\Users\10020574\Downloads\TravelManagementProject 4\TravelManagementProject\ServicesTravelManagement\bin\Debug\net8.0\ServicesTravelManagement.pdb
+C:\Users\10020574\Downloads\TravelManagementProject 4\TravelManagementProject\ServicesTravelManagement\bin\Debug\net8.0\Azure.Core.dll
+C:\Users\10020574\Downloads\TravelManagementProject 4\TravelManagementProject\ServicesTravelManagement\bin\Debug\net8.0\Azure.Identity.dll
+C:\Users\10020574\Downloads\TravelManagementProject 4\TravelManagementProject\ServicesTravelManagement\bin\Debug\net8.0\Microsoft.Bcl.AsyncInterfaces.dll
+C:\Users\10020574\Downloads\TravelManagementProject 4\TravelManagementProject\ServicesTravelManagement\bin\Debug\net8.0\Microsoft.Data.SqlClient.dll
+C:\Users\10020574\Downloads\TravelManagementProject 4\TravelManagementProject\ServicesTravelManagement\bin\Debug\net8.0\Microsoft.EntityFrameworkCore.dll
+C:\Users\10020574\Downloads\TravelManagementProject 4\TravelManagementProject\ServicesTravelManagement\bin\Debug\net8.0\Microsoft.EntityFrameworkCore.Abstractions.dll
+C:\Users\10020574\Downloads\TravelManagementProject 4\TravelManagementProject\ServicesTravelManagement\bin\Debug\net8.0\Microsoft.EntityFrameworkCore.Relational.dll
+C:\Users\10020574\Downloads\TravelManagementProject 4\TravelManagementProject\ServicesTravelManagement\bin\Debug\net8.0\Microsoft.EntityFrameworkCore.SqlServer.dll
+C:\Users\10020574\Downloads\TravelManagementProject 4\TravelManagementProject\ServicesTravelManagement\bin\Debug\net8.0\Microsoft.Extensions.Caching.Abstractions.dll
+C:\Users\10020574\Downloads\TravelManagementProject 4\TravelManagementProject\ServicesTravelManagement\bin\Debug\net8.0\Microsoft.Extensions.Caching.Memory.dll
+C:\Users\10020574\Downloads\TravelManagementProject 4\TravelManagementProject\ServicesTravelManagement\bin\Debug\net8.0\Microsoft.Extensions.Configuration.Abstractions.dll
+C:\Users\10020574\Downloads\TravelManagementProject 4\TravelManagementProject\ServicesTravelManagement\bin\Debug\net8.0\Microsoft.Extensions.DependencyInjection.dll
+C:\Users\10020574\Downloads\TravelManagementProject 4\TravelManagementProject\ServicesTravelManagement\bin\Debug\net8.0\Microsoft.Extensions.DependencyInjection.Abstractions.dll
+C:\Users\10020574\Downloads\TravelManagementProject 4\TravelManagementProject\ServicesTravelManagement\bin\Debug\net8.0\Microsoft.Extensions.Logging.dll
+C:\Users\10020574\Downloads\TravelManagementProject 4\TravelManagementProject\ServicesTravelManagement\bin\Debug\net8.0\Microsoft.Extensions.Logging.Abstractions.dll
+C:\Users\10020574\Downloads\TravelManagementProject 4\TravelManagementProject\ServicesTravelManagement\bin\Debug\net8.0\Microsoft.Extensions.Options.dll
+C:\Users\10020574\Downloads\TravelManagementProject 4\TravelManagementProject\ServicesTravelManagement\bin\Debug\net8.0\Microsoft.Extensions.Primitives.dll
+C:\Users\10020574\Downloads\TravelManagementProject 4\TravelManagementProject\ServicesTravelManagement\bin\Debug\net8.0\Microsoft.Identity.Client.dll
+C:\Users\10020574\Downloads\TravelManagementProject 4\TravelManagementProject\ServicesTravelManagement\bin\Debug\net8.0\Microsoft.Identity.Client.Extensions.Msal.dll
+C:\Users\10020574\Downloads\TravelManagementProject 4\TravelManagementProject\ServicesTravelManagement\bin\Debug\net8.0\Microsoft.IdentityModel.Abstractions.dll
+C:\Users\10020574\Downloads\TravelManagementProject 4\TravelManagementProject\ServicesTravelManagement\bin\Debug\net8.0\Microsoft.IdentityModel.JsonWebTokens.dll
+C:\Users\10020574\Downloads\TravelManagementProject 4\TravelManagementProject\ServicesTravelManagement\bin\Debug\net8.0\Microsoft.IdentityModel.Logging.dll
+C:\Users\10020574\Downloads\TravelManagementProject 4\TravelManagementProject\ServicesTravelManagement\bin\Debug\net8.0\Microsoft.IdentityModel.Protocols.dll
+C:\Users\10020574\Downloads\TravelManagementProject 4\TravelManagementProject\ServicesTravelManagement\bin\Debug\net8.0\Microsoft.IdentityModel.Protocols.OpenIdConnect.dll
+C:\Users\10020574\Downloads\TravelManagementProject 4\TravelManagementProject\ServicesTravelManagement\bin\Debug\net8.0\Microsoft.IdentityModel.Tokens.dll
+C:\Users\10020574\Downloads\TravelManagementProject 4\TravelManagementProject\ServicesTravelManagement\bin\Debug\net8.0\Microsoft.SqlServer.Server.dll
+C:\Users\10020574\Downloads\TravelManagementProject 4\TravelManagementProject\ServicesTravelManagement\bin\Debug\net8.0\Microsoft.Win32.SystemEvents.dll
+C:\Users\10020574\Downloads\TravelManagementProject 4\TravelManagementProject\ServicesTravelManagement\bin\Debug\net8.0\System.Configuration.ConfigurationManager.dll
+C:\Users\10020574\Downloads\TravelManagementProject 4\TravelManagementProject\ServicesTravelManagement\bin\Debug\net8.0\System.Drawing.Common.dll
+C:\Users\10020574\Downloads\TravelManagementProject 4\TravelManagementProject\ServicesTravelManagement\bin\Debug\net8.0\System.IdentityModel.Tokens.Jwt.dll
+C:\Users\10020574\Downloads\TravelManagementProject 4\TravelManagementProject\ServicesTravelManagement\bin\Debug\net8.0\System.Memory.Data.dll
+C:\Users\10020574\Downloads\TravelManagementProject 4\TravelManagementProject\ServicesTravelManagement\bin\Debug\net8.0\System.Runtime.Caching.dll
+C:\Users\10020574\Downloads\TravelManagementProject 4\TravelManagementProject\ServicesTravelManagement\bin\Debug\net8.0\System.Security.Cryptography.ProtectedData.dll
+C:\Users\10020574\Downloads\TravelManagementProject 4\TravelManagementProject\ServicesTravelManagement\bin\Debug\net8.0\System.Security.Permissions.dll
+C:\Users\10020574\Downloads\TravelManagementProject 4\TravelManagementProject\ServicesTravelManagement\bin\Debug\net8.0\System.Windows.Extensions.dll
+C:\Users\10020574\Downloads\TravelManagementProject 4\TravelManagementProject\ServicesTravelManagement\bin\Debug\net8.0\Tesseract.dll
+C:\Users\10020574\Downloads\TravelManagementProject 4\TravelManagementProject\ServicesTravelManagement\bin\Debug\net8.0\runtimes\unix\lib\net6.0\Microsoft.Data.SqlClient.dll
+C:\Users\10020574\Downloads\TravelManagementProject 4\TravelManagementProject\ServicesTravelManagement\bin\Debug\net8.0\runtimes\win\lib\net6.0\Microsoft.Data.SqlClient.dll
+C:\Users\10020574\Downloads\TravelManagementProject 4\TravelManagementProject\ServicesTravelManagement\bin\Debug\net8.0\runtimes\win-arm\native\Microsoft.Data.SqlClient.SNI.dll
+C:\Users\10020574\Downloads\TravelManagementProject 4\TravelManagementProject\ServicesTravelManagement\bin\Debug\net8.0\runtimes\win-arm64\native\Microsoft.Data.SqlClient.SNI.dll
+C:\Users\10020574\Downloads\TravelManagementProject 4\TravelManagementProject\ServicesTravelManagement\bin\Debug\net8.0\runtimes\win-x64\native\Microsoft.Data.SqlClient.SNI.dll
+C:\Users\10020574\Downloads\TravelManagementProject 4\TravelManagementProject\ServicesTravelManagement\bin\Debug\net8.0\runtimes\win-x86\native\Microsoft.Data.SqlClient.SNI.dll
+C:\Users\10020574\Downloads\TravelManagementProject 4\TravelManagementProject\ServicesTravelManagement\bin\Debug\net8.0\runtimes\win\lib\net6.0\Microsoft.Win32.SystemEvents.dll
+C:\Users\10020574\Downloads\TravelManagementProject 4\TravelManagementProject\ServicesTravelManagement\bin\Debug\net8.0\runtimes\unix\lib\net6.0\System.Drawing.Common.dll
+C:\Users\10020574\Downloads\TravelManagementProject 4\TravelManagementProject\ServicesTravelManagement\bin\Debug\net8.0\runtimes\win\lib\net6.0\System.Drawing.Common.dll
+C:\Users\10020574\Downloads\TravelManagementProject 4\TravelManagementProject\ServicesTravelManagement\bin\Debug\net8.0\runtimes\win\lib\net6.0\System.Runtime.Caching.dll
+C:\Users\10020574\Downloads\TravelManagementProject 4\TravelManagementProject\ServicesTravelManagement\bin\Debug\net8.0\runtimes\win\lib\net6.0\System.Security.Cryptography.ProtectedData.dll
+C:\Users\10020574\Downloads\TravelManagementProject 4\TravelManagementProject\ServicesTravelManagement\bin\Debug\net8.0\runtimes\win\lib\net6.0\System.Windows.Extensions.dll
+C:\Users\10020574\Downloads\TravelManagementProject 4\TravelManagementProject\ServicesTravelManagement\bin\Debug\net8.0\DataTravelManagement.dll
+C:\Users\10020574\Downloads\TravelManagementProject 4\TravelManagementProject\ServicesTravelManagement\bin\Debug\net8.0\DataTravelManagement.pdb
+C:\Users\10020574\Downloads\TravelManagementProject 4\TravelManagementProject\ServicesTravelManagement\obj\Debug\net8.0\ServicesTravelManagement.csproj.AssemblyReference.cache
+C:\Users\10020574\Downloads\TravelManagementProject 4\TravelManagementProject\ServicesTravelManagement\obj\Debug\net8.0\ServicesTravelManagement.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\10020574\Downloads\TravelManagementProject 4\TravelManagementProject\ServicesTravelManagement\obj\Debug\net8.0\ServicesTravelManagement.AssemblyInfoInputs.cache
+C:\Users\10020574\Downloads\TravelManagementProject 4\TravelManagementProject\ServicesTravelManagement\obj\Debug\net8.0\ServicesTravelManagement.AssemblyInfo.cs
+C:\Users\10020574\Downloads\TravelManagementProject 4\TravelManagementProject\ServicesTravelManagement\obj\Debug\net8.0\ServicesTravelManagement.csproj.CoreCompileInputs.cache
+C:\Users\10020574\Downloads\TravelManagementProject 4\TravelManagementProject\ServicesTravelManagement\obj\Debug\net8.0\Services.B04B172C.Up2Date
+C:\Users\10020574\Downloads\TravelManagementProject 4\TravelManagementProject\ServicesTravelManagement\obj\Debug\net8.0\ServicesTravelManagement.dll
+C:\Users\10020574\Downloads\TravelManagementProject 4\TravelManagementProject\ServicesTravelManagement\obj\Debug\net8.0\refint\ServicesTravelManagement.dll
+C:\Users\10020574\Downloads\TravelManagementProject 4\TravelManagementProject\ServicesTravelManagement\obj\Debug\net8.0\ServicesTravelManagement.pdb
+C:\Users\10020574\Downloads\TravelManagementProject 4\TravelManagementProject\ServicesTravelManagement\obj\Debug\net8.0\ServicesTravelManagement.genruntimeconfig.cache
+C:\Users\10020574\Downloads\TravelManagementProject 4\TravelManagementProject\ServicesTravelManagement\obj\Debug\net8.0\ref\ServicesTravelManagement.dll
