@@ -48,6 +48,7 @@ import {
 import BaseLayout from '../../components/layout/BaseLayout';
 import realApi from '../../services/api/realApi';
 import managerService from '../../services/managerService';
+import { toast } from 'react-toastify';
 
 // Icon Mapping
 const ICON_MAP = {
@@ -74,19 +75,26 @@ const DashboardManager = () => {
   const [country, setCountry] = useState("")
   const [city, setCity] = useState("")
   const [remark, setRemark] = useState("")
+  const [requestSubmit, setRequestSubmit] = useState(false)
+  const [requestSubmitStatus, setRequestSubmitStatus] = useState(0);
 
   // Filter State
-  const [filterStatus, setFilterStatus] = useState('ALL');
+  const [filterStatus, setFilterStatus] = useState('PENDING');
   console.log("pendingApprovals::::::::  ", pendingApprovals)
   console.log("stats on dashboard:::::::::  ", stats)
   console.log("getAllDetails on dash:::::::: ", getAllDetails)
 
   // useEffect(())
 
+  const travellingEmployeeIds = new Set(getAllDetails.map(employee => employee?.empId))
+  const emplyeesNotOnTravel = allEmployees.filter(employee => !travellingEmployeeIds.has(employee?.empId))
+
+  console.log("emplyeesNotOnTravel:::::::::  ", emplyeesNotOnTravel)
+
   useEffect(() => {
     dispatch(fetchDashboardData());
     // dispatch(realApi.getTravelDetailByRptId(user?.empId))
-  }, [dispatch]);
+  }, [dispatch, requestSubmit]);
 
   const handleLogout = async () => {
     await dispatch(logout());
@@ -96,6 +104,19 @@ const DashboardManager = () => {
   const handleViewDetails = (id) => {
     navigate(`/application/${id}`);
   };
+
+  const resetFields = () => {
+    setCountry('');
+    setCity('');
+    setRemark('');
+    setDates({});
+    setCheckedEmployees([]);
+  };
+
+  const handleCloseModal = () => {
+    resetFields(); // Reset fields when closing the modal
+    setShowRaiseRequestModal(false);
+  }
 
   const handleCheckboxChange = (employeeId) => {
     setCheckedEmployees((prev) => {
@@ -107,7 +128,13 @@ const DashboardManager = () => {
     });
   };
 
+  const getTodayDate = () => {
+    const today = new Date();
+    return today.toISOString().split('T')[0]; // Format YYYY-MM-DD
+  };
+
   const handleDateChange = (employeeId, dateType, value) => {
+
     setDates((prev) => ({
       ...prev,
       [employeeId]: {
@@ -130,33 +157,53 @@ const DashboardManager = () => {
       remark: remark
     }));
 
-    console.log("request submit details here",JSON.stringify(jsonData)); // This will log the JSON object
-    jsonData.forEach((travelRequest)=>{
-      dispatch(managerService.createTravelRequest(travelRequest))
+    console.log("request submit details here", JSON.stringify(jsonData)); // This will log the JSON object
+    jsonData.forEach(async (travelRequest) => {
+      const response = await managerService.createTravelRequest(travelRequest)
+      console.log("response::::::::: ", response)
+      if (response !== 'Inserted') {
+        setRequestSubmitStatus(1)
+      }
     })
-    
+    if (requestSubmitStatus === 0) {
+      toast.success('Request Submitted')
+    } else {
+      toast.error('Request Failed')
+    }
+    setShowRaiseRequestModal(false)
+    setRequestSubmit(true)
+
     // Here you can also send jsonData to your API or handle it as needed
   }
 
   // Filter Logic
   const getFilteredApprovals = () => {
-    if (filterStatus === 'ALL') return pendingApprovals;
 
-    return pendingApprovals.filter(req => {
-      if (filterStatus === 'PENDING') return req.status.includes('REVIEW') || req.status === 'PENDING';
-      if (filterStatus === 'APPROVED') return req.status.includes('APPROVED');
-      if (filterStatus === 'REJECTED') return req.status === 'REJECTED';
-      return req.status === filterStatus;
-    });
+    if (filterStatus === 'ALL') {
+      return getAllDetails;
+    }
+    const statusMap = {
+      PENDING: 1,
+      APPROVED: 2,
+      REJECTED: 3
+    };
+    const targetStatus = statusMap[filterStatus];
+    return getAllDetails.filter(req => req.status === targetStatus);
+  };
+
+  const handleFilter = (value) => {
+    console.log("Selected filter value: ", value);
+    setFilterStatus(value);
   };
 
   const filteredApprovals = getFilteredApprovals();
+  console.log("filteredApprovals::::::::: ", filteredApprovals)
 
   const FilterButton = ({ label, value }) => (
     <Button
       variant={filterStatus === value ? "contained" : "outlined"}
       size="small"
-      onClick={() => setFilterStatus(value)}
+      onClick={() => handleFilter(value)}
       sx={{
         borderRadius: 5,
         textTransform: 'none',
@@ -272,7 +319,7 @@ const DashboardManager = () => {
             />
 
             <TableBody>
-              {getAllDetails.length > 0 ? getAllDetails.map((request) => (
+              {filteredApprovals.length > 0 ? filteredApprovals.map((request) => (
                 <TableRow key={request.id}>
                   <TableCell>{request.id}</TableCell>
                   <TableCell>{request.employeeDetails?.empName}</TableCell>
@@ -315,7 +362,7 @@ const DashboardManager = () => {
       {/* Raise New Request Modal */}
       <SharedModal
         open={showRaiseRequestModal}
-        onClose={() => setShowRaiseRequestModal(false)}
+        onClose={() => handleCloseModal()}
         title="Raise New Travel Request"
         maxWidth="md"
         fullWidth
@@ -334,7 +381,7 @@ const DashboardManager = () => {
                 placeholder="e.g. Germany"
                 InputLabelProps={{ shrink: true }}
                 value={country}
-                onChange={(e)=>setCountry(e.target.value)}
+                onChange={(e) => setCountry(e.target.value)}
               />
             </Grid>
             <Grid item xs={12} sm={4}>
@@ -345,7 +392,7 @@ const DashboardManager = () => {
                 placeholder="e.g. Berlin"
                 InputLabelProps={{ shrink: true }}
                 value={city}
-                onChange={(e)=>setCity(e.target.value)}
+                onChange={(e) => setCity(e.target.value)}
               />
             </Grid>
             <Grid item xs={12} sm={4}>
@@ -356,7 +403,7 @@ const DashboardManager = () => {
                 placeholder="e.g. Client Meeting"
                 InputLabelProps={{ shrink: true }}
                 value={remark}
-                onChange={(e)=>setRemark(e.target.value)}
+                onChange={(e) => setRemark(e.target.value)}
               />
             </Grid>
           </Grid>
@@ -377,38 +424,52 @@ const DashboardManager = () => {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {allEmployees.length > 0 ? allEmployees.map((employee) => (
-                    <TableRow key={employee.id}>
-                      <TableCell padding="checkbox">
-                        {console.log("employee.id::::::: ", employee.empId)}
-                        <Checkbox
-                          size="small"
-                          checked={checkedEmployees.includes(employee.empId)}
-                          onChange={() => handleCheckboxChange(employee.empId)} />
-                      </TableCell>
-                      <TableCell>
-                        {employee.name}
-                      </TableCell>
-                      <TableCell>
-                        <TextField type="date"
-                          size="small"
-                          fullWidth
-                          variant="standard"
-                          InputProps={{ disableUnderline: true }}
-                          onChange={(e) => handleDateChange(employee.empId, 'startDate', e.target.value)}
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <TextField
-                          type="date"
-                          size="small"
-                          fullWidth
-                          variant="standard"
-                          InputProps={{ disableUnderline: true }}
-                          onChange={(e) => handleDateChange(employee.empId, 'endDate', e.target.value)} />
-                      </TableCell>
-                    </TableRow>
-                  )) : (
+                  {emplyeesNotOnTravel.length > 0 ? emplyeesNotOnTravel.map((employee) => {
+                    const startDate = dates[employee.empId]?.startDate || '';
+                    const endDate = dates[employee.empId]?.endDate || '';
+                    return (
+
+                      <TableRow key={employee.id}>
+                        <TableCell padding="checkbox">
+                          {console.log("employee.id::::::: ", employee.empId)}
+                          <Checkbox
+                            size="small"
+                            checked={checkedEmployees.includes(employee.empId)}
+                            onChange={() => handleCheckboxChange(employee.empId)} />
+                        </TableCell>
+                        <TableCell>
+                          {employee.name}
+                        </TableCell>
+                        <TableCell>
+                          <TextField type="date"
+                            size="small"
+                            fullWidth
+                            variant="standard"
+                            InputProps={{ disableUnderline: true }}
+                            onChange={(e) => handleDateChange(employee.empId, 'startDate', e.target.value)}
+                            inputProps={{
+                              min: getTodayDate(), // Disable past dates
+                            }}
+                            value={startDate}
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <TextField
+                            type="date"
+                            size="small"
+                            fullWidth
+                            variant="standard"
+                            InputProps={{ disableUnderline: true }}
+                            onChange={(e) => handleDateChange(employee.empId, 'endDate', e.target.value)}
+                            inputProps={{
+                              min: startDate ? startDate : getTodayDate(), // Disable dates before the selected start date
+                            }}
+                            value={endDate}
+                          />
+                        </TableCell>
+                      </TableRow>
+                    )
+                  }) : (
                     <TableRow>
                       <TableCell colSpan={5} align="center" sx={{ py: 4, color: '#64748b' }}>
                         No requests found
@@ -423,7 +484,7 @@ const DashboardManager = () => {
           <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 4 }}>
             <SharedButton
               variant="outlined"
-              onClick={() => setShowRaiseRequestModal(false)}
+              onClick={() => handleCloseModal(false)}
               sx={{ borderColor: '#e2e8f0', color: '#64748b', '&:hover': { borderColor: '#cbd5e1', bgcolor: '#f8fafc' } }}
             >
               Cancel
