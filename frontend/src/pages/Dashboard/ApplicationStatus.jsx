@@ -39,6 +39,8 @@ import statusMapping from '../../utils/statusMapping';
 import StepperStep from '../../components/shared/stepper/StepperStep';
 import TravelApplicationStepper from '../../components/shared/stepper/TravelApplicationStepper';
 import { getActiveStep } from '../../utils/getActiveStep';
+import api from '../../services/apiService';
+import apiClient from '../../api/client';
 
 // Custom Stepper Connector
 const QontoConnector = styled(StepConnector)(({ theme }) => ({
@@ -129,7 +131,7 @@ const ApplicationStatus = () => {
 
     console.log("travelDetails in here app status:::::::: ", travelDetails)
     console.log("destination::::::: ", travelDetails[0]?.destination)
-    const travelId = travelDetails[0]?.tId
+    let travelId = travelDetails[0]?.travelId
 
     const departurDate = formatDateToDateString(travelDetails[0]?.departureDate)
     const arrivalDate = formatDateToDateString(travelDetails[0]?.returnDate)
@@ -171,7 +173,16 @@ const ApplicationStatus = () => {
         }
 
         // Dispatch updates
-        dispatch(updateRequestStatus({ travelId, status: newStatus, stepIndex }));
+        // dispatch(updateRequestStatus({ travelId, status: newStatus, stepIndex }));
+
+        console.log("travelId:::::: ", travelId)
+        console.log("newStatus:::::: ", newStatus)
+        const updateData = new FormData()
+        updateData.append('TID', travelId)
+        updateData.append('Status', newStatus)
+        console.log("updateData:::::::: ", updateData)
+        const updateResponse = apiClient.post("/api/UpdateTravelStatus", updateData)
+        // updateData.respo
         dispatch(addNotification(notifMessage));
         dispatch(addApprovalHistory({
             role: user.role,

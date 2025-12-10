@@ -237,7 +237,7 @@ const DashboardManager = () => {
 
   const getStatusToSubmitWhileRaisingRequest = (user) =>{
     switch(user.roleId){
-      case 101:
+      case 102:
         return 1
       case 104:
         return 2
@@ -286,9 +286,15 @@ const DashboardManager = () => {
   };
 
   const getFilteredApprovals = () => {
-        if (filterStatus === 'ALL') {
+    if (filterStatus === 'ALL') {
         return getAllDetails;
     }
+
+    const svpStatusMap = {
+        PENDING: [1, 2, 3, 4, 5], // PENDING includes statuses 1, 2, 3
+        APPROVED: [6, 10, 11, 12], // APPROVED includes statuses 4, 5, 6, 10, 11, 12
+        REJECTED: [18] // Assuming REJECTED is still just status 3
+    };
 
     const statusMap = {
         PENDING: [1, 2, 3], // PENDING includes statuses 1, 2, 3
@@ -296,7 +302,13 @@ const DashboardManager = () => {
         REJECTED: [18] // Assuming REJECTED is still just status 3
     };
 
-    const targetStatuses = statusMap[filterStatus];
+    // const targetStatuses = user.roleId?104:statusMap[filterStatus]:user.roleId?105;
+    let targetStatuses = []
+    if(user.roleId===104){
+      targetStatuses = statusMap[filterStatus]
+    }else if(user.roleId===105){
+      targetStatuses = svpStatusMap[filterStatus]
+    }
 
     return getAllDetails.filter(req => targetStatuses.includes(req.status));
   };
@@ -434,7 +446,7 @@ const DashboardManager = () => {
                     { id: 'id', label: 'Request ID' },
                     { id: 'employee', label: 'Employee' },
                     { id: 'destination', label: 'Destination' },
-                    { id: 'status', label: 'Status' },
+                    // { id: 'status', label: 'Status' },
                     { id: 'actions', label: 'Action' }
                   ]}
                 />
@@ -445,9 +457,9 @@ const DashboardManager = () => {
                       <TableCell>{request.id}</TableCell>
                       <TableCell>{request.employeeDetails?.empName}</TableCell>
                       <TableCell>{request.destination}</TableCell>
-                      <TableCell>
-                        {/* <StatusChip label={request.status || 'PENDING_MANAGER'} /> */}
-                      </TableCell>
+                      {/* <TableCell>
+                        <StatusChip label={request.status} />
+                      </TableCell> */}
                       <TableCell>
                         <SharedButton
                           variant="outlined"

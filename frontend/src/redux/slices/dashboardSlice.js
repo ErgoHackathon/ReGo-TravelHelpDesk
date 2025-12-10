@@ -30,15 +30,23 @@ export const fetchDashboardData = createAsyncThunk(
 
     // Get all employees under MANAGER, AVP, SVP or CHRO
     let allEmployees = []
-    if (userRole === 'MANAGER' || userRole === 'AVP' || userRole === 'SVP' || userRole === 'CHRO') {
+    if (userRole === 'MANAGER' || userRole === 'SVP' || userRole === 'CHRO') {
       allEmployees = await managerService.getTeam(userId)
       console.log("allEmployees::::::::::: ", allEmployees)
     }
 
     // Get all the travel details
     let getAllDetails = []
-    if (userRole === 'MANAGER' || userRole === 'AVP' || userRole === 'SVP' || userRole === 'CHRO') {
+    if (userRole === 'MANAGER' 
+      // || userRole === 'CHRO'
+    ) {
       getAllDetails = await dashboardService.getAllDetails(userId)
+      console.log("getAllDetails::::::::::: ", getAllDetails)
+    }else if(userRole === 'AVP' ){
+      getAllDetails = await dashboardService.getAllAvpDetails(userId)
+      console.log("getAllDetails::::::::::: ", getAllDetails)
+    }else if(userRole === 'SVP' ){
+      getAllDetails = await dashboardService.getAllSvpDetails(userId)
       console.log("getAllDetails::::::::::: ", getAllDetails)
     }
 
@@ -62,6 +70,8 @@ export const fetchDashboardData = createAsyncThunk(
     };
   }
 );
+
+// export const updateTravelRequest = createA
 
 export const fetchTravelDeskData = createAsyncThunk(
   'dashboard/fetchTravelDesk',

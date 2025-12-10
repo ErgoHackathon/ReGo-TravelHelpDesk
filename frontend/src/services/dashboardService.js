@@ -22,15 +22,19 @@ const dashboardService = {
       let travels = [];
 
       // ✅ FIX: Different API based on role
-      if (role === 'MANAGER' || role === 'AVP' || role === 'SVP' || role === 'CHRO') {
+      if (role === 'MANAGER' || role === 'CHRO') {
         // Managers see team's travel requests
         travels = await managerService.getTeamTravel(userId);
         console.log("travels:::::::: ", travels)
       }
-      // else if(role === 'SVP'){
-      //   travels = await managerService.getSVPTeamTravel(userId);
-      //   console.log("travels:::::::: ", travels)
-      // }
+      else if(role === 'AVP'){
+        travels = await managerService.getAvpTeamTravel(userId);
+        console.log("travels:::::::: ", travels)
+      }
+      else if(role === 'SVP'){
+        travels = await managerService.getSvpTeamTravel(userId);
+        console.log("travels:::::::: ", travels)
+      }
       else {
         // Employees see their own travel requests
         travels = await employeeService.getEmployeeTravel(userId);
@@ -124,6 +128,78 @@ const dashboardService = {
     }
   },
 
+  getAllAvpDetails: async (managerId) => {
+    console.log('🟢 Getting all requests for AVP:', managerId);
+
+    if (!managerId) {
+      console.warn('⚠️ No managerId provided');
+      return [];
+    }
+
+    try {
+      const travels = await managerService.getAvpTeamTravel(managerId);
+      // const pending = travels.filter(t => t.status === 0 || t.status === 1);
+      // console.log('📊 Pending approvals:', pending.length);
+      // travels?.forEach(async travel => {
+      //   const employeeDetails = await employeeService.getEmployeeProfile(travel.empId)
+      //   console.log("employeeDetails:::::::::: ", employeeDetails)
+      //   {...travel, }
+      // });
+
+      const travelsWithEmployeeDetails = await Promise.all(travels.map(async travel => {
+        const employeeDetails = await employeeService.getEmployeeProfile(travel?.empId);
+        console.log("employeeDetails:::::::::: ", employeeDetails);
+        
+        // Return a new object that combines travel and employeeDetails
+        return {
+            ...travel, // Spread the existing travel properties
+            employeeDetails // Add the employee details
+        };
+    }));
+
+      return travelsWithEmployeeDetails;
+    } catch (error) {
+      console.error('❌ Error getting pending approvals:', error);
+      return [];
+    }
+  },
+
+  getAllSvpDetails: async (managerId) => {
+    console.log('🟢 Getting all requests for AVP:', managerId);
+
+    if (!managerId) {
+      console.warn('⚠️ No managerId provided');
+      return [];
+    }
+
+    try {
+      const travels = await managerService.getSvpTeamTravel(managerId);
+      // const pending = travels.filter(t => t.status === 0 || t.status === 1);
+      // console.log('📊 Pending approvals:', pending.length);
+      // travels?.forEach(async travel => {
+      //   const employeeDetails = await employeeService.getEmployeeProfile(travel.empId)
+      //   console.log("employeeDetails:::::::::: ", employeeDetails)
+      //   {...travel, }
+      // });
+
+      const travelsWithEmployeeDetails = await Promise.all(travels.map(async travel => {
+        const employeeDetails = await employeeService.getEmployeeProfile(travel?.empId);
+        console.log("employeeDetails:::::::::: ", employeeDetails);
+        
+        // Return a new object that combines travel and employeeDetails
+        return {
+            ...travel, // Spread the existing travel properties
+            employeeDetails // Add the employee details
+        };
+    }));
+
+      return travelsWithEmployeeDetails;
+    } catch (error) {
+      console.error('❌ Error getting pending approvals:', error);
+      return [];
+    }
+  },
+
   /**
    * Get recent travel requests
    */
@@ -149,7 +225,9 @@ const dashboardService = {
   },
   
   updateRequestStatus: async (travelId, status) =>{
+    console.log("we are in here:::::::::", travelId, status )
     const updateRequest = await api.updateTravelStatus(travelId, status)
+    
   },
 
   /**
