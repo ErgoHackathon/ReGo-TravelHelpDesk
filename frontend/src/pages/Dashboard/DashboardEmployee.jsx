@@ -611,7 +611,9 @@ const handleDeleteDocument = async (doc) => {
                       whileHover="hover"
                       whileTap="tap"
                     >
+                      {console.log("rrecentRequests::::::: ", recentRequests)}
                       <Button
+                        disabled={recentRequests[0]?.status<13}
                         variant="contained"
                         startIcon={<CloudUpload />}
                         onClick={() => setShowDocumentsModal(true)}
@@ -656,7 +658,7 @@ const handleDeleteDocument = async (doc) => {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.4 }}
               >
-                <SharedCard sx={{ mt: 4 }}>
+                <SharedCard variant="dashboard" sx={{ mt: 4 }}>
                   <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
                     Your Travel History
                   </Typography>
