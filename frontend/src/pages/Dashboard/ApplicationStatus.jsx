@@ -33,7 +33,6 @@ import { useSelector, useDispatch } from 'react-redux';
 import { updateRequestStatus, addNotification, addApprovalHistory } from '../../redux/slices/dashboardSlice';
 import { toast } from 'react-toastify';
 import employeeService from '../../services/employeeService';
-import { getEmployeeApplicationDetails } from '../../redux/slices/employeeSlice';
 import { formatDate, formatDateToDateString } from '../../utils/helpers';
 
 // Custom Stepper Connector
