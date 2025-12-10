@@ -13,6 +13,17 @@ const TRAVEL_STATUS_LABELS = {
   4: 'Rejected',
 };
 
+const getTravelStatusLabel = (travelStatus) =>{
+  if(travelStatus===0 || travelStatus===1 ||travelStatus===2){
+    return TRAVEL_STATUS_LABELS[0]
+  }else if(travelStatus===4 || travelStatus===5 ||travelStatus===6){
+    return TRAVEL_STATUS_LABELS[2]
+  }else if(travelStatus===17){
+    return TRAVEL_STATUS_LABELS[3]
+  }
+
+}
+
 const employeeService = {
   /**
    * Get employee profile
@@ -52,6 +63,7 @@ const employeeService = {
 
     return travels.map((travel, index) => ({
       id: `${travel.empId}-${index}`,
+      travelId: travel.tId,
       empId: travel.empId,
       country: travel.country,
       city: travel.city,
@@ -60,7 +72,7 @@ const employeeService = {
       departureDate: travel.travelStartDate,
       returnDate: travel.travelEndDate,
       status: travel.status,
-      statusLabel: TRAVEL_STATUS_LABELS[travel.status] || 'Unknown',
+      statusLabel: getTravelStatusLabel(travel.status) || 'Unknown',
       rptEmpId: travel.rptEmpId
     }));
   },
