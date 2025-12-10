@@ -2,6 +2,7 @@
  * Dashboard Service
  */
 
+import api from './apiService';
 import employeeService from './employeeService';
 import managerService from './managerService';
 
@@ -25,7 +26,12 @@ const dashboardService = {
         // Managers see team's travel requests
         travels = await managerService.getTeamTravel(userId);
         console.log("travels:::::::: ", travels)
-      } else {
+      }
+      // else if(role === 'SVP'){
+      //   travels = await managerService.getSVPTeamTravel(userId);
+      //   console.log("travels:::::::: ", travels)
+      // }
+      else {
         // Employees see their own travel requests
         travels = await employeeService.getEmployeeTravel(userId);
       }
@@ -33,10 +39,10 @@ const dashboardService = {
       // Calculate stats
       const stats = {
         totalRequests: travels.length,
-        pending: travels.filter(t => t.status === 0 || t.status === 1).length,
-        approved: travels.filter(t => t.status === 2).length,
-        completed: travels.filter(t => t.status === 3).length,
-        rejected: travels.filter(t => t.status === 4).length,
+        pending: travels.filter(t => t.status === 0 || t.status === 1 || t.status === 2 || t.status === 3 || t.status ===13 || t.status===14 || t.status===15 || t.status===16).length,
+        approved: travels.filter(t => t.status === 5 || t.status === 4 || t.status === 6).length,
+        completed: travels.filter(t => t.status === 17).length,
+        rejected: travels.filter(t => t.status === 18).length,
       };
 
       console.log("stats here:::::::: ", stats)
@@ -140,6 +146,10 @@ const dashboardService = {
       console.error('❌ Error getting recent requests:', error);
       return [];
     }
+  },
+  
+  updateRequestStatus: async (travelId, status) =>{
+    const updateRequest = await api.updateTravelStatus(travelId, status)
   },
 
   /**

@@ -182,6 +182,8 @@ const DashboardManager = () => {
   const travellingEmployeeIds = new Set(getAllDetails.map(employee => employee?.empId));
   const emplyeesNotOnTravel = allEmployees.filter(employee => !travellingEmployeeIds.has(employee?.empId));
 
+  console.log("user here::::::::::", user)
+
   useEffect(() => {
     dispatch(fetchDashboardData());
   }, [dispatch, requestSubmit]);
@@ -233,6 +235,18 @@ const DashboardManager = () => {
     }));
   };
 
+  const getStatusToSubmitWhileRaisingRequest = (user) =>{
+    switch(user.roleId){
+      case 101:
+        return 1
+      case 104:
+        return 2
+      case 105:
+        return 3
+    }
+
+  }
+
   const handleSubmitRequest = async () => {
     const jsonData = checkedEmployees.map(employeeId => ({
       empId: employeeId,
@@ -240,7 +254,7 @@ const DashboardManager = () => {
       city: city,
       travelStartDate: dates[employeeId]?.startDate || null,
       travelEndDate: dates[employeeId]?.endDate || null,
-      status: 1,
+      status: getStatusToSubmitWhileRaisingRequest(user),
       rptEmpId: user.empId,
       remark: remark
     }));
@@ -272,16 +286,19 @@ const DashboardManager = () => {
   };
 
   const getFilteredApprovals = () => {
-    if (filterStatus === 'ALL') {
-      return getAllDetails;
+        if (filterStatus === 'ALL') {
+        return getAllDetails;
     }
+
     const statusMap = {
-      PENDING: 1,
-      APPROVED: 2,
-      REJECTED: 3
+        PENDING: [1, 2, 3], // PENDING includes statuses 1, 2, 3
+        APPROVED: [4, 5, 6, 10, 11, 12], // APPROVED includes statuses 4, 5, 6, 10, 11, 12
+        REJECTED: [18] // Assuming REJECTED is still just status 3
     };
-    const targetStatus = statusMap[filterStatus];
-    return getAllDetails.filter(req => req.status === targetStatus);
+
+    const targetStatuses = statusMap[filterStatus];
+
+    return getAllDetails.filter(req => targetStatuses.includes(req.status));
   };
 
   const handleFilter = (value) => {
@@ -289,6 +306,7 @@ const DashboardManager = () => {
   };
 
   const filteredApprovals = getFilteredApprovals();
+  console.log("filteredApprovals::::::::: ", filteredApprovals)
 
   // ✅ FIXED FilterButton Component
   const FilterButton = ({ label, value }) => (
@@ -320,6 +338,8 @@ const DashboardManager = () => {
 
   const firstName = user?.name.split(" ")[0];
   const lastName = user?.name.split(" ")[1] || "";
+
+  console.log("stats here::::::::  ", stats)
 
   const displayStats = stats && stats.length > 0 ? stats : [
     { title: 'Requests Raised', value: 24, iconKey: 'FlightTakeoff' },
@@ -376,7 +396,7 @@ const DashboardManager = () => {
           {/* Stats */}
           <Grid container spacing={3} sx={{ mb: 4 }}>
             {displayStats.map((stat, index) => (
-              <Grid item xs={12} sm={6} md={4} key={index}>
+              <Grid item xs={12} sm={6} md={12/stats.length} key={index}>
                 <AnimatedStatCard stat={stat} index={index} />
               </Grid>
             ))}
@@ -401,10 +421,10 @@ const DashboardManager = () => {
                   <FilterButton label="Pending" value="PENDING" />
                   <FilterButton label="Approved" value="APPROVED" />
                   <FilterButton label="Rejected" value="REJECTED" />
-                  <FilterButton label="Manager Review" value="MANAGER_REVIEW" />
+                  {/* <FilterButton label="Manager Review" value="MANAGER_REVIEW" />
                   {(user?.role === 'AVP' || user?.role === 'SVP') && (
                     <FilterButton label="Travel Desk" value="TRAVEL_DESK_REVIEW" />
-                  )}
+                  )} */}
                 </Stack>
               </Box>
 

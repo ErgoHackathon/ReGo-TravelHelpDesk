@@ -1,5 +1,5 @@
 // pages/dashboard/ApplicationStatus.jsx
-import React, { useEffect, useState } from 'react';
+import React, { Fragment, useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
     Box,
@@ -14,7 +14,8 @@ import {
     StepConnector,
     stepConnectorClasses,
     TextField,
-    InputAdornment
+    InputAdornment,
+    CircularProgress
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import {
@@ -34,6 +35,10 @@ import { updateRequestStatus, addNotification, addApprovalHistory } from '../../
 import { toast } from 'react-toastify';
 import employeeService from '../../services/employeeService';
 import { formatDate, formatDateToDateString } from '../../utils/helpers';
+import statusMapping from '../../utils/statusMapping';
+import StepperStep from '../../components/shared/stepper/StepperStep';
+import TravelApplicationStepper from '../../components/shared/stepper/TravelApplicationStepper';
+import { getActiveStep } from '../../utils/getActiveStep';
 
 // Custom Stepper Connector
 const QontoConnector = styled(StepConnector)(({ theme }) => ({
@@ -98,34 +103,39 @@ const ApplicationStatus = () => {
     const { id } = useParams();
     const navigate = useNavigate();
     const { user } = useSelector((state) => state.auth);
-    const { approvalHistory,  } = useSelector((state) => state.dashboard);
+    const { approvalHistory, } = useSelector((state) => state.dashboard);
     const [travelDetails, setTravelDetails] = useState([])
     const dispatch = useDispatch();
 
     const [comment, setComment] = useState('');
+    const [loader, setLoader] = useState(true)
     const [budget, setBudget] = useState('');
 
     const empId = id.split("-")[0]
     console.log("empid in here:::::::: ", empId)
     // let travelDetails = []
 
-    useEffect(()=>{
+    useEffect(() => {
         console.log("we are inside useffect here::::::")
         console.log("empId in useEffect:::::::::: ", empId)
-        const fetchEmployeeTravelData = async()=>{
+        const fetchEmployeeTravelData = async () => {
             const data = await employeeService.getEmployeeTravel(empId);
             setTravelDetails(data)
+            setLoader(false)
         }
         fetchEmployeeTravelData()
         // dispatch(getEmployeeApplicationDetails())
-    },[])
-    
+    }, [])
+
     console.log("travelDetails in here app status:::::::: ", travelDetails)
     console.log("destination::::::: ", travelDetails[0]?.destination)
+    const travelId = travelDetails[0]?.tId
 
     const departurDate = formatDateToDateString(travelDetails[0]?.departureDate)
     const arrivalDate = formatDateToDateString(travelDetails[0]?.returnDate)
+    const applicationStatus = travelDetails!==undefined||travelDetails.length!==0 ? travelDetails[0]:null
     console.log("departurDate:::::::::: ", departurDate)
+    // console.log("applicationStatus:::::::: ", applicationStatus)
 
     const handleStatusUpdate = (actionType) => {
         let newStatus = '';
@@ -133,9 +143,9 @@ const ApplicationStatus = () => {
         let notifMessage = '';
 
         if (actionType === 'APPROVE') {
-            if (user.role === 'MANAGER') { newStatus = 'APPROVED_BY_MANAGER'; stepIndex = 2; notifMessage = `Manager approved request ${id}`; }
-            else if (user.role === 'AVP') { newStatus = 'APPROVED_BY_AVP'; stepIndex = 2; notifMessage = `AVP approved request ${id}`; }
-            else if (user.role === 'SVP') { newStatus = 'APPROVED_BY_SVP'; stepIndex = 3; notifMessage = `SVP approved request ${id}`; }
+            if (user.role === 'MANAGER') { newStatus = 4; stepIndex = 4; notifMessage = `Manager approved request ${id}`; }
+            else if (user.role === 'AVP') { newStatus = 5; stepIndex = 5; notifMessage = `AVP approved request ${id}`; }
+            else if (user.role === 'SVP') { newStatus = 6; stepIndex = 6; notifMessage = `SVP approved request ${id}`; }
             else if (user.role === 'CHRO') { newStatus = 'APPROVED'; stepIndex = 4; notifMessage = `CHRO final approval for request ${id}`; }
             else if (user.role === 'FINANCE') { newStatus = 'BUDGET_CONFIRMED'; stepIndex = 2; notifMessage = `Finance confirmed budget for ${id}`; }
         } else if (actionType === 'REJECT') {
@@ -161,7 +171,7 @@ const ApplicationStatus = () => {
         }
 
         // Dispatch updates
-        dispatch(updateRequestStatus({ id, status: newStatus, stepIndex }));
+        dispatch(updateRequestStatus({ travelId, status: newStatus, stepIndex }));
         dispatch(addNotification(notifMessage));
         dispatch(addApprovalHistory({
             role: user.role,
@@ -176,13 +186,25 @@ const ApplicationStatus = () => {
     };
 
     // Mock data for the stepper
+    const activeStep =  getActiveStep(travelDetails[0]?.status)
     const steps = [
-        { label: 'Request Raised', date: '2025-11-25', completed: true },
-        { label: 'Manager Approved', date: '2025-11-26', completed: true },
-        { label: 'Travel Desk Review', date: 'Current', completed: false, active: true },
-        { label: 'Documents Submitted', date: '', completed: false },
-        { label: 'Booking Confirmed', date: '', completed: false }
+        { label: 'Request Raised', date: '2025-11-25', completed: activeStep >= 0 ? true:false },
+        { label: 'Manager Approved', date: '2025-11-26', completed: activeStep >= 1 ? true:false },
+        { label: 'Documents Submitted', date: '', completed: activeStep >= 2 ? true:false },
+        { label: 'Travel Desk Review', date: 'Current', completed: activeStep >= 3 ? true:false},
+        { label: 'Booking Confirmed', date: '', completed: activeStep >= 4 ? true:false }
     ];
+
+    
+
+    console.log("active Step here:::::::: ", activeStep)
+
+    // const steps = Object.values(statusMapping)
+    // const steps = Object.values(statusMapping).map((step) => ({
+    //     label: step.label,
+    //     completed: false,
+    //     active: false,
+    // }));
 
     return (
         <BaseLayout variant="dashboard">
@@ -197,7 +219,11 @@ const ApplicationStatus = () => {
                     Back to Dashboard
                 </Button>
 
-                <SharedCard variant="dashboard" sx={{ mb: 4, overflow: 'visible' }}>
+                {loader?
+                <CircularProgress/>
+                :
+                <Fragment>
+                    <SharedCard variant="dashboard" sx={{ mb: 4, overflow: 'visible' }}>
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 6 }}>
                         <Box>
                             <Typography variant="h5" sx={{ fontWeight: 700, color: '#1e293b', mb: 1 }}>
@@ -211,22 +237,27 @@ const ApplicationStatus = () => {
                     </Box>
 
                     <Box sx={{ mb: 6 }}>
-                        <Stepper alternativeLabel activeStep={2} connector={<QontoConnector />}>
+                        <Stepper alternativeLabel activeStep={activeStep} connector={<QontoConnector />}>
+                        {console.log("stepes:::::::: ", steps)}
                             {steps.map((step) => (
                                 <Step key={step.label} completed={step.completed}>
                                     <StepLabel StepIconComponent={QontoStepIcon}>
                                         <Typography variant="subtitle2" sx={{ fontWeight: step.active || step.completed ? 600 : 400 }}>
                                             {step.label}
                                         </Typography>
-                                        {step.date && (
+                                        {/* {step.date && (
                                             <Typography variant="caption" display="block" color="text.secondary" sx={{ mt: 0.5 }}>
                                                 {step.date}
                                             </Typography>
-                                        )}
+                                        )} */}
                                     </StepLabel>
                                 </Step>
                             ))}
+                            {/* {steps.map((step, index) => (
+                                <StepperStep key={step.label} step={step} active={index === activeStep} completed={step.completed} />
+                            ))} */}
                         </Stepper>
+                        {/* <TravelApplicationStepper applicationStatus={applicationStatus} /> */}
                     </Box>
 
                     <Divider sx={{ mb: 4 }} />
@@ -315,7 +346,7 @@ const ApplicationStatus = () => {
                                 />
                             </Grid>
 
-                            {user?.role === 'AVP' && (
+                            {/* {user?.role === 'AVP' && (
                                 <Grid item xs={12} md={6}>
                                     <TextField
                                         fullWidth
@@ -326,11 +357,12 @@ const ApplicationStatus = () => {
                                         type="number"
                                     />
                                 </Grid>
-                            )}
+                            )} */}
 
                             <Grid item xs={12} sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 1 }}>
                                 {user?.role === 'TRAVEL_DESK' ? (
                                     <Button
+                                        disabled={travelDetails[0]?.rptEmpId === user.empId}
                                         variant="contained"
                                         color="success"
                                         startIcon={<CheckCircle />}
@@ -342,13 +374,14 @@ const ApplicationStatus = () => {
                                 ) : (
                                     <>
                                         <Button
+                                            disabled={travelDetails[0]?.rptEmpId === user.empId}
                                             variant="outlined"
                                             color="error"
                                             onClick={() => handleStatusUpdate('REJECTED')}
                                         >
                                             Reject Request
                                         </Button>
-                                        {user?.role !== 'SVP' && user?.role !== 'CHRO' && (
+                                        {/* {user?.role !== 'SVP' && user?.role !== 'CHRO' && (
                                             <Button
                                                 variant="outlined"
                                                 onClick={() => handleStatusUpdate('REQUEST_CHANGES')}
@@ -356,9 +389,10 @@ const ApplicationStatus = () => {
                                             >
                                                 Request Changes
                                             </Button>
-                                        )}
+                                        )} */}
                                         <Button
                                             variant="contained"
+                                            disabled={travelDetails[0]?.rptEmpId === user.empId}
                                             color="success"
                                             onClick={() => handleStatusUpdate('APPROVE')}
                                             sx={{ color: 'white', px: 4 }}
@@ -371,6 +405,10 @@ const ApplicationStatus = () => {
                         </Grid>
                     </SharedCard>
                 )}
+                </Fragment>
+                }
+                
+                
             </Box>
         </BaseLayout>
     );
