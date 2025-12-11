@@ -35,9 +35,6 @@ import { updateRequestStatus, addNotification, addApprovalHistory } from '../../
 import { toast } from 'react-toastify';
 import employeeService from '../../services/employeeService';
 import { formatDate, formatDateToDateString } from '../../utils/helpers';
-import statusMapping from '../../utils/statusMapping';
-import StepperStep from '../../components/shared/stepper/StepperStep';
-import TravelApplicationStepper from '../../components/shared/stepper/TravelApplicationStepper';
 import { getActiveStep } from '../../utils/getActiveStep';
 import api from '../../services/apiService';
 import apiClient from '../../api/client';

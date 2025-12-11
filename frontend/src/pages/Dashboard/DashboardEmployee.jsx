@@ -1,5 +1,5 @@
 // pages/dashboard/DashboardEmployee.jsx
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -37,12 +37,24 @@ import {
   Delete,
   Refresh,
   PictureAsPdf,
-  Image as ImageIcon
+  Image as ImageIcon,
+  Send as SendIcon
 } from '@mui/icons-material';
 import { useDropzone } from 'react-dropzone';
-import { fetchDashboardData, updateRequestStatus } from '../../redux/slices/dashboardSlice';
+import { 
+  fetchDashboardData, 
+  updateRequestStatus,
+  submitDocumentsThunk 
+} from '../../redux/slices/dashboardSlice';
 import { logout } from '../../features/authSlice';
 import documentService from '../../services/documentService';
+import { 
+  statusToChip, 
+  getStatusLabel, 
+  canUploadDocuments,
+  getStepperConfig,
+  STATUS_CODES
+} from '../../utils/statusMapper';
 import BaseLayout from '../../components/layout/BaseLayout';
 import {
   SharedCard,
@@ -55,7 +67,9 @@ import {
   SharedButton
 } from '../../components/shared';
 
-// Animation variants
+// ==========================================
+// ANIMATION VARIANTS
+// ==========================================
 const pageVariants = {
   initial: { opacity: 0, y: 8 },
   animate: { 
@@ -129,57 +143,23 @@ const buttonVariants = {
   tap: { scale: 0.98, transition: { duration: 0.1 } }
 };
 
-const uploadZoneVariants = {
-  initial: { borderColor: "#cbd5e1", backgroundColor: "#f8fafc" },
-  hover: { 
-    borderColor: "#b91c1c", 
-    backgroundColor: "rgba(185, 28, 28, 0.03)",
-    transition: { duration: 0.2 }
-  },
-  active: { 
-    borderColor: "#b91c1c", 
-    backgroundColor: "rgba(185, 28, 28, 0.08)",
-    scale: 1.01,
-    transition: { duration: 0.2 }
-  }
-};
-
-const progressVariants = {
-  initial: { width: 0 },
-  animate: (value) => ({
-    width: `${value}%`,
-    transition: { duration: 0.5, ease: [0, 0, 0.2, 1] }
-  })
-};
-
-// Default steps for travel workflow
-const DEFAULT_STEPS = [
-  { label: 'Submitted', completed: false },
-  { label: 'Manager Approval', completed: false },
-  { label: 'Documents Upload', completed: false },
-  { label: 'Booking', completed: false },
-  { label: 'Completed', completed: false }
-];
-
-// Map status number to step index
-const getStepIndex = (status) => {
-  switch (status) {
-    case 0: return 0;
-    case 1: return 1;
-    case 2: return 2;
-    case 3: return 4;
-    case 4: return -1;
-    default: return 0;
-  }
-};
-
+// ==========================================
+// COMPONENT
+// ==========================================
 const DashboardEmployee = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { user } = useSelector((state) => state.auth);
-  const { activeRequest, recentRequests = [], loading } = useSelector((state) => state.dashboard);
+  const { 
+    activeRequest, 
+    recentRequests = [], 
+    loading,
+    submittingDocuments 
+  } = useSelector((state) => state.dashboard);
 
-  // State
+  // ==========================================
+  // STATE
+  // ==========================================
   const [showDocumentsModal, setShowDocumentsModal] = useState(false);
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [showPreviewModal, setShowPreviewModal] = useState(false);
@@ -191,9 +171,74 @@ const DashboardEmployee = () => {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [loadingDocs, setLoadingDocs] = useState(false);
   const [loadingPreview, setLoadingPreview] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
 
-  // Fetch dashboard data
+  // ==========================================
+  // COMPUTED VALUES
+  // ==========================================
+  
+  // Get current status from active request or recent requests
+  const currentStatus = useMemo(() => {
+    return activeRequest?.status || 
+           activeRequest?.statusId || 
+           recentRequests[0]?.status || 
+           recentRequests[0]?.statusId || 
+           0;
+  }, [activeRequest, recentRequests]);
+
+  // Check if employee can upload documents (status === 13)
+  const canUpload = useMemo(() => {
+    return canUploadDocuments(currentStatus);
+  }, [currentStatus]);
+
+  // Get stepper configuration based on current status
+  const stepperConfig = useMemo(() => {
+    return getStepperConfig(currentStatus);
+  }, [currentStatus]);
+
+  // Check if all required documents are uploaded
+  const allRequiredUploaded = useMemo(() => {
+    if (!documentTypes || documentTypes.length === 0) return false;
+    
+    const requiredDocs = documentTypes.filter(d => d.required !== false);
+    
+    // If no required flag is set, assume all are required
+    if (requiredDocs.length === 0) {
+      return Object.keys(uploadedDocuments).length >= documentTypes.length;
+    }
+    
+    return requiredDocs.every(doc => !!uploadedDocuments[doc.id]);
+  }, [documentTypes, uploadedDocuments]);
+
+  // Get upload statistics
+  const uploadStats = useMemo(() => {
+    const uploaded = Object.keys(uploadedDocuments).length;
+    const total = documentTypes.length;
+    
+    const requiredDocs = documentTypes.filter(d => d.required !== false);
+    const required = requiredDocs.length || total;
+    const requiredUploaded = requiredDocs.filter(doc => !!uploadedDocuments[doc.id]).length;
+    
+    return { 
+      uploaded, 
+      total, 
+      required,
+      requiredUploaded,
+      percentage: total > 0 ? (uploaded / total) * 100 : 0,
+      requiredPercentage: required > 0 ? (requiredUploaded / required) * 100 : 0,
+      allRequiredDone: requiredUploaded >= required
+    };
+  }, [documentTypes, uploadedDocuments]);
+
+  // Check if submission is in progress
+  const isSubmissionInProgress = isSubmitting || submittingDocuments;
+
+  // ==========================================
+  // EFFECTS
+  // ==========================================
+  
+  // Fetch dashboard data on mount
   useEffect(() => {
     dispatch(fetchDashboardData());
   }, [dispatch]);
@@ -205,16 +250,21 @@ const DashboardEmployee = () => {
     }
   }, [showDocumentsModal, user?.empId]);
 
-  // Fetch both document types and uploaded documents
+  // ==========================================
+  // HANDLERS
+  // ==========================================
+
+  // Fetch documents data
   const fetchDocumentsData = async () => {
     setLoadingDocs(true);
     try {
       // Fetch document types
       const types = await documentService.getAllDocumentTypes();
+      
       setDocumentTypes(types);
       console.log('📋 Document types loaded:', types);
 
-      // Fetch uploaded documents if the method exists
+      // Fetch uploaded documents
       if (documentService.getEmployeeUploadedDocuments) {
         try {
           const uploadedMap = await documentService.getEmployeeUploadedDocuments(user.empId);
@@ -234,11 +284,13 @@ const DashboardEmployee = () => {
     }
   };
 
+  // Logout handler
   const handleLogout = async () => {
     await dispatch(logout());
     navigate('/login', { replace: true });
   };
 
+  // Snackbar handler
   const showSnackbarMessage = (message, severity = 'success') => {
     setSnackbar({ open: true, message, severity });
   };
@@ -317,80 +369,153 @@ const DashboardEmployee = () => {
   };
 
   // View document
-  // View document - UPDATED
-const handleViewDocument = async (doc) => {
-  const uploaded = uploadedDocuments[doc.id];
-  if (!uploaded) return;
+  const handleViewDocument = async (doc) => {
+    const uploaded = uploadedDocuments[doc.id];
+    if (!uploaded) return;
 
-  setLoadingPreview(true);
-  try {
-    // Check if we already have the base64 cached
-    if (uploaded.base64String) {
-      setPreviewData({
-        fileName: uploaded.fileName,
-        fileType: uploaded.fileType,
-        base64: uploaded.base64String,
-      });
-      setShowPreviewModal(true);
+    setLoadingPreview(true);
+    try {
+      // Check if we already have the base64 cached
+      if (uploaded.base64String) {
+        setPreviewData({
+          fileName: uploaded.fileName,
+          fileType: uploaded.fileType,
+          base64: uploaded.base64String,
+        });
+        setShowPreviewModal(true);
+        setLoadingPreview(false);
+        return;
+      }
+
+      showSnackbarMessage('Loading document...', 'info');
+      
+      // Fetch document with content from API
+      const fileData = await documentService.getDocumentWithContent(user.empId, doc.id);
+      
+      if (fileData && fileData.base64String) {
+        // Cache the base64 in local state
+        setUploadedDocuments(prev => ({
+          ...prev,
+          [doc.id]: { 
+            ...prev[doc.id], 
+            base64String: fileData.base64String,
+            fileType: fileData.fileType || prev[doc.id]?.fileType
+          }
+        }));
+        
+        setPreviewData({
+          fileName: uploaded.fileName || fileData.fileName,
+          fileType: fileData.fileType || uploaded.fileType,
+          base64: fileData.base64String,
+        });
+        setShowPreviewModal(true);
+      } else {
+        showSnackbarMessage('Document preview not available', 'warning');
+      }
+    } catch (error) {
+      console.error('Error viewing document:', error);
+      showSnackbarMessage('Failed to load document', 'error');
+    } finally {
       setLoadingPreview(false);
+    }
+  };
+
+  // Delete document
+  const handleDeleteDocument = async (doc) => {
+    if (!window.confirm(`Are you sure you want to delete "${doc.name}"?`)) return;
+
+    try {
+      showSnackbarMessage('Deleting document...', 'info');
+      
+      await documentService.deleteDocument(user.empId, doc.id);
+      
+      // Remove from local state
+      setUploadedDocuments(prev => {
+        const newState = { ...prev };
+        delete newState[doc.id];
+        return newState;
+      });
+
+      showSnackbarMessage(`${doc.name} deleted successfully!`, 'success');
+    } catch (error) {
+      console.error('Error deleting document:', error);
+      showSnackbarMessage(error.message || 'Failed to delete document', 'error');
+    }
+  };
+
+  // ✅ SUBMIT DOCUMENTS (Status 13 → 14)
+  const handleSubmitDocuments = async () => {
+    if (!allRequiredUploaded) {
+      showSnackbarMessage('Please upload all required documents before submitting.', 'error');
       return;
     }
 
-    showSnackbarMessage('Loading document...', 'info');
+    // Get travel ID from active request or recent requests
+    const tId = activeRequest?.travelId || 
+                activeRequest?.tId || 
+                recentRequests[0]?.travelId || 
+                recentRequests[0]?.tId;
     
-    // Fetch document with content from API
-    const fileData = await documentService.getDocumentWithContent(user.empId, doc.id);
-    
-    if (fileData && fileData.base64String) {
-      // Cache the base64 in local state
-      setUploadedDocuments(prev => ({
-        ...prev,
-        [doc.id]: { 
-          ...prev[doc.id], 
-          base64String: fileData.base64String,
-          fileType: fileData.fileType || prev[doc.id]?.fileType
-        }
-      }));
-      
-      setPreviewData({
-        fileName: uploaded.fileName || fileData.fileName,
-        fileType: fileData.fileType || uploaded.fileType,
-        base64: fileData.base64String,
-      });
-      setShowPreviewModal(true);
-    } else {
-      showSnackbarMessage('Document preview not available', 'warning');
+    if (!tId) {
+      showSnackbarMessage('No active travel request found.', 'error');
+      return;
     }
-  } catch (error) {
-    console.error('Error viewing document:', error);
-    showSnackbarMessage('Failed to load document', 'error');
-  } finally {
-    setLoadingPreview(false);
-  }
-};
-  // Delete document
-const handleDeleteDocument = async (doc) => {
-  if (!window.confirm(`Are you sure you want to delete "${doc.name}"?`)) return;
 
-  try {
-    showSnackbarMessage('Deleting document...', 'info');
-    
-    // Call the delete API
-    await documentService.deleteDocument(user.empId, doc.id);
-    
-    // Remove from local state
-    setUploadedDocuments(prev => {
-      const newState = { ...prev };
-      delete newState[doc.id];
-      return newState;
-    });
+    setIsSubmitting(true);
 
-    showSnackbarMessage(`${doc.name} deleted successfully!`, 'success');
-  } catch (error) {
-    console.error('Error deleting document:', error);
-    showSnackbarMessage(error.message || 'Failed to delete document', 'error');
-  }
-};
+    try {
+      console.log('📄 Submitting documents for tId:', tId);
+      
+      // Use the thunk to submit documents (changes status 13 → 14)
+      const result = await dispatch(submitDocumentsThunk({ 
+        tId, 
+        empId: user?.empId 
+      })).unwrap();
+
+      if (result.success) {
+        showSnackbarMessage(
+          'Documents submitted successfully! Helpdesk will review your documents.', 
+          'success'
+        );
+        
+        // Close modal after delay
+        setTimeout(() => {
+          setShowDocumentsModal(false);
+        }, 2000);
+      }
+    } catch (error) {
+      console.error('Submit documents error:', error);
+      
+      // Try fallback with direct service call
+      try {
+        const response = await documentService.submitDocuments(tId, user?.empId);
+        
+        if (response.status === 'Success') {
+          dispatch(updateRequestStatus({
+            tId,
+            statusId: 14,
+            statusLabel: getStatusLabel(14)
+          }));
+          
+          showSnackbarMessage('Documents submitted successfully!', 'success');
+          
+          setTimeout(() => {
+            setShowDocumentsModal(false);
+            dispatch(fetchDashboardData());
+          }, 1500);
+        } else {
+          throw new Error(response.result || 'Submission failed');
+        }
+      } catch (fallbackError) {
+        showSnackbarMessage(
+          fallbackError.message || 'Failed to submit documents. Please try again.', 
+          'error'
+        );
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   // Dropzone configuration
   const onDrop = useCallback((acceptedFiles, rejectedFiles) => {
@@ -417,15 +542,9 @@ const handleDeleteDocument = async (doc) => {
     disabled: uploading
   });
 
-  // Get steps with current status
-  const getSteps = () => {
-    const currentStepIndex = getStepIndex(activeRequest?.status || 0);
-    return DEFAULT_STEPS.map((step, index) => ({
-      ...step,
-      completed: index < currentStepIndex,
-      active: index === currentStepIndex
-    }));
-  };
+  // ==========================================
+  // HELPER FUNCTIONS
+  // ==========================================
 
   // Format file size
   const formatFileSize = (bytes) => {
@@ -454,19 +573,21 @@ const handleDeleteDocument = async (doc) => {
     return <Description sx={{ fontSize: 28, color: '#64748b' }} />;
   };
 
-  // Get upload stats
-  const getUploadStats = () => {
-    const uploaded = Object.keys(uploadedDocuments).length;
-    const total = documentTypes.length;
-    return { uploaded, total, percentage: total > 0 ? (uploaded / total) * 100 : 0 };
+  // Get status info for display
+  const getStatusInfo = (status) => {
+    return statusToChip(status);
   };
 
+  // ==========================================
+  // LOADING STATE
+  // ==========================================
   if (loading) {
     return <LoadingSpinner />;
   }
 
-  const uploadStats = getUploadStats();
-
+  // ==========================================
+  // RENDER
+  // ==========================================
   return (
     <BaseLayout variant="dashboard">
       <Navbar user={user} onLogout={handleLogout} />
@@ -478,7 +599,9 @@ const handleDeleteDocument = async (doc) => {
         exit="exit"
       >
         <Box sx={{ p: 3 }}>
-          {/* Header */}
+          {/* ==========================================
+              HEADER
+          ========================================== */}
           <motion.div variants={staggerItem}>
             <Box sx={{ mb: 4, display: 'flex', alignItems: 'center', gap: 2 }}>
               <motion.div
@@ -505,24 +628,12 @@ const handleDeleteDocument = async (doc) => {
                 </motion.div>
               </Box>
               <Box sx={{ flexGrow: 1 }} />
-              <motion.div
-                variants={buttonVariants}
-                whileHover="hover"
-                whileTap="tap"
-              >
-                <SharedButton
-                  variant="contained"
-                  startIcon={<Flight />}
-                  onClick={() => navigate('/create-request')}
-                  sx={{ bgcolor: '#b91c1c', '&:hover': { bgcolor: '#991b1b' } }}
-                >
-                  Raise Travel Request
-                </SharedButton>
-              </motion.div>
             </Box>
           </motion.div>
 
-          {/* Active Application Card */}
+          {/* ==========================================
+              ACTIVE APPLICATION CARD
+          ========================================== */}
           <AnimatePresence mode="wait">
             {activeRequest ? (
               <motion.div
@@ -547,21 +658,28 @@ const handleDeleteDocument = async (doc) => {
                       animate={{ scale: 1 }}
                       transition={{ type: "spring", stiffness: 500, damping: 25, delay: 0.2 }}
                     >
-                      <StatusChip label={activeRequest.statusLabel || 'Pending'} />
+                      <Chip
+                        label={getStatusInfo(currentStatus).label}
+                        color={getStatusInfo(currentStatus).color}
+                        sx={{ 
+                          bgcolor: getStatusInfo(currentStatus).bgColor,
+                          fontWeight: 600
+                        }}
+                      />
                     </motion.div>
                   </Box>
 
                   {/* Stepper */}
                   <Box sx={{ width: '100%', mb: 4 }}>
-                    <Stepper activeStep={getStepIndex(activeRequest.status)} alternativeLabel>
-                      {getSteps().map((step, index) => (
-                        <Step key={index} completed={step.completed}>
+                    <Stepper activeStep={stepperConfig.activeStep} alternativeLabel>
+                      {stepperConfig.steps.map((label, index) => (
+                        <Step key={index} completed={stepperConfig.completed[index]}>
                           <motion.div
                             initial={{ opacity: 0, y: 10 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: index * 0.1 }}
                           >
-                            <StepLabel>{step.label}</StepLabel>
+                            <StepLabel>{label}</StepLabel>
                           </motion.div>
                         </Step>
                       ))}
@@ -604,23 +722,76 @@ const handleDeleteDocument = async (doc) => {
                     </Box>
                   </motion.div>
 
-                  {/* Action Button */}
+                  {/* Status-based message */}
+                  {currentStatus === 13 && (
+                    <Alert severity="warning" sx={{ mb: 3 }}>
+                      <Typography variant="body2">
+                        <strong>Action Required:</strong> Please upload your documents to proceed.
+                      </Typography>
+                    </Alert>
+                  )}
+
+                  {currentStatus === 14 && (
+                    <Alert severity="info" sx={{ mb: 3 }}>
+                      <Typography variant="body2">
+                        <strong>Documents Submitted:</strong> Helpdesk is reviewing your documents. You will be notified once the review is complete.
+                      </Typography>
+                    </Alert>
+                  )}
+
+                  {currentStatus === 15 && (
+                    <Alert severity="info" sx={{ mb: 3 }}>
+                      <Typography variant="body2">
+                        <strong>Booking in Progress:</strong> Helpdesk is booking your flights and hotels.
+                      </Typography>
+                    </Alert>
+                  )}
+
+                  {currentStatus === 16 && (
+                    <Alert severity="success" sx={{ mb: 3 }}>
+                      <Typography variant="body2">
+                        <strong>Tickets Uploaded:</strong> Your travel has been booked! Check your email for details.
+                      </Typography>
+                    </Alert>
+                  )}
+
+                  {/* Action Button - Only show if status is 13 */}
                   <Box sx={{ display: 'flex', justifyContent: 'center' }}>
                     <motion.div
                       variants={buttonVariants}
                       whileHover="hover"
                       whileTap="tap"
                     >
-                      {console.log("rrecentRequests::::::: ", recentRequests)}
-                      <Button
-                        disabled={recentRequests[0]?.status<13}
-                        variant="contained"
-                        startIcon={<CloudUpload />}
-                        onClick={() => setShowDocumentsModal(true)}
-                        sx={{ bgcolor: '#b91c1c', '&:hover': { bgcolor: '#991b1b' }, px: 4, py: 1.5 }}
+                      <Tooltip 
+                        title={
+                          canUpload 
+                            ? 'Upload required documents for your travel' 
+                            : currentStatus === 14 
+                              ? 'Documents already submitted. Waiting for review.' 
+                              : 'Document upload not available for current status'
+                        }
                       >
-                        Upload Documents
-                      </Button>
+                        <span>
+                          <Button
+                            disabled={!canUpload}
+                            variant="contained"
+                            startIcon={<CloudUpload />}
+                            onClick={() => setShowDocumentsModal(true)}
+                            sx={{ 
+                              bgcolor: '#b91c1c', 
+                              '&:hover': { bgcolor: '#991b1b' }, 
+                              px: 4, 
+                              py: 1.5,
+                              '&.Mui-disabled': {
+                                bgcolor: '#e2e8f0',
+                                color: '#94a3b8'
+                              }
+                            }}
+                          >
+                            {currentStatus === 14 ? 'Documents Submitted' : 'Upload Documents'}
+                          </Button>
+                        </span>
+                      </Tooltip>
                     </motion.div>
                   </Box>
                 </SharedCard>
@@ -650,7 +821,9 @@ const handleDeleteDocument = async (doc) => {
             )}
           </AnimatePresence>
 
-          {/* Travel History */}
+          {/* ==========================================
+              TRAVEL HISTORY
+          ========================================== */}
           <AnimatePresence>
             {recentRequests && recentRequests.length > 0 && (
               <motion.div
@@ -672,22 +845,32 @@ const handleDeleteDocument = async (doc) => {
                       </TableRow>
                     </TableHead>
                     <TableBody>
-                      {recentRequests.map((request, index) => (
-                        <motion.tr
-                          key={request.id || index}
-                          initial={{ opacity: 0, x: -10 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          transition={{ delay: index * 0.05 }}
-                          style={{ display: 'table-row' }}
-                        >
-                          <TableCell>{request.destination}</TableCell>
-                          <TableCell>
-                            {new Date(request.departureDate).toLocaleDateString()} - {new Date(request.returnDate).toLocaleDateString()}
-                          </TableCell>
-                          <TableCell>{request.purpose}</TableCell>
-                          <TableCell><StatusChip label={request.statusLabel} /></TableCell>
-                        </motion.tr>
-                      ))}
+                      {recentRequests.map((request, index) => {
+                        const statusInfo = getStatusInfo(request.status || request.statusId);
+                        return (
+                          <motion.tr
+                            key={request.id || index}
+                            initial={{ opacity: 0, x: -10 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: index * 0.05 }}
+                            style={{ display: 'table-row' }}
+                          >
+                            <TableCell>{request.destination}</TableCell>
+                            <TableCell>
+                              {new Date(request.departureDate).toLocaleDateString()} - {new Date(request.returnDate).toLocaleDateString()}
+                            </TableCell>
+                            <TableCell>{request.purpose}</TableCell>
+                            <TableCell>
+                              <Chip
+                                label={statusInfo.shortLabel || statusInfo.label}
+                                size="small"
+                                color={statusInfo.color}
+                                sx={{ bgcolor: statusInfo.bgColor }}
+                              />
+                            </TableCell>
+                          </motion.tr>
+                        );
+                      })}
                     </TableBody>
                   </Table>
                 </SharedCard>
@@ -697,12 +880,12 @@ const handleDeleteDocument = async (doc) => {
         </Box>
       </motion.div>
 
-      {/* ============================================ */}
-      {/* DOCUMENTS LIST MODAL - MODERN DESIGN */}
-      {/* ============================================ */}
+      {/* ==========================================
+          DOCUMENTS LIST MODAL
+      ========================================== */}
       <SharedModal
         open={showDocumentsModal}
-        onClose={() => setShowDocumentsModal(false)}
+        onClose={() => !isSubmissionInProgress && setShowDocumentsModal(false)}
         title="Upload Required Documents"
         maxWidth="md"
         fullWidth
@@ -747,7 +930,6 @@ const handleDeleteDocument = async (doc) => {
                       overflow: 'hidden'
                     }}
                   >
-                    {/* Subtle pattern overlay */}
                     <Box
                       sx={{
                         position: 'absolute',
@@ -779,10 +961,10 @@ const handleDeleteDocument = async (doc) => {
                           transition={{ type: "spring", stiffness: 500, delay: 0.2 }}
                         >
                           <Chip
-                            label={`${uploadStats.uploaded}/${uploadStats.total} Completed`}
+                            label={`${uploadStats.requiredUploaded}/${uploadStats.required} Required`}
                             sx={{
-                              bgcolor: uploadStats.uploaded === uploadStats.total ? '#4ade80' : 'rgba(255,255,255,0.2)',
-                              color: uploadStats.uploaded === uploadStats.total ? '#166534' : 'white',
+                              bgcolor: uploadStats.allRequiredDone ? '#4ade80' : 'rgba(255,255,255,0.2)',
+                              color: uploadStats.allRequiredDone ? '#166534' : 'white',
                               fontWeight: 600,
                               '& .MuiChip-label': { px: 2 }
                             }}
@@ -809,7 +991,7 @@ const handleDeleteDocument = async (doc) => {
                       Please upload all required documents. Supported formats: PNG, JPG, PDF (Max 5MB)
                     </Typography>
                     
-                    {/* Animated Progress Bar */}
+                    {/* Progress Bar */}
                     <Box sx={{ position: 'relative' }}>
                       <Box sx={{ 
                         height: 10, 
@@ -819,12 +1001,12 @@ const handleDeleteDocument = async (doc) => {
                       }}>
                         <motion.div
                           initial={{ width: 0 }}
-                          animate={{ width: `${uploadStats.percentage}%` }}
+                          animate={{ width: `${uploadStats.requiredPercentage}%` }}
                           transition={{ duration: 0.8, ease: [0, 0, 0.2, 1] }}
                           style={{
                             height: '100%',
                             borderRadius: 5,
-                            background: uploadStats.uploaded === uploadStats.total 
+                            background: uploadStats.allRequiredDone 
                               ? 'linear-gradient(90deg, #4ade80, #22c55e)'
                               : 'linear-gradient(90deg, #fbbf24, #f59e0b)',
                           }}
@@ -839,7 +1021,7 @@ const handleDeleteDocument = async (doc) => {
                           opacity: 0.9 
                         }}
                       >
-                        {Math.round(uploadStats.percentage)}% Complete
+                        {Math.round(uploadStats.requiredPercentage)}% Complete
                       </Typography>
                     </Box>
                   </Box>
@@ -866,6 +1048,7 @@ const handleDeleteDocument = async (doc) => {
                     {documentTypes.map((doc, index) => {
                       const uploaded = uploadedDocuments[doc.id];
                       const isUploaded = !!uploaded;
+                      const isRequired = doc.required !== false;
                       
                       return (
                         <motion.div
@@ -924,6 +1107,19 @@ const handleDeleteDocument = async (doc) => {
                                 >
                                   {doc.name}
                                 </Typography>
+                                {isRequired && (
+                                  <Chip
+                                    size="small"
+                                    label="Required"
+                                    sx={{
+                                      height: 20,
+                                      fontSize: '0.65rem',
+                                      bgcolor: '#fee2e2',
+                                      color: '#dc2626',
+                                      fontWeight: 600
+                                    }}
+                                  />
+                                )}
                                 <motion.div
                                   initial={{ scale: 0 }}
                                   animate={{ scale: 1 }}
@@ -1073,49 +1269,58 @@ const handleDeleteDocument = async (doc) => {
                   >
                     <Button 
                       onClick={() => setShowDocumentsModal(false)} 
+                      disabled={isSubmissionInProgress}
                       sx={{ color: '#64748b', '&:hover': { bgcolor: '#f1f5f9' } }}
                     >
                       Cancel
                     </Button>
                     
-                    <Box sx={{ display: 'flex', gap: 2 }}>
-                      <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                        <Button
-                          variant="outlined"
-                          onClick={() => showSnackbarMessage('Progress saved!', 'info')}
-                          sx={{ 
-                            borderColor: '#e2e8f0',
-                            color: '#64748b',
-                            '&:hover': { borderColor: '#cbd5e1', bgcolor: '#f8fafc' }
-                          }}
-                        >
-                          Save Draft
-                        </Button>
-                      </motion.div>
+                    <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+                      {/* Progress indicator */}
+                      <Typography variant="body2" color="text.secondary">
+                        {uploadStats.requiredUploaded}/{uploadStats.required} required docs
+                      </Typography>
                       
-                      <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                        <Button
-                          variant="contained"
-                          disabled={uploadStats.uploaded === 0}
-                          onClick={() => {
-                            showSnackbarMessage('Documents submitted successfully!', 'success');
-                            setShowDocumentsModal(false);
-                          }}
-                          startIcon={<CheckCircle />}
-                          sx={{
-                            bgcolor: uploadStats.uploaded === uploadStats.total ? '#16a34a' : '#3b82f6',
-                            '&:hover': {
-                              bgcolor: uploadStats.uploaded === uploadStats.total ? '#15803d' : '#2563eb',
-                            },
-                            '&.Mui-disabled': { bgcolor: '#e2e8f0', color: '#94a3b8' }
-                          }}
-                        >
-                          {uploadStats.uploaded === uploadStats.total 
-                            ? 'Submit All Documents' 
-                            : `Submit (${uploadStats.uploaded}/${uploadStats.total})`
-                          }
-                        </Button>
-                      </motion.div>
+                      {/* Submit Button with Tooltip */}
+                      <Tooltip 
+                        title={
+                          allRequiredUploaded 
+                            ? 'Submit documents for Helpdesk review' 
+                            : `Upload all required documents first (${uploadStats.required - uploadStats.requiredUploaded} remaining)`
+                        }
+                        arrow
+                      >
+                        <span>
+                          <motion.div 
+                            whileHover={allRequiredUploaded && !isSubmissionInProgress ? { scale: 1.02 } : {}} 
+                            whileTap={allRequiredUploaded && !isSubmissionInProgress ? { scale: 0.98 } : {}}
+                          >
+                            <Button
+                              variant="contained"
+                              onClick={handleSubmitDocuments}
+                              disabled={!allRequiredUploaded || isSubmissionInProgress}
+                              startIcon={
+                                isSubmissionInProgress 
+                                  ? <CircularProgress size={18} color="inherit" /> 
+                                  : <SendIcon />
+                              }
+                              sx={{
+                                minWidth: 200,
+                                bgcolor: allRequiredUploaded ? '#16a34a' : '#94a3b8',
+                                '&:hover': {
+                                  bgcolor: allRequiredUploaded ? '#15803d' : '#94a3b8',
+                                },
+                                '&.Mui-disabled': { 
+                                  bgcolor: '#e2e8f0', 
+                                  color: '#94a3b8' 
+                                }
+                              }}
+                            >
+                              {isSubmissionInProgress ? 'Submitting...' : 'Submit Documents'}
+                            </Button>
+                          </motion.div>
+                        </span>
+                      </Tooltip>
                     </Box>
                   </Box>
                 </motion.div>
@@ -1125,16 +1330,15 @@ const handleDeleteDocument = async (doc) => {
         </AnimatePresence>
       </SharedModal>
 
-      {/* ============================================ */}
-      {/* FILE UPLOAD MODAL (Drag & Drop) */}
-      {/* ============================================ */}
+      {/* ==========================================
+          FILE UPLOAD MODAL (Drag & Drop)
+      ========================================== */}
       <SharedModal
         open={showUploadModal}
         onClose={() => !uploading && setShowUploadModal(false)}
         title={selectedDoc ? `Upload ${selectedDoc.name}` : 'Upload Document'}
         maxWidth="sm"
       >
-        {/* Drag & Drop Zone */}
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -1142,9 +1346,6 @@ const handleDeleteDocument = async (doc) => {
         >
           <Box
             {...getRootProps()}
-            component={motion.div}
-            animate={isDragActive ? "active" : "initial"}
-            whileHover={!uploading ? "hover" : undefined}
             sx={{
               border: '2px dashed',
               borderColor: isDragActive ? '#b91c1c' : uploading ? '#94a3b8' : '#cbd5e1',
@@ -1237,7 +1438,6 @@ const handleDeleteDocument = async (doc) => {
           </Box>
         </motion.div>
 
-        {/* Cancel Button */}
         <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end' }}>
           <Button
             onClick={() => setShowUploadModal(false)}
@@ -1249,9 +1449,9 @@ const handleDeleteDocument = async (doc) => {
         </Box>
       </SharedModal>
 
-      {/* ============================================ */}
-      {/* DOCUMENT PREVIEW MODAL */}
-      {/* ============================================ */}
+      {/* ==========================================
+          DOCUMENT PREVIEW MODAL
+      ========================================== */}
       <SharedModal
         open={showPreviewModal}
         onClose={() => {
@@ -1327,9 +1527,9 @@ const handleDeleteDocument = async (doc) => {
         </AnimatePresence>
       </SharedModal>
 
-      {/* ============================================ */}
-      {/* SNACKBAR NOTIFICATIONS */}
-      {/* ============================================ */}
+      {/* ==========================================
+          SNACKBAR NOTIFICATIONS
+      ========================================== */}
       <Snackbar
         open={snackbar.open}
         autoHideDuration={4000}

@@ -10,21 +10,28 @@ const documentService = {
    * Get all document types
    * API: GET /api/GetAllDocumentsList
    */
-  getAllDocumentTypes: async () => {
-    console.log('📄 Getting all document types');
+ /**
+ * Get all document types
+ * API: GET /api/GetAllDocumentsList
+ */
+getAllDocumentTypes: async () => {
+  console.log('📄 Getting all document types');
 
-    const response = await api.getAllDocumentsList();
+  const response = await api.getAllDocumentsList();
 
-    if (response.status !== 'Success' || !response.result) {
-      throw new Error('Failed to fetch document types');
-    }
+  if (response.status !== 'Success' || !response.result) {
+    throw new Error('Failed to fetch document types');
+  }
 
-    // Transform to frontend format
-    return response.result.map(doc => ({
-      id: doc.documentID,
-      name: doc.documentName
-    }));
-  },
+  // Transform to frontend format
+  // Check for isRequired, isMandatory, or required field from backend
+  return response.result.map(doc => ({
+    id: doc.documentID,
+    name: doc.documentName,
+    // Check multiple possible field names from backend
+    required: doc.isRequired ?? doc.isMandatory ?? doc.required ?? doc.IsRequired ?? true
+  }));
+},
 
   /**
    * Convert file to Base64 string
@@ -36,7 +43,6 @@ const documentService = {
       const reader = new FileReader();
 
       reader.onload = () => {
-        // Get base64 string (remove data:xxx;base64, prefix)
         const base64String = reader.result.split(',')[1];
         resolve(base64String);
       };
@@ -58,6 +64,10 @@ const documentService = {
     const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg', 'application/pdf'];
     const maxSize = 5 * 1024 * 1024; // 5MB
 
+    if (!file) {
+      return { valid: false, error: 'No file provided' };
+    }
+
     if (!allowedTypes.includes(file.type)) {
       return { valid: false, error: 'Only PNG, JPG, and PDF files are allowed' };
     }
@@ -76,24 +86,22 @@ const documentService = {
   addDocument: async (empId, documentId, file) => {
     console.log('📄 Adding document:', { empId, documentId, fileName: file.name });
 
-    // Validate file
+    // Validate file using the method reference
     const validation = documentService.validateFile(file);
     if (!validation.valid) {
       throw new Error(validation.error);
     }
 
-    // Convert file to Base64
     const fileBase64 = await documentService.fileToBase64(file);
     console.log('📄 File converted to Base64, length:', fileBase64.length);
 
-    // Call API with metadata
     const response = await api.addDocumentWithMetadata(
       empId,
       documentId,
       fileBase64,
-      file.type,      // FileType (e.g., "image/png", "application/pdf")
-      file.name,      // FileName (e.g., "passport.jpg")
-      file.size       // FileSize in bytes
+      file.type,
+      file.name,
+      file.size
     );
 
     if (response.status !== 'Success') {
@@ -105,12 +113,9 @@ const documentService = {
 
   /**
    * Update document for employee
-   * API: POST /api/employee/AddDocumentWithMetadata (backend handles update)
    */
   updateDocument: async (empId, documentId, file) => {
     console.log('📄 Updating document:', { empId, documentId, fileName: file.name });
-
-    // Same as addDocument - backend handles the update logic
     return documentService.addDocument(empId, documentId, file);
   },
 
@@ -125,9 +130,7 @@ const documentService = {
   },
 
   /**
-   * Get all uploaded documents for an employee (list without base64)
-   * API: GET /api/employee/GetUploadedDocuments?empId=xxx
-   * @returns {Object} - Map of documentId -> document info
+   * Get all uploaded documents for an employee
    */
   getEmployeeUploadedDocuments: async (empId) => {
     console.log('📄 Getting all uploaded documents for:', empId);
@@ -140,7 +143,6 @@ const documentService = {
         return {};
       }
 
-      // Transform array to map by documentId
       const documentsMap = {};
       if (response.result && Array.isArray(response.result)) {
         response.result.forEach(doc => {
@@ -165,7 +167,6 @@ const documentService = {
 
   /**
    * Get document with base64 content (for preview)
-   * API: POST /api/employee/GetDocumentFile
    */
   getDocumentWithContent: async (empId, documentId) => {
     console.log('📄 Getting document with content:', { empId, documentId });
@@ -194,7 +195,6 @@ const documentService = {
 
   /**
    * Delete document
-   * API: DELETE /api/employee/DeleteDocument?empId=xxx&documentId=xxx
    */
   deleteDocument: async (empId, documentId) => {
     console.log('📄 Deleting document:', { empId, documentId });
@@ -208,13 +208,84 @@ const documentService = {
     return response.result;
   },
 
-  // ==========================================
-  // HELPDESK / TRAVEL DESK METHODS
-  // ==========================================
+  /**
+   * Submit all documents for a travel request
+   * Changes status from 13 → 14
+   */
+  submitDocuments: async (tId, empId) => {
+    console.log('📄 Submitting documents:', { tId, empId });
+
+    try {
+      const NEW_STATUS = 14;
+      
+      // Try dedicated endpoint first
+      if (api.submitDocuments) {
+        const response = await api.submitDocuments(tId, empId);
+        
+        if (response.status === 'Success') {
+          return {
+            status: 'Success',
+            result: {
+              tId: tId,
+              previousStatus: 13,
+              newStatus: NEW_STATUS,
+              statusLabel: 'Documents Under Review',
+              message: 'Documents submitted successfully'
+            }
+          };
+        }
+      }
+
+      // Fallback: Update status directly
+      const response = await api.updateTravelStatus(tId, NEW_STATUS);
+      
+      if (response.status !== 'Success') {
+        throw new Error(response.result || 'Failed to submit documents');
+      }
+
+      return {
+        status: 'Success',
+        result: {
+          tId: tId,
+          previousStatus: 13,
+          newStatus: NEW_STATUS,
+          statusLabel: 'Documents Under Review',
+          message: 'Documents submitted successfully'
+        }
+      };
+    } catch (error) {
+      console.error('📄 Error submitting documents:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Check if all required documents are uploaded
+   */
+  checkRequiredDocuments: (documentTypes, uploadedDocuments) => {
+    const requiredDocs = documentTypes.filter(d => d.required !== false);
+    const uploadedIds = Object.keys(uploadedDocuments).map(id => parseInt(id, 10));
+    
+    const missing = requiredDocs.filter(doc => !uploadedIds.includes(doc.id));
+    const uploaded = requiredDocs.filter(doc => uploadedIds.includes(doc.id));
+
+    return {
+      allUploaded: missing.length === 0,
+      missing,
+      uploaded,
+      stats: {
+        required: requiredDocs.length,
+        uploaded: uploaded.length,
+        missing: missing.length,
+        percentage: requiredDocs.length > 0 
+          ? Math.round((uploaded.length / requiredDocs.length) * 100) 
+          : 100
+      }
+    };
+  },
 
   /**
    * Get all uploaded documents for an employee (HelpDesk view)
-   * API: GET /api/HelpDesk/GetUploadedDocuments?empId=xxx
    */
   getHelpDeskEmployeeDocuments: async (empId) => {
     console.log('📄 [HelpDesk] Getting all uploaded documents for:', empId);
@@ -248,7 +319,6 @@ const documentService = {
 
   /**
    * Get document with base64 content (for HelpDesk preview/download)
-   * API: POST /api/HelpDesk/GetDocumentFile
    */
   getHelpDeskDocumentWithContent: async (empId, documentId) => {
     console.log('📄 [HelpDesk] Getting document with content:', { empId, documentId });

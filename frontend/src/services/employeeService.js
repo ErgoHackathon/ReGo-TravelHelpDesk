@@ -99,6 +99,9 @@ const employeeService = {
     if (response.status !== 'Success') {
       throw new Error('Failed to update document');
     }
+    else{
+      
+    }
 
     return response.result;
   }
