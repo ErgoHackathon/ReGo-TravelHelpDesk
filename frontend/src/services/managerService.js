@@ -6,6 +6,7 @@
 
 import apiClient from '../api/client';
 import apiConfig, { ENDPOINTS } from '../config/apiConfig';
+import { formatDateToDateString } from '../utils/helpers';
 
 // Status labels mapping
 const TRAVEL_STATUS_LABELS = {
@@ -94,8 +95,12 @@ const managerService = {
       ? response.data.result
       : [response.data.result];
 
-    return travels.map(travel => ({
-      id: `${travel.empId}-${travel.country}-${travel.travelStartDate}`,
+    
+
+    return travels.map(travel => 
+      ({
+      id: `${travel.empId}-${travel.country}-${formatDateToDateString(travel.travelStartDate)}`,
+      travelLabel: `${travel.tId}-${travel.country}-${formatDateToDateString(travel.travelStartDate)}`,
       empId: travel.empId,
       country: travel.country,
       city: travel.city,
@@ -148,7 +153,8 @@ const managerService = {
       : [response.data.result];
 
     return travels.map(travel => ({
-      id: `${travel.empId}-${travel.country}-${travel.travelStartDate}`,
+      id: `${travel.empId}-${travel.country}-${formatDateToDateString(travel.travelStartDate)}`,
+      travelLabel: `${travel.tId}-${travel.country}-${formatDateToDateString(travel.travelStartDate)}`,
       empId: travel.empId,
       country: travel.country,
       city: travel.city,
@@ -203,7 +209,8 @@ const managerService = {
       : [response.data.result];
 
     return travels.map(travel => ({
-      id: `${travel.empId}-${travel.country}-${travel.travelStartDate}`,
+      id: `${travel.empId}-${travel.country}-${formatDateToDateString(travel.travelStartDate)}`,
+      travelLabel: `${travel.tId}-${travel.country}-${formatDateToDateString(travel.travelStartDate)}`,
       empId: travel.empId,
       country: travel.country,
       city: travel.city,

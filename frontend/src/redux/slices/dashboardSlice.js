@@ -45,10 +45,12 @@ export const fetchDashboardData = createAsyncThunk(
     const user = auth.user;
     const userRole = user?.role;
     const userId = user?.empId;
+    const userRoleID = user?.roleId
 
     console.log('📊 Fetching dashboard data for:', { role: userRole, empId: userId });
 
-    const statsData = await dashboardService.getDashboardStats(userRole, userId);
+    // Get stats
+    const statsData = await dashboardService.getDashboardStats(userRole, userId, userRoleID);
 
     let allEmployees = [];
     if (userRole === 'MANAGER' || userRole === 'SVP' || userRole === 'CHRO') {

@@ -117,7 +117,7 @@ const dashboardService = {
   /**
    * Get dashboard statistics
    */
-  getDashboardStats: async (role, userId) => {
+  getDashboardStats: async (role, userId, userRoleID) => {
     console.log('🟢 Getting dashboard stats for:', { role, userId });
 
     if (!userId) {
@@ -128,41 +128,16 @@ const dashboardService = {
     try {
       let travels = [];
 
-      // ✅ Handle Travel Desk / Helpdesk role
-      if (role === 'TRAVEL_DESK' || role === 'Helpdesk' || role === 'HELPDESK') {
-        const response = await realApi.getAllTravelDetails();
-        travels = response?.result || response?.Result || [];
-        
-        // Travel Desk specific stats
-        const stats = {
-          totalRequests: travels.length,
-          pendingReview: travels.filter(t => t.status === 14).length,
-          pendingBooking: travels.filter(t => t.status === 15).length,
-          completed: travels.filter(t => t.status === 16 || t.status === 17).length,
-        };
-
-        const formattedStats = [
-          { title: 'Total Requests', value: stats.totalRequests, iconKey: 'Flight', color: 'primary', trend: '' },
-          { title: 'Pending Review', value: stats.pendingReview, iconKey: 'RateReview', color: 'warning', trend: '' },
-          { title: 'Pending Booking', value: stats.pendingBooking, iconKey: 'FlightTakeoff', color: 'info', trend: '' },
-          { title: 'Completed', value: stats.completed, iconKey: 'CheckCircle', color: 'success', trend: '' }
-        ];
-
-        return { ...stats, stats: formattedStats };
-      }
-
-      // ✅ Manager roles
-      if (role === 'MANAGER' || role === 'AVP' || role === 'SVP' || role === 'CHRO') {
+      // ✅ FIX: Different API based on role
+      if (role === 'MANAGER' || role === 'CHRO') {
+        // Managers see team's travel requests
         travels = await managerService.getTeamTravel(userId);
-        console.log("travels:::::::: ", travels)
       }
-      else if(role === 'AVP'){
+      else if (role === 'AVP') {
         travels = await managerService.getAvpTeamTravel(userId);
-        console.log("travels:::::::: ", travels)
       }
-      else if(role === 'SVP'){
+      else if (role === 'SVP') {
         travels = await managerService.getSvpTeamTravel(userId);
-        console.log("travels:::::::: ", travels)
       }
       else {
         // Employees see their own travel requests
@@ -170,15 +145,48 @@ const dashboardService = {
       }
 
       // Calculate stats
-      const stats = {
-        totalRequests: travels.length,
-        pending: travels.filter(t => t.status === 0 || t.status === 1 || t.status === 2 || t.status === 3 || t.status === 13 || t.status === 14 || t.status === 15 || t.status === 16).length,
-        approved: travels.filter(t => t.status === 5 || t.status === 4 || t.status === 6).length,
-        completed: travels.filter(t => t.status === 17).length,
-        rejected: travels.filter(t => t.status === 18).length,
-      };
+      // const stats = {
+      //   totalRequests: travels.length,
+      //   pending: travels.filter(t => t.status === 0 || t.status === 1 || t.status === 2 || t.status === 3 || t.status === 13 || t.status === 14 || t.status === 15 || t.status === 16).length,
+      //   approved: travels.filter(t => t.status === 5 || t.status === 4 || t.status === 6).length,
+      //   // completed: travels.filter(t => t.status === 17).length,
+      //   rejected: travels.filter(t => t.status === 100).length,
+      // };
 
-      console.log("stats here:::::::: ", stats);
+      let stats = {}
+
+      const statsManager = {
+        totalRequests: travels.length,
+        pending: travels.filter(t => t.status === 7).length,
+        approved: travels.filter(t => t.status === 1 || t.status === 10 || t.status === 17).length,
+        // completed: travels.filter(t => t.status === 17).length,
+        rejected: travels.filter(t => t.status === 100).length,
+      }
+
+      const statsAVP = {
+        totalRequests: travels.length,
+        pending: travels.filter(t => t.status === 1).length,
+        approved: travels.filter(t => t.status===2 || t.status === 5 || t.status === 17).length,
+        // completed: travels.filter(t => t.status === 17).length,
+        rejected: travels.filter(t => t.status === 100).length,
+      }
+
+      const statsSVP = {
+        totalRequests: travels.length,
+        pending: travels.filter(t => t.status === 5).length,
+        approved: travels.filter(t => t.status === 1 || t.status===6 || t.status === 10 || t.status === 17).length,
+        // completed: travels.filter(t => t.status === 17).length,
+        rejected: travels.filter(t => t.status === 100).length,
+      }
+
+      if (userRoleID === 102) {
+        stats = statsManager
+      }
+      else if (userRoleID === 104) {
+        stats = statsAVP
+      } else if (userRoleID === 105) {
+        stats = statsSVP
+      }
 
       // Format for display
       const formattedStats = [
@@ -188,9 +196,6 @@ const dashboardService = {
         { title: 'Rejected', value: stats.rejected, iconKey: 'Cancel', color: 'error', trend: '' }
       ];
 
-      console.log('📊 Stats calculated:', stats);
-      console.log("formattedStats:::::::: ", formattedStats);
-      
       return { ...stats, stats: formattedStats };
 
     } catch (error) {
@@ -231,14 +236,20 @@ const dashboardService = {
 
     try {
       const travels = await managerService.getTeamTravel(managerId);
+      // const pending = travels.filter(t => t.status === 0 || t.status === 1);
+      // console.log('📊 Pending approvals:', pending.length);
+      // travels?.forEach(async travel => {
+      //   const employeeDetails = await employeeService.getEmployeeProfile(travel.empId)
+      //   console.log("employeeDetails:::::::::: ", employeeDetails)
+      //   {...travel, }
+      // });
 
       const travelsWithEmployeeDetails = await Promise.all(travels.map(async travel => {
         const employeeDetails = await employeeService.getEmployeeProfile(travel?.empId);
-        console.log("employeeDetails:::::::::: ", employeeDetails);
-        
+        // Return a new object that combines travel and employeeDetails
         return {
-          ...travel,
-          employeeDetails
+          ...travel, // Spread the existing travel properties
+          employeeDetails // Add the employee details
         };
       }));
 
@@ -269,14 +280,12 @@ const dashboardService = {
 
       const travelsWithEmployeeDetails = await Promise.all(travels.map(async travel => {
         const employeeDetails = await employeeService.getEmployeeProfile(travel?.empId);
-        console.log("employeeDetails:::::::::: ", employeeDetails);
-        
         // Return a new object that combines travel and employeeDetails
         return {
-            ...travel, // Spread the existing travel properties
-            employeeDetails // Add the employee details
+          ...travel, // Spread the existing travel properties
+          employeeDetails // Add the employee details
         };
-    }));
+      }));
 
       return travelsWithEmployeeDetails;
     } catch (error) {
@@ -305,11 +314,11 @@ const dashboardService = {
 
       const travelsWithEmployeeDetails = await Promise.all(travels.map(async travel => {
         const employeeDetails = await employeeService.getEmployeeProfile(travel?.empId);
-        console.log("employeeDetails:::::::::: ", employeeDetails);
-        
+
+        // Return a new object that combines travel and employeeDetails
         return {
-          ...travel,
-          employeeDetails
+          ...travel, // Spread the existing travel properties
+          employeeDetails // Add the employee details
         };
       }));
 
@@ -331,13 +340,6 @@ const dashboardService = {
     try {
       let travels = [];
 
-      // ✅ Handle Travel Desk
-      if (role === 'TRAVEL_DESK' || role === 'Helpdesk' || role === 'HELPDESK') {
-        const response = await realApi.getAllTravelDetails();
-        travels = response?.result || response?.Result || [];
-        return travels.slice(0, 5);
-      }
-
       if (role === 'MANAGER' || role === 'AVP' || role === 'SVP' || role === 'CHRO') {
         travels = await managerService.getTeamTravel(empId);
       } else {
@@ -350,25 +352,14 @@ const dashboardService = {
       return [];
     }
   },
-  
-  updateRequestStatus: async (travelId, status) =>{
-    console.log("we are in here:::::::::", travelId, status )
+
+  updateRequestStatus: async (travelId, status) => {
     const updateRequest = await api.updateTravelStatus(travelId, status)
-    
+
   },
-
-  // ============================================
-  // ✅ NEW: TRAVEL DESK / HELPDESK METHODS
-  // ============================================
-
-  // ============================================
-  // ✅ NEW: TRAVEL DESK / HELPDESK METHODS
-  // ============================================
 
   /**
    * Get pending requests for Travel Desk
-   * Filters: Status 14 (Document Review) and 15 (Pending Tickets)
-   * Filters: Status 14 (Document Review) and 15 (Pending Tickets)
    */
   getPendingRequests: async () => {
     console.log('🟢 Getting pending requests for Travel Desk');
@@ -558,9 +549,7 @@ const dashboardService = {
   }
 };
 
-// ============================================
-// HELPER - Empty Stats
-// ============================================
+// Helper
 const getEmptyStats = () => ({
   totalRequests: 0,
   pending: 0,
@@ -575,8 +564,4 @@ const getEmptyStats = () => ({
   ]
 });
 
-// ============================================
-// EXPORTS
-// ============================================
 export default dashboardService;
-export { STATUS, getStatusLabel, HELPDESK_PENDING_STATUSES, HELPDESK_COMPLETED_STATUSES };

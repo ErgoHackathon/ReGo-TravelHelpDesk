@@ -28,7 +28,10 @@ import {
   PendingActions,
   AttachMoney,
   FilterList,
-  ConnectingAirportsOutlined
+  ConnectingAirportsOutlined,
+  Report,
+  Dashboard,
+  Summarize
 } from '@mui/icons-material';
 import { fetchDashboardData } from '../../redux/slices/dashboardSlice';
 import { logout } from '../../features/authSlice';
@@ -180,9 +183,8 @@ const DashboardManager = () => {
   const [filterStatus, setFilterStatus] = useState('PENDING');
 
   const travellingEmployeeIds = new Set(getAllDetails.map(employee => employee?.empId));
+  
   const emplyeesNotOnTravel = allEmployees.filter(employee => !travellingEmployeeIds.has(employee?.empId));
-
-  console.log("user here::::::::::", user)
 
   useEffect(() => {
     dispatch(fetchDashboardData());
@@ -258,19 +260,16 @@ const DashboardManager = () => {
       rptEmpId: user.empId,
       remark: remark
     }));
-
-    console.log("request submit details here", JSON.stringify(jsonData));
     
     let allSuccess = true;
     for (const travelRequest of jsonData) {
       try {
         const response = await managerService.createTravelRequest(travelRequest);
-        console.log("response::::::::: ", response);
         if (response !== 'Inserted') {
           allSuccess = false;
         }
       } catch (error) {
-        allSuccess = false;
+        // allSuccess = false;
         console.error("Request failed:", error);
       }
     }
@@ -290,22 +289,37 @@ const DashboardManager = () => {
         return getAllDetails;
     }
 
+    const managerStatusMap = {
+        PENDING: [7], // PENDING includes statuses 1, 2, 3
+        APPROVED: [1, 10, 17], // APPROVED includes statuses 4, 5, 6, 10, 11, 12
+        REJECTED: [100] // Assuming REJECTED is still just status 3
+    }
+
+    const avpStatusMap = {
+        PENDING: [1], // PENDING includes statuses 1, 2, 3
+        APPROVED: [2, 5, 17], // APPROVED includes statuses 4, 5, 6, 10, 11, 12
+        REJECTED: [100] // Assuming REJECTED is still just status 3
+    }
+
     const svpStatusMap = {
-        PENDING: [1, 2, 3, 4, 5], // PENDING includes statuses 1, 2, 3
-        APPROVED: [6, 10, 11, 12], // APPROVED includes statuses 4, 5, 6, 10, 11, 12
-        REJECTED: [18] // Assuming REJECTED is still just status 3
+        PENDING: [5], // PENDING includes statuses 1, 2, 3
+        APPROVED: [6, 17], // APPROVED includes statuses 4, 5, 6, 10, 11, 12
+        REJECTED: [100] // Assuming REJECTED is still just status 3
     };
 
-    const statusMap = {
-        PENDING: [1, 2, 3], // PENDING includes statuses 1, 2, 3
-        APPROVED: [4, 5, 6, 10, 11, 12], // APPROVED includes statuses 4, 5, 6, 10, 11, 12
-        REJECTED: [18] // Assuming REJECTED is still just status 3
-    };
+    // const statusMap = {
+    //     PENDING: [1, 2, 3], // PENDING includes statuses 1, 2, 3
+    //     APPROVED: [4, 5, 6, 10, 11, 12], // APPROVED includes statuses 4, 5, 6, 10, 11, 12
+    //     REJECTED: [100] // Assuming REJECTED is still just status 3
+    // };
 
     // const targetStatuses = user.roleId?104:statusMap[filterStatus]:user.roleId?105;
     let targetStatuses = []
-    if(user.roleId===104){
-      targetStatuses = statusMap[filterStatus]
+    if(user.roleId===102){
+      targetStatuses = managerStatusMap[filterStatus]
+    }
+    else if(user.roleId===104){
+      targetStatuses = avpStatusMap[filterStatus]
     }else if(user.roleId===105){
       targetStatuses = svpStatusMap[filterStatus]
     }
@@ -318,7 +332,6 @@ const DashboardManager = () => {
   };
 
   const filteredApprovals = getFilteredApprovals();
-  console.log("filteredApprovals::::::::: ", filteredApprovals)
 
   // ✅ FIXED FilterButton Component
   const FilterButton = ({ label, value }) => (
@@ -348,10 +361,13 @@ const DashboardManager = () => {
     return <LoadingSpinner />;
   }
 
+  const handleGenerateReports = ()=>{
+    toast.info("Coming Soon")
+  }
+
   const firstName = user?.name.split(" ")[0];
   const lastName = user?.name.split(" ")[1] || "";
 
-  console.log("stats here::::::::  ", stats)
 
   const displayStats = stats && stats.length > 0 ? stats : [
     { title: 'Requests Raised', value: 24, iconKey: 'FlightTakeoff' },
@@ -390,19 +406,45 @@ const DashboardManager = () => {
               whileHover="hover"
               whileTap="tap"
             >
+
               <SharedButton
                 variant="contained"
                 startIcon={<FlightTakeoff />}
                 sx={{
                   bgcolor: "#b22a2a",
                   "&:hover": { bgcolor: "#8b1f1f" },
-                  minWidth: 200,
+                  minWidth: 150,
                 }}
                 onClick={() => setShowRaiseRequestModal(true)}
               >
                 Raise Travel Request
               </SharedButton>
+
             </motion.div>
+
+
+            <motion.div
+              variants={buttonVariants}
+              whileHover="hover"
+              whileTap="tap"
+            >
+
+              <SharedButton
+                variant="contained"
+                startIcon={<Summarize />}
+                sx={{
+                  bgcolor: "#b22a2a",
+                  "&:hover": { bgcolor: "#8b1f1f" },
+                  minWidth: 150,
+                }}
+                onClick={() => handleGenerateReports(true)}
+              >
+                Generate Reports
+              </SharedButton>
+              
+          
+            </motion.div>
+            
           </Box>
 
           {/* Stats */}
@@ -444,7 +486,8 @@ const DashboardManager = () => {
                 <TableHeader
                   columns={[
                     { id: 'id', label: 'Request ID' },
-                    { id: 'employee', label: 'Employee' },
+                    { id: 'empid', label: 'Employee ID' },
+                    { id: 'employee', label: 'Employee Name' },
                     { id: 'destination', label: 'Destination' },
                     // { id: 'status', label: 'Status' },
                     { id: 'actions', label: 'Action' }
@@ -454,7 +497,8 @@ const DashboardManager = () => {
                 <TableBody>
                   {filteredApprovals.length > 0 ? filteredApprovals.map((request) => (
                     <TableRow key={request.id}>
-                      <TableCell>{request.id}</TableCell>
+                      <TableCell>{request.travelLabel}</TableCell>
+                      <TableCell>{request.employeeDetails?.empId}</TableCell>
                       <TableCell>{request.employeeDetails?.empName}</TableCell>
                       <TableCell>{request.destination}</TableCell>
                       {/* <TableCell>
@@ -562,6 +606,7 @@ const DashboardManager = () => {
                       <TableHead sx={{ bgcolor: '#f8fafc' }}>
                         <TableRow>
                           <TableCell padding="checkbox"></TableCell>
+                          <TableCell sx={{ fontWeight: 600 }}>Employee Id</TableCell>
                           <TableCell sx={{ fontWeight: 600 }}>Employee Name</TableCell>
                           <TableCell sx={{ fontWeight: 600 }}>Departure Date</TableCell>
                           <TableCell sx={{ fontWeight: 600 }}>Arrival Date</TableCell>
@@ -579,7 +624,8 @@ const DashboardManager = () => {
                                   checked={checkedEmployees.includes(employee.empId)}
                                   onChange={() => handleCheckboxChange(employee.empId)} />
                               </TableCell>
-                              <TableCell>{employee.name}</TableCell>
+                              <TableCell>{employee?.empId}</TableCell>
+                              <TableCell>{employee?.name}</TableCell>
                               <TableCell>
                                 <TextField 
                                   type="date"
@@ -587,7 +633,7 @@ const DashboardManager = () => {
                                   fullWidth
                                   variant="standard"
                                   InputProps={{ disableUnderline: true }}
-                                  onChange={(e) => handleDateChange(employee.empId, 'startDate', e.target.value)}
+                                  onChange={(e) => handleDateChange(employee?.empId, 'startDate', e.target.value)}
                                   inputProps={{
                                     min: getTodayDate(),
                                   }}
