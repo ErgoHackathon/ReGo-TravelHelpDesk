@@ -5,13 +5,9 @@
 import api from './apiService';
 import employeeService from './employeeService';
 import managerService from './managerService';
-import realApi from './api/realApi'; // ✅ Add this import
-
-// ============================================
-// STATUS CONSTANTS (Based on StatusMaster)
-// ============================================
+import realApi from './api/realApi'; 
 const STATUS = {
-  // Initial Initiated
+  // 
   MANAGER_INITIATED: 1,
   AVP_INITIATED: 2,
   SVP_INITIATED: 3,
@@ -99,126 +95,6 @@ const getEmployeeName = async (empId) => {
     return `Employee ${empId}`;
   }
 };
-
-// ============================================
-// HELPER FUNCTIONS
-// ============================================
-const formatDate = (dateString) => {
-  if (!dateString || dateString === '0001-01-01T00:00:00') {
-    return 'Not Set';
-  }
-  try {
-    return new Date(dateString).toLocaleDateString('en-IN', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric'
-    });
-  } catch {
-    return dateString;
-  }
-};
-
-// ============================================
-// DASHBOARD SERVICE
-// ============================================
-import realApi from './api/realApi'; // ✅ Add this import
-
-// ============================================
-// STATUS CONSTANTS (Based on StatusMaster)
-// ============================================
-const STATUS = {
-  // Initial Initiated
-  MANAGER_INITIATED: 1,
-  AVP_INITIATED: 2,
-  SVP_INITIATED: 3,
-  
-  // Initial Approved
-  MANAGER_APPROVED: 4,
-  AVP_APPROVED: 5,
-  SVP_APPROVED: 6,
-  
-  // Final Initiated
-  MANAGER_FINAL_INITIATED: 7,
-  AVP_FINAL_INITIATED: 8,
-  SVP_FINAL_INITIATED: 9,
-  
-  // Final Approved
-  MANAGER_FINAL_APPROVED: 10,
-  AVP_FINAL_APPROVED: 11,
-  SVP_FINAL_APPROVED: 12,
-  
-  // HelpDesk/Travel Desk statuses
-  DOCUMENT_PENDING: 13,
-  DOCUMENT_REVIEW_PENDING: 14,  // HelpDesk reviews documents
-  PENDING_TICKETS: 15,          // HelpDesk books tickets
-  TICKETS_UPLOADED: 16,         // Booking completed
-  COMPLETED: 17                 // Travel completed
-};
-
-// Status IDs that Travel Desk needs to work on
-const HELPDESK_PENDING_STATUSES = [
-  STATUS.DOCUMENT_REVIEW_PENDING,  // 14
-  STATUS.PENDING_TICKETS           // 15
-];
-
-// Status IDs for completed bookings
-const HELPDESK_COMPLETED_STATUSES = [
-  STATUS.TICKETS_UPLOADED,  // 16
-  STATUS.COMPLETED          // 17
-];
-
-// ============================================
-// STATUS LABEL MAPPING
-// ============================================
-const getStatusLabel = (statusId) => {
-  const statusMap = {
-    1: 'Manager Initiated',
-    2: 'AVP/DVP Initiated',
-    3: 'SVP Initiated',
-    4: 'Manager Approved',
-    5: 'AVP/DVP Approved',
-    6: 'SVP Approved',
-    7: 'Final - Manager Initiated',
-    8: 'Final - AVP/DVP Initiated',
-    9: 'Final - SVP Initiated',
-    10: 'Final - Manager Approved',
-    11: 'Final - AVP/DVP Approved',
-    12: 'Final - SVP Approved',
-    13: 'Document Pending',
-    14: 'Document Review Pending',
-    15: 'Pending Flight/Hotel',
-    16: 'Tickets Uploaded',
-    17: 'Completed'
-  };
-  return statusMap[statusId] || 'Unknown';
-};
-
-// ============================================
-// EMPLOYEE NAME CACHE (for performance)
-// ============================================
-const employeeCache = new Map();
-
-const getEmployeeName = async (empId) => {
-  if (!empId) return 'Unknown';
-  
-  if (employeeCache.has(empId)) {
-    return employeeCache.get(empId);
-  }
-  
-  try {
-    const response = await employeeService.getEmployeeProfile(empId);
-    const name = response?.Name || response?.name || `Employee ${empId}`;
-    employeeCache.set(empId, name);
-    return name;
-  } catch (error) {
-    console.error(`Error fetching employee ${empId}:`, error);
-    return `Employee ${empId}`;
-  }
-};
-
-// ============================================
-// HELPER FUNCTIONS
-// ============================================
 const formatDate = (dateString) => {
   if (!dateString || dateString === '0001-01-01T00:00:00') {
     return 'Not Set';
@@ -661,6 +537,7 @@ const dashboardService = {
       throw error;
     }
   },
+
 
   /**
    * Get employee documents (for Travel Desk review)

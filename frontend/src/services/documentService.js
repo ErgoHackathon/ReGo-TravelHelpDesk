@@ -1,148 +1,135 @@
 /**
  * Document Service
- * Handles all document-related API calls
+ * Handles all document-related API calls including Visa OCR
  */
-
 import api from './apiService';
 
+// Document IDs
+const HIDDEN_DOCUMENT_IDS = [10]; // Visa - hidden from employee
+const HIDDEN_DOCUMENT_NAMES = ['visa'];
+const VISA_DOCUMENT_ID = 10;
+
 const documentService = {
-  /**
-   * Get all document types
-   * API: GET /api/GetAllDocumentsList
-   */
- /**
- * Get all document types
- * API: GET /api/GetAllDocumentsList
- */
-getAllDocumentTypes: async () => {
-  console.log('📄 Getting all document types');
+  // ==========================================
+  // DOCUMENT TYPES
+  // ==========================================
+  
+  getAllDocumentTypes: async () => {
+    console.log('📄 Getting all document types (employee view)');
+    
+    const response = await api.getAllDocumentsList();
+    
+    if (response.status !== 'Success' || !response.result) {
+      throw new Error('Failed to fetch document types');
+    }
+    
+    const allDocs = response.result.map(doc => ({
+      id: doc.documentID,
+      name: doc.documentName,
+      required: doc.isRequired ?? doc.isMandatory ?? true
+    }));
+    
+    // Filter out Visa for employee view
+    const filteredDocs = allDocs.filter(doc => {
+      if (HIDDEN_DOCUMENT_IDS.includes(doc.id)) return false;
+      if (HIDDEN_DOCUMENT_NAMES.some(name => 
+        doc.name.toLowerCase().trim() === name.toLowerCase().trim()
+      )) return false;
+      return true;
+    });
+    
+    return filteredDocs;
+  },
 
-  const response = await api.getAllDocumentsList();
+  getAllDocumentTypesForHelpDesk: async () => {
+    console.log('📄 Getting all document types (HelpDesk view - includes Visa)');
+    
+    const response = await api.getAllDocumentsList();
+    
+    if (response.status !== 'Success' || !response.result) {
+      throw new Error('Failed to fetch document types');
+    }
+    
+    const allDocs = response.result.map(doc => ({
+      id: doc.documentID,
+      name: doc.documentName,
+      required: doc.isRequired ?? doc.isMandatory ?? true,
+      canUpload: doc.documentID === VISA_DOCUMENT_ID,
+      isVisa: doc.documentID === VISA_DOCUMENT_ID
+    }));
+    
+    console.log(`📄 Returning ${allDocs.length} documents for HelpDesk`);
+    return allDocs;
+  },
 
-  if (response.status !== 'Success' || !response.result) {
-    throw new Error('Failed to fetch document types');
-  }
+  // ==========================================
+  // FILE UTILITIES
+  // ==========================================
 
-  // Transform to frontend format
-  // Check for isRequired, isMandatory, or required field from backend
-  return response.result.map(doc => ({
-    id: doc.documentID,
-    name: doc.documentName,
-    // Check multiple possible field names from backend
-    required: doc.isRequired ?? doc.isMandatory ?? doc.required ?? doc.IsRequired ?? true
-  }));
-},
-
-  /**
-   * Convert file to Base64 string
-   * @param {File} file - File object
-   * @returns {Promise<string>} - Base64 encoded string
-   */
   fileToBase64: (file) => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
-
       reader.onload = () => {
         const base64String = reader.result.split(',')[1];
         resolve(base64String);
       };
-
-      reader.onerror = (error) => {
-        reject(error);
-      };
-
+      reader.onerror = (error) => reject(error);
       reader.readAsDataURL(file);
     });
   },
 
-  /**
-   * Validate file type and size
-   * @param {File} file - File object
-   * @returns {object} - { valid: boolean, error: string | null }
-   */
   validateFile: (file) => {
     const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg', 'application/pdf'];
-    const maxSize = 5 * 1024 * 1024; // 5MB
-
-    if (!file) {
-      return { valid: false, error: 'No file provided' };
-    }
-
-    if (!allowedTypes.includes(file.type)) {
-      return { valid: false, error: 'Only PNG, JPG, and PDF files are allowed' };
-    }
-
-    if (file.size > maxSize) {
-      return { valid: false, error: 'File size must be less than 5MB' };
-    }
-
+    const maxSize = 5 * 1024 * 1024;
+    
+    if (!file) return { valid: false, error: 'No file provided' };
+    if (!allowedTypes.includes(file.type)) return { valid: false, error: 'Only PNG, JPG, and PDF files are allowed' };
+    if (file.size > maxSize) return { valid: false, error: 'File size must be less than 5MB' };
+    
     return { valid: true, error: null };
   },
 
-  /**
-   * Add document for employee WITH metadata
-   * API: POST /api/employee/AddDocumentWithMetadata
-   */
+  // ==========================================
+  // DOCUMENT CRUD
+  // ==========================================
+
   addDocument: async (empId, documentId, file) => {
     console.log('📄 Adding document:', { empId, documentId, fileName: file.name });
-
-    // Validate file using the method reference
+    
     const validation = documentService.validateFile(file);
-    if (!validation.valid) {
-      throw new Error(validation.error);
-    }
-
+    if (!validation.valid) throw new Error(validation.error);
+    
     const fileBase64 = await documentService.fileToBase64(file);
-    console.log('📄 File converted to Base64, length:', fileBase64.length);
-
+    console.log("fileBase64Visa:::",fileBase64);
+    
     const response = await api.addDocumentWithMetadata(
-      empId,
-      documentId,
-      fileBase64,
-      file.type,
-      file.name,
-      file.size
+      empId, documentId, fileBase64, file.type, file.name, file.size
     );
-
+    
     if (response.status !== 'Success') {
       throw new Error(response.result || 'Failed to upload document');
     }
-
+    
     return response.result;
   },
 
-  /**
-   * Update document for employee
-   */
   updateDocument: async (empId, documentId, file) => {
-    console.log('📄 Updating document:', { empId, documentId, fileName: file.name });
     return documentService.addDocument(empId, documentId, file);
   },
 
-  /**
-   * Upload or update document (auto-detect)
-   */
   uploadDocument: async (empId, documentId, file, isUpdate = false) => {
-    if (isUpdate) {
-      return documentService.updateDocument(empId, documentId, file);
-    }
+    if (isUpdate) return documentService.updateDocument(empId, documentId, file);
     return documentService.addDocument(empId, documentId, file);
   },
 
-  /**
-   * Get all uploaded documents for an employee
-   */
   getEmployeeUploadedDocuments: async (empId) => {
-    console.log('📄 Getting all uploaded documents for:', empId);
-
+    console.log('📄 Getting uploaded documents for:', empId);
+    
     try {
       const response = await api.getEmployeeAllDocuments(empId);
-
-      if (response.status !== 'Success') {
-        console.log('📄 No documents found or API error');
-        return {};
-      }
-
+      
+      if (response.status !== 'Success') return {};
+      
       const documentsMap = {};
       if (response.result && Array.isArray(response.result)) {
         response.result.forEach(doc => {
@@ -156,29 +143,22 @@ getAllDocumentTypes: async () => {
           };
         });
       }
-
-      console.log('📄 Uploaded documents map:', documentsMap);
+      
       return documentsMap;
     } catch (error) {
-      console.error('📄 Error fetching uploaded documents:', error);
+      console.error('📄 Error fetching documents:', error);
       return {};
     }
   },
 
-  /**
-   * Get document with base64 content (for preview)
-   */
   getDocumentWithContent: async (empId, documentId) => {
-    console.log('📄 Getting document with content:', { empId, documentId });
-
+    console.log('📄 Getting document content:', { empId, documentId });
+    
     try {
       const response = await api.getDocumentFile(empId, documentId);
-
-      if (response.status !== 'Success' || !response.result) {
-        console.log('📄 Document not found');
-        return null;
-      }
-
+      
+      if (response.status !== 'Success' || !response.result) return null;
+      
       return {
         empDocId: response.result.empDocId,
         fileName: response.result.fileName || `Document_${documentId}`,
@@ -193,62 +173,33 @@ getAllDocumentTypes: async () => {
     }
   },
 
-  /**
-   * Delete document
-   */
   deleteDocument: async (empId, documentId) => {
     console.log('📄 Deleting document:', { empId, documentId });
-
+    
     const response = await api.deleteDocument(empId, documentId);
-
+    
     if (response.status !== 'Success') {
       throw new Error(response.result || 'Failed to delete document');
     }
-
+    
     return response.result;
   },
 
-  /**
-   * Submit all documents for a travel request
-   * Changes status from 13 → 14
-   */
   submitDocuments: async (tId, empId) => {
     console.log('📄 Submitting documents:', { tId, empId });
-
     try {
-      const NEW_STATUS = 14;
-      
-      // Try dedicated endpoint first
-      if (api.submitDocuments) {
-        const response = await api.submitDocuments(tId, empId);
-        
-        if (response.status === 'Success') {
-          return {
-            status: 'Success',
-            result: {
-              tId: tId,
-              previousStatus: 13,
-              newStatus: NEW_STATUS,
-              statusLabel: 'Documents Under Review',
-              message: 'Documents submitted successfully'
-            }
-          };
-        }
-      }
-
-      // Fallback: Update status directly
-      const response = await api.updateTravelStatus(tId, NEW_STATUS);
+      const response = await api.updateTravelStatus(tId, 14, empId, 'Documents submitted by employee');
       
       if (response.status !== 'Success') {
         throw new Error(response.result || 'Failed to submit documents');
       }
-
+      
       return {
         status: 'Success',
         result: {
-          tId: tId,
+          tId,
           previousStatus: 13,
-          newStatus: NEW_STATUS,
+          newStatus: 14,
           statusLabel: 'Documents Under Review',
           message: 'Documents submitted successfully'
         }
@@ -259,44 +210,109 @@ getAllDocumentTypes: async () => {
     }
   },
 
-  /**
-   * Check if all required documents are uploaded
-   */
-  checkRequiredDocuments: (documentTypes, uploadedDocuments) => {
-    const requiredDocs = documentTypes.filter(d => d.required !== false);
-    const uploadedIds = Object.keys(uploadedDocuments).map(id => parseInt(id, 10));
-    
-    const missing = requiredDocs.filter(doc => !uploadedIds.includes(doc.id));
-    const uploaded = requiredDocs.filter(doc => uploadedIds.includes(doc.id));
+  // ==========================================
+  // PASSPORT OCR (Employee Dashboard)
+  // ==========================================
 
-    return {
-      allUploaded: missing.length === 0,
-      missing,
-      uploaded,
-      stats: {
-        required: requiredDocs.length,
-        uploaded: uploaded.length,
-        missing: missing.length,
-        percentage: requiredDocs.length > 0 
-          ? Math.round((uploaded.length / requiredDocs.length) * 100) 
-          : 100
-      }
-    };
+  getPassportOCRInfo: async (empId) => {
+    console.log('🛂 Getting passport OCR info for:', empId);
+    try {
+      const response = await api.getPassportInfo(empId);
+      return response;
+    } catch (error) {
+      console.error('❌ Error fetching passport OCR info:', error);
+      throw error;
+    }
   },
 
-  /**
-   * Get all uploaded documents for an employee (HelpDesk view)
-   */
-  getHelpDeskEmployeeDocuments: async (empId) => {
-    console.log('📄 [HelpDesk] Getting all uploaded documents for:', empId);
-
+  updatePassportOCRInfo: async (empId, passportData) => {
+    console.log('🛂 Updating passport OCR info for:', empId);
+    
     try {
-      const response = await api.getHelpDeskEmployeeDocuments(empId);
+      const apiData = {
+        issuer: passportData.issuer || passportData.Issuer || '',
+        fullName: passportData.fullName || passportData.FullName || '',
+        passportNumber: passportData.passportNumber || passportData.PassportNumber || '',
+        nationality: passportData.nationality || passportData.Nationality || '',
+        dateOfBirth: passportData.dateOfBirth || passportData.DateOfBirth || '',
+        sex: passportData.sex || passportData.Sex || '',
+        expiryDate: passportData.expiryDate || passportData.ExpiryDate || '',
+        compositeCheck: passportData.compositeCheck ?? passportData.CompositeCheck ?? true
+      };
+      
+      const response = await api.updatePassportInfo(empId, apiData);
+      return response;
+    } catch (error) {
+      console.error('❌ Error updating passport OCR info:', error);
+      throw error;
+    }
+  },
 
-      if (response.status !== 'Success') {
-        return {};
+  // ==========================================
+  // VISA OCR (TravelDesk Only)
+  // ==========================================
+
+  getVisaOCRInfo: async (empId) => {
+    console.log('🎫 Getting visa OCR info for:', empId);
+    try {
+      const response = await api.getVisaInfo(empId);
+      
+      if (response?.fallbackRequired || response?.status === 'NotFound') {
+        console.log('🎫 Visa OCR data not available yet');
+        return null;
       }
+      
+      return response;
+    } catch (error) {
+      console.error('❌ Error fetching visa OCR info:', error);
+      return null;
+    }
+  },
 
+  updateVisaOCRInfo: async (empId, visaData) => {
+    console.log('🎫 Updating visa OCR info for:', empId);
+    
+    try {
+      const apiData = {
+        issuer: visaData.issuer || visaData.Issuer || '',
+        fullName: visaData.fullName || visaData.FullName || '',
+        visaNumber: visaData.visaNumber || visaData.VisaNumber || '',
+        nationality: visaData.nationality || visaData.Nationality || '',
+        dateOfBirth: visaData.dateOfBirth || visaData.DateOfBirth || '',
+        sex: visaData.sex || visaData.Sex || '',
+        expiryDate: visaData.expiryDate || visaData.ExpiryDate || '',
+        compositeCheck: visaData.compositeCheck ?? visaData.CompositeCheck ?? true
+      };
+      
+      const response = await api.updateVisaInfo(empId, apiData);
+      return response;
+    } catch (error) {
+      console.error('❌ Error updating visa OCR info:', error);
+      throw error;
+    }
+  },
+
+  // ==========================================
+  // HELPDESK / TRAVEL DESK METHODS
+  // ==========================================
+
+  _needsFallback: (response) => {
+    return response?.fallbackRequired === true || response?.status === 'NotFound';
+  },
+
+  getHelpDeskEmployeeDocuments: async (empId) => {
+    console.log('📄 [HelpDesk] Getting documents for:', empId);
+    
+    try {
+      let response = await api.getEmployeeAllDocuments(empId);
+      
+      if (documentService._needsFallback(response)) {
+        console.log('📄 [HelpDesk] Using employee endpoint as fallback');
+        response = await api.getEmployeeAllDocuments(empId);
+      }
+      
+      if (response.status !== 'Success') return {};
+      
       const documentsMap = {};
       if (response.result && Array.isArray(response.result)) {
         response.result.forEach(doc => {
@@ -309,7 +325,7 @@ getAllDocumentTypes: async () => {
           };
         });
       }
-
+      
       return documentsMap;
     } catch (error) {
       console.error('📄 [HelpDesk] Error fetching documents:', error);
@@ -317,19 +333,19 @@ getAllDocumentTypes: async () => {
     }
   },
 
-  /**
-   * Get document with base64 content (for HelpDesk preview/download)
-   */
   getHelpDeskDocumentWithContent: async (empId, documentId) => {
-    console.log('📄 [HelpDesk] Getting document with content:', { empId, documentId });
-
+    console.log('📄 [HelpDesk] Getting document content:', { empId, documentId });
+    
     try {
-      const response = await api.getHelpDeskDocumentFile(empId, documentId);
-
-      if (response.status !== 'Success' || !response.result) {
-        return null;
+      let response = await api.getHelpDeskDocumentFile(empId, documentId);
+      
+      if (documentService._needsFallback(response)) {
+        console.log('📄 [HelpDesk] Using employee endpoint as fallback');
+        response = await api.getDocumentFile(empId, documentId);
       }
-
+      
+      if (response.status !== 'Success' || !response.result) return null;
+      
       return {
         empDocId: response.result.empDocId,
         fileName: response.result.fileName || `Document_${documentId}`,
@@ -342,6 +358,11 @@ getAllDocumentTypes: async () => {
       console.error('📄 [HelpDesk] Error fetching document content:', error);
       throw error;
     }
+  },
+
+  helpDeskUploadVisa: async (empId, file) => {
+    console.log('📄 [HelpDesk] Uploading visa for:', empId);
+    return documentService.addDocument(empId, VISA_DOCUMENT_ID, file);
   }
 };
 

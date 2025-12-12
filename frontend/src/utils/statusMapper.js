@@ -21,9 +21,9 @@ export const STATUS_CODES = {
     INITIAL_SVP_APPROVED: 6,
     
     // Final Initiated (7-9)
-    FINAL_MANAGER_INITIATED: 7,
-    FINAL_AVP_DVP_INITIATED: 8,
-    FINAL_SVP_INITIATED: 9,
+    MANAGER_FINAL_INITIATED: 7,
+    AVP_DVP_FINAL_INITIATED: 8,
+    SVP_FINAL_INITIATED: 9,
     
     // Final Approved (10-12)
     FINAL_MANAGER_APPROVED: 10,
@@ -31,11 +31,12 @@ export const STATUS_CODES = {
     FINAL_SVP_APPROVED: 12,
     
     // Document & Booking Flow (13-17)
-    DOCUMENT_PENDING: 13,           // Employee needs to upload documents
-    DOCUMENT_REVIEW_PENDING: 14,    // Documents submitted, Helpdesk reviewing
-    PENDING_TICKETS: 15,            // Helpdesk booking flights/hotels
-    TICKETS_UPLOADED: 16,           // Tickets uploaded by Helpdesk
-    COMPLETED: 17,                  // Travel completed
+    DOCUMENT_PENDING_FROM_EMPLOYEE: 13,           // Employee needs to upload documents
+    DOCUMENT_REVIEW_PENDING_FROM_HELPDESK: 14,    // Documents submitted, Helpdesk reviewing
+    PENDING_TICKETS_FROM_HELPDESK: 15,            // Helpdesk booking flights/hotels
+    TICKETS_UPLOADED_FROM_HELPDESK: 16,           // Tickets uploaded by Helpdesk
+    EMPLOYEE_TRAVEL_COMPLETED: 17,
+    VISA_REJECTED: 18,                 // Travel completed
     
     // Travel Desk Workflow (String based - for extended workflow)
     TD_RECEIVED_FAKE_DATES: 'TD_RECEIVED_FAKE_DATES',
