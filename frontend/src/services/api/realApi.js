@@ -37,11 +37,14 @@ const realApi = {
     return response.data;
   },
 
-  getTravelDetailByTId: async (tId) => {
-    console.log('🟢 REAL: POST /api/employee/TravelDetailByTID');
-    const formData = new FormData();
-    formData.append('TID', tId);
-    const response = await apiClient.post('/api/employee/TravelDetailByTID', formData);
+  getTravelDetailByTId: async (TiD) => {
+
+    const formData = new FormData()
+    formData.append('TID', TiD)
+
+    console.log('🟢 REAL: POST /api/employee/TravelDetailByTID' + TiD);
+
+    const response = await apiClient.post(`/api/employee/TravelDetailByTID`, formData);
     return response.data;
   },
 
