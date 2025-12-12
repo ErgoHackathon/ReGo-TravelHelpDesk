@@ -1,10 +1,10 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import realApi from '../../services/api/realApi';
-import realApi from '../../services/api/realApi';
+
 import dashboardService from '../../services/dashboardService';
 import managerService from '../../services/managerService';
 import { getStatusLabel as mapStatusLabel } from '../../utils/statusMapper';
-import { getStatusLabel as mapStatusLabel } from '../../utils/statusMapper';
+
 
 // Fallback stats (UNCHANGED)
 const fallbackStats = [
@@ -14,39 +14,7 @@ const fallbackStats = [
   { title: 'Rejected', value: 0, iconKey: 'Cancel', color: 'error', trend: '' }
 ];
 
-// ============================================
-// HELPERS - Updated with new status codes
-// ============================================
-const getStatusLabel = (statusId) => {
-  // Use the mapper for consistency
-  return mapStatusLabel(statusId);
-};
 
-const formatDate = (dateString) => {
-  if (!dateString || dateString === '0001-01-01T00:00:00') return 'Not Set';
-  try {
-    return new Date(dateString).toLocaleDateString('en-IN', {
-      day: '2-digit', month: 'short', year: 'numeric'
-    });
-  } catch { return dateString; }
-};
-
-const getEmployeeName = async (empId) => {
-  if (!empId) return 'Unknown';
-  try {
-    const response = await realApi.getEmployeeData(empId);
-    const result = response?.Result || response?.result;
-    if (result) {
-      return result.Name || result.name || `Employee ${empId}`;
-    }
-  } catch (error) { console.error(error); }
-  return `Employee ${empId}`;
-};
-
-// ============================================
-// ASYNC THUNKS (Keep existing, add new)
-// HELPERS - Updated with new status codes
-// ============================================
 const getStatusLabel = (statusId) => {
   // Use the mapper for consistency
   return mapStatusLabel(statusId);
@@ -86,31 +54,31 @@ export const fetchDashboardData = createAsyncThunk(
     const user = auth.user;
     const userRole = user?.role;
     const userId = user?.empId;
+    const userRoleID = user?.roleId
 
     console.log('📊 Fetching dashboard data for:', { role: userRole, empId: userId });
 
-    const statsData = await dashboardService.getDashboardStats(userRole, userId);
+    // Get stats
+    const statsData = await dashboardService.getDashboardStats(userRole, userId, userRoleID);
 
     // Get all employees under MANAGER, AVP, SVP or CHRO
     let allEmployees = []
     if (userRole === 'MANAGER' || userRole === 'SVP' || userRole === 'CHRO') {
       allEmployees = await managerService.getTeam(userId)
-      console.log("allEmployees::::::::::: ", allEmployees)
+    }else if(userRoleID===104){
+      allEmployees = await managerService.getTeam(userId)
     }
 
     // Get all the travel details
     let getAllDetails = []
-    if (userRole === 'MANAGER' 
+    if (userRoleID === 102
       // || userRole === 'CHRO'
     ) {
       getAllDetails = await dashboardService.getAllDetails(userId)
-      console.log("getAllDetails::::::::::: ", getAllDetails)
-    }else if(userRole === 'AVP' ){
+    }else if(userRoleID === 104 ){
       getAllDetails = await dashboardService.getAllAvpDetails(userId)
-      console.log("getAllDetails::::::::::: ", getAllDetails)
-    }else if(userRole === 'SVP' ){
+    }else if(userRoleID === 105 ){
       getAllDetails = await dashboardService.getAllSvpDetails(userId)
-      console.log("getAllDetails::::::::::: ", getAllDetails)
     }
 
     let pendingApprovals = [];

@@ -15,6 +15,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useSelector, useDispatch } from 'react-redux';
 import { markNotificationRead } from '../../../redux/slices/dashboardSlice';
+import './Navbar.css'; 
 
 const Navbar = ({ user, onLogout }) => {
   const [anchorEl, setAnchorEl] = React.useState(null);
@@ -35,6 +36,7 @@ const Navbar = ({ user, onLogout }) => {
         bgcolor: '#b91c1c',
         boxShadow: '0 4px 20px rgba(185, 28, 28, 0.15)'
       }}
+      // className='navbar'
     >
       <Toolbar>
         <motion.div

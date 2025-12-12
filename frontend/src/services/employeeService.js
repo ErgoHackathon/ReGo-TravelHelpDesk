@@ -77,6 +77,40 @@ const employeeService = {
     }));
   },
 
+  getEmployeeTravelByTid: async (TiD) => {
+    if (!TiD) return [];
+
+    const response = await api.getTravelDetailByTId(TiD);
+
+    if (response.status === 'Functional Failure' || !response.result) {
+      return [];
+    }
+
+    const result = response.result;
+    const travels = Array.isArray(result) ? result : [result];
+
+    return travels.map((travel, index) => ({
+      id: `${travel.empId}-${index}`,
+      travelId: travel.tId,
+      asset: travel.asset,
+      empId: travel.empId,
+      empName: travel.empName,
+      position: travel.position,
+      country: travel.country,
+      city: travel.city,
+      destination: `${travel.city}, ${travel.country}`,
+      purpose: travel.remark,
+      departureDate: travel.travelStartDate,
+      returnDate: travel.travelEndDate,
+      status: travel.status,
+      statusLabel: getTravelStatusLabel(travel.status) || 'Unknown',
+      rptEmpId: travel.rptEmpId,
+      history: travel.statusHistory,
+      finalStartDate: travel.finalStartDate,
+      finalEndDate: travel.finalEndDate,
+    }));
+  },
+
   /**
    * Add document
    */
