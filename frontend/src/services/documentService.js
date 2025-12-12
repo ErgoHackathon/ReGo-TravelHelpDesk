@@ -5,8 +5,8 @@
 import api from './apiService';
 
 // Document IDs
-const HIDDEN_DOCUMENT_IDS = [10]; // Visa - hidden from employee
-const HIDDEN_DOCUMENT_NAMES = ['visa'];
+const HIDDEN_DOCUMENT_IDS = [5,6,7,10]; // Visa - hidden from employee
+const HIDDEN_DOCUMENT_NAMES =  ['visa','Hotel Booking','Flight Booking','Travel Insurance'];
 const VISA_DOCUMENT_ID = 10;
 
 const documentService = {

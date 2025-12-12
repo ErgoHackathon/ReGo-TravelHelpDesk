@@ -359,6 +359,8 @@ const DashboardEmployee = () => {
   const [loadingPreview, setLoadingPreview] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
+  // Add with other state declarations
+const [showViewOnlyModal, setShowViewOnlyModal] = useState(false);
 
   // OCR State
   const [passportOCRData, setPassportOCRData] = useState(null);
@@ -463,6 +465,11 @@ const DashboardEmployee = () => {
   // ==========================================
 
   // Fetch documents data with required/optional flag
+
+  // Add with other computed values
+const isCompletedStatus = useMemo(() => {
+  return currentStatus >= 16;
+}, [currentStatus]);
   const fetchDocumentsData = async () => {
     setLoadingDocs(true);
     try {
@@ -541,7 +548,13 @@ const DashboardEmployee = () => {
       setLoadingOCR(false);
     }
   };
-
+// Add with other handlers
+const handleOpenViewOnlyDocuments = async () => {
+  setShowViewOnlyModal(true);
+  if (Object.keys(uploadedDocuments).length === 0) {
+    await fetchDocumentsData();
+  }
+};
   // Handle OCR Edit
   const handleEditOCR = () => {
     setIsEditingOCR(true);
@@ -1086,6 +1099,29 @@ const handleSaveOCR = async () => {
                         </span>
                       </Tooltip>
                     </motion.div>
+                    {isCompletedStatus && (
+    <motion.div
+      variants={buttonVariants}
+      whileHover="hover"
+      whileTap="tap"
+    >
+      <Tooltip title="View your submitted documents">
+        <Button
+          variant="contained"
+          startIcon={<Visibility />}
+          onClick={handleOpenViewOnlyDocuments}
+          sx={{ 
+            bgcolor: '#3b82f6', 
+            '&:hover': { bgcolor: '#2563eb' }, 
+            px: 4, 
+            py: 1.5,
+          }}
+        >
+          View Documents
+        </Button>
+      </Tooltip>
+    </motion.div>
+  )}
                   </Box>
                 </SharedCard>
               </motion.div>
@@ -1679,6 +1715,241 @@ const handleSaveOCR = async () => {
           </Box>
         )}
       </SharedModal>
+      {/* ==========================================
+    VIEW-ONLY DOCUMENTS MODAL (Status 16+)
+========================================== */}
+<SharedModal
+  open={showViewOnlyModal}
+  onClose={() => setShowViewOnlyModal(false)}
+  title="Your Submitted Documents"
+  maxWidth="md"
+  fullWidth
+>
+  <AnimatePresence mode="wait">
+    {loadingDocs ? (
+      <motion.div
+        key="loading"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+      >
+        <Box sx={{ p: 2 }}>
+          {[1, 2, 3, 4].map((i) => (
+            <Skeleton key={i} variant="rounded" height={70} sx={{ mb: 2, borderRadius: 2 }} />
+          ))}
+        </Box>
+      </motion.div>
+    ) : (
+      <motion.div
+        key="content"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+      >
+        <Box sx={{ width: '100%' }}>
+          {/* Header */}
+          <Box
+            sx={{
+              background: 'linear-gradient(135deg, #16a34a 0%, #15803d 100%)',
+              borderRadius: 3,
+              p: 3,
+              mb: 3,
+              color: 'white',
+            }}
+          >
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1 }}>
+              <CheckCircle sx={{ fontSize: 28 }} />
+              <Typography variant="h6" fontWeight={600}>
+                Documents Submitted Successfully
+              </Typography>
+            </Box>
+            <Typography variant="body2" sx={{ opacity: 0.9 }}>
+              Your travel documents have been submitted and processed. You can view them below.
+            </Typography>
+          </Box>
+
+          {/* Travel Status Info */}
+          <Alert 
+            severity="success" 
+            sx={{ mb: 3 }}
+            icon={<Flight />}
+          >
+            <Typography variant="body2">
+              <strong>Travel Status:</strong> Your tickets have been uploaded. Check your email for travel details.
+            </Typography>
+          </Alert>
+
+          {/* Documents List - Read Only */}
+          <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 2, color: '#1e293b' }}>
+            Uploaded Documents ({Object.keys(uploadedDocuments).length})
+          </Typography>
+
+          <Box sx={{ maxHeight: '45vh', overflowY: 'auto', pr: 1 }}>
+            <motion.div variants={staggerContainer} initial="initial" animate="animate">
+              {documentTypes.map((doc, index) => {
+                const uploaded = uploadedDocuments[doc.id];
+                const isUploaded = !!uploaded;
+                
+                if (!isUploaded) return null; // Only show uploaded documents
+                
+                return (
+                  <motion.div
+                    key={doc.id}
+                    variants={documentCardVariants}
+                    custom={index}
+                    whileHover="hover"
+                    style={{ marginBottom: 12 }}
+                  >
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 2,
+                        p: 2,
+                        borderRadius: 2,
+                        border: '1px solid #86efac',
+                        bgcolor: '#f0fdf4',
+                        transition: 'all 0.2s ease',
+                      }}
+                    >
+                      {/* Document Icon */}
+                      <Box
+                        sx={{
+                          width: 50,
+                          height: 50,
+                          borderRadius: 2,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          bgcolor: '#dcfce7',
+                          flexShrink: 0,
+                        }}
+                      >
+                        {getFileIcon(uploaded.fileType)}
+                      </Box>
+
+                      {/* Document Info */}
+                      <Box sx={{ flexGrow: 1, minWidth: 0 }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+                          <Typography variant="subtitle1" fontWeight={600} sx={{ color: '#1e293b' }}>
+                            {doc.name}
+                          </Typography>
+                          <Chip
+                            size="small"
+                            icon={<CheckCircle sx={{ fontSize: 14 }} />}
+                            label="UPLOADED"
+                            sx={{
+                              height: 22,
+                              fontSize: '0.7rem',
+                              fontWeight: 600,
+                              bgcolor: '#dcfce7',
+                              color: '#16a34a',
+                            }}
+                          />
+                        </Box>
+                        
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+                          <Typography variant="caption" sx={{ color: '#64748b' }}>
+                            📄 {uploaded.fileName}
+                          </Typography>
+                          {uploaded.fileSize && (
+                            <>
+                              <Typography variant="caption" sx={{ color: '#94a3b8' }}>•</Typography>
+                              <Typography variant="caption" sx={{ color: '#64748b' }}>
+                                {formatFileSize(uploaded.fileSize)}
+                              </Typography>
+                            </>
+                          )}
+                          {uploaded.uploadedAt && (
+                            <>
+                              <Typography variant="caption" sx={{ color: '#94a3b8' }}>•</Typography>
+                              <Typography variant="caption" sx={{ color: '#64748b' }}>
+                                Uploaded: {formatDate(uploaded.uploadedAt)}
+                              </Typography>
+                            </>
+                          )}
+                        </Box>
+                      </Box>
+
+                      {/* View Button Only - No Delete/Update */}
+                      <Box sx={{ display: 'flex', gap: 1, flexShrink: 0 }}>
+                        <Tooltip title="View document">
+                          <IconButton
+                            size="small"
+                            onClick={() => handleViewDocument(doc)}
+                            disabled={loadingPreview}
+                            sx={{ 
+                              color: '#3b82f6',
+                              bgcolor: '#eff6ff',
+                              '&:hover': { bgcolor: '#dbeafe' }
+                            }}
+                          >
+                            <Visibility fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                        <Tooltip title="Download document">
+                          <IconButton
+                            size="small"
+                            onClick={async () => {
+                              const fileData = await documentService.getDocumentWithContent(user.empId, doc.id);
+                              if (fileData?.base64String) {
+                                const link = document.createElement('a');
+                                link.href = `data:${fileData.fileType};base64,${fileData.base64String}`;
+                                link.download = uploaded.fileName || `${doc.name}.pdf`;
+                                link.click();
+                                showSnackbarMessage('Document downloaded!', 'success');
+                              }
+                            }}
+                            sx={{ 
+                              color: '#16a34a',
+                              bgcolor: '#f0fdf4',
+                              '&:hover': { bgcolor: '#dcfce7' }
+                            }}
+                          >
+                            <Download fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                      </Box>
+                    </Box>
+                  </motion.div>
+                );
+              })}
+
+              {/* Show message if no documents */}
+              {Object.keys(uploadedDocuments).length === 0 && (
+                <Box sx={{ textAlign: 'center', py: 4 }}>
+                  <Description sx={{ fontSize: 48, color: '#cbd5e1', mb: 2 }} />
+                  <Typography color="text.secondary">
+                    No documents found
+                  </Typography>
+                </Box>
+              )}
+            </motion.div>
+          </Box>
+
+          {/* Footer */}
+          <Box 
+            sx={{ 
+              mt: 3, 
+              pt: 3,
+              borderTop: '1px solid #e2e8f0',
+              display: 'flex', 
+              justifyContent: 'flex-end',
+            }}
+          >
+            <Button 
+              variant="contained"
+              onClick={() => setShowViewOnlyModal(false)}
+              sx={{ bgcolor: '#3b82f6', '&:hover': { bgcolor: '#2563eb' } }}
+            >
+              Close
+            </Button>
+          </Box>
+        </Box>
+      </motion.div>
+    )}
+  </AnimatePresence>
+</SharedModal>
 
       {/* Snackbar */}
       <Snackbar
