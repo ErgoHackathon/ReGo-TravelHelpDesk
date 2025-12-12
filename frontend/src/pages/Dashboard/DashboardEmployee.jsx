@@ -23,7 +23,11 @@ import {
   LinearProgress,
   IconButton,
   Tooltip,
-  Skeleton
+  Skeleton,
+  TextField,
+  Divider,
+  Card,
+  CardContent
 } from '@mui/material';
 import {
   Flight,
@@ -38,7 +42,12 @@ import {
   Refresh,
   PictureAsPdf,
   Image as ImageIcon,
-  Send as SendIcon
+  Send as SendIcon,
+  Edit as EditIcon,
+  Save as SaveIcon,
+  Cancel as CancelIcon,
+  Verified as VerifiedIcon,
+  Warning as WarningIcon
 } from '@mui/icons-material';
 import { useDropzone } from 'react-dropzone';
 import { 
@@ -66,6 +75,17 @@ import {
   SharedModal,
   SharedButton
 } from '../../components/shared';
+
+// ==========================================
+// CONSTANTS
+// ==========================================
+
+// Documents that are OPTIONAL (not required)
+const OPTIONAL_DOCUMENT_NAMES = ['visa'];
+const OPTIONAL_DOCUMENT_IDS = [1]; 
+
+// Document ID for Passport (for OCR)
+const PASSPORT_DOCUMENT_ID = 1; // Adjust based on your backend
 
 // ==========================================
 // ANIMATION VARIANTS
@@ -144,7 +164,173 @@ const buttonVariants = {
 };
 
 // ==========================================
-// COMPONENT
+// OCR DATA CARD COMPONENT
+// ==========================================
+const PassportOCRCard = ({ 
+  ocrData, 
+  isEditing, 
+  editedData, 
+  onEdit, 
+  onSave, 
+  onCancel, 
+  onChange,
+  isVerified,
+  onVerify
+}) => {
+  if (!ocrData) return null;
+
+  const formatDate = (dateString) => {
+    if (!dateString) return '';
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  };
+
+  const fields = [
+    { key: 'fullName', label: 'Full Name', value: ocrData.fullName },
+    { key: 'passportNumber', label: 'Passport Number', value: ocrData.passportNumber },
+    { key: 'nationality', label: 'Nationality', value: ocrData.nationality },
+    { key: 'dateOfBirth', label: 'Date of Birth', value: formatDate(ocrData.dateOfBirth), type: 'date' },
+    { key: 'sex', label: 'Gender', value: ocrData.sex === 'M' ? 'Male' : 'Female' },
+    { key: 'expiryDate', label: 'Expiry Date', value: formatDate(ocrData.expiryDate), type: 'date' },
+    { key: 'issuer', label: 'Issuing Country', value: ocrData.issuer },
+  ];
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4 }}
+    >
+      <Card 
+        sx={{ 
+          mt: 2, 
+          border: isVerified ? '2px solid #22c55e' : '2px solid #f59e0b',
+          borderRadius: 2,
+          bgcolor: isVerified ? '#f0fdf4' : '#fffbeb'
+        }}
+      >
+        <CardContent>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              {isVerified ? (
+                <VerifiedIcon sx={{ color: '#22c55e' }} />
+              ) : (
+                <WarningIcon sx={{ color: '#f59e0b' }} />
+              )}
+              <Typography variant="h6" fontWeight={600}>
+                Passport OCR Data
+              </Typography>
+              <Chip
+                size="small"
+                label={isVerified ? 'Verified' : 'Pending Verification'}
+                sx={{
+                  bgcolor: isVerified ? '#dcfce7' : '#fef3c7',
+                  color: isVerified ? '#16a34a' : '#d97706',
+                  fontWeight: 600
+                }}
+              />
+            </Box>
+            
+            {!isVerified && (
+              <Box sx={{ display: 'flex', gap: 1 }}>
+                {isEditing ? (
+                  <>
+                    <Button
+                      size="small"
+                      variant="contained"
+                      startIcon={<SaveIcon />}
+                      onClick={onSave}
+                      sx={{ bgcolor: '#22c55e', '&:hover': { bgcolor: '#16a34a' } }}
+                    >
+                      Save
+                    </Button>
+                    <Button
+                      size="small"
+                      variant="outlined"
+                      startIcon={<CancelIcon />}
+                      onClick={onCancel}
+                    >
+                      Cancel
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <Button
+                      size="small"
+                      variant="outlined"
+                      startIcon={<EditIcon />}
+                      onClick={onEdit}
+                    >
+                      Edit
+                    </Button>
+                    <Button
+                      size="small"
+                      variant="contained"
+                      startIcon={<VerifiedIcon />}
+                      onClick={onVerify}
+                      sx={{ bgcolor: '#22c55e', '&:hover': { bgcolor: '#16a34a' } }}
+                    >
+                      Verify & Confirm
+                    </Button>
+                  </>
+                )}
+              </Box>
+            )}
+          </Box>
+
+          <Divider sx={{ mb: 2 }} />
+
+          <Grid container spacing={2}>
+            {fields.map((field) => (
+              <Grid item xs={12} sm={6} md={4} key={field.key}>
+                {isEditing && !isVerified ? (
+                  <TextField
+                    fullWidth
+                    size="small"
+                    label={field.label}
+                    value={editedData[field.key] || ''}
+                    onChange={(e) => onChange(field.key, e.target.value)}
+                    type={field.type === 'date' ? 'date' : 'text'}
+                    InputLabelProps={field.type === 'date' ? { shrink: true } : {}}
+                  />
+                ) : (
+                  <Box>
+                    <Typography variant="caption" color="text.secondary">
+                      {field.label}
+                    </Typography>
+                    <Typography variant="body1" fontWeight={500}>
+                      {field.value || '-'}
+                    </Typography>
+                  </Box>
+                )}
+              </Grid>
+            ))}
+          </Grid>
+
+          {ocrData.compositeCheck !== undefined && (
+            <Box sx={{ mt: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Chip
+                size="small"
+                icon={ocrData.compositeCheck ? <CheckCircle /> : <ErrorIcon />}
+                label={ocrData.compositeCheck ? 'MRZ Check: Passed' : 'MRZ Check: Failed'}
+                sx={{
+                  bgcolor: ocrData.compositeCheck ? '#dcfce7' : '#fee2e2',
+                  color: ocrData.compositeCheck ? '#16a34a' : '#dc2626',
+                }}
+              />
+            </Box>
+          )}
+        </CardContent>
+      </Card>
+    </motion.div>
+  );
+};
+
+// ==========================================
+// MAIN COMPONENT
 // ==========================================
 const DashboardEmployee = () => {
   const dispatch = useDispatch();
@@ -174,11 +360,17 @@ const DashboardEmployee = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
 
+  // OCR State
+  const [passportOCRData, setPassportOCRData] = useState(null);
+  const [loadingOCR, setLoadingOCR] = useState(false);
+  const [isEditingOCR, setIsEditingOCR] = useState(false);
+  const [editedOCRData, setEditedOCRData] = useState({});
+  const [isOCRVerified, setIsOCRVerified] = useState(false);
+
   // ==========================================
   // COMPUTED VALUES
   // ==========================================
   
-  // Get current status from active request or recent requests
   const currentStatus = useMemo(() => {
     return activeRequest?.status || 
            activeRequest?.statusId || 
@@ -187,37 +379,49 @@ const DashboardEmployee = () => {
            0;
   }, [activeRequest, recentRequests]);
 
-  // Check if employee can upload documents (status === 13)
   const canUpload = useMemo(() => {
     return canUploadDocuments(currentStatus);
   }, [currentStatus]);
 
-  // Get stepper configuration based on current status
   const stepperConfig = useMemo(() => {
     return getStepperConfig(currentStatus);
   }, [currentStatus]);
 
-  // Check if all required documents are uploaded
+  // Check if all required documents are uploaded (9 required, Visa is optional)
   const allRequiredUploaded = useMemo(() => {
     if (!documentTypes || documentTypes.length === 0) return false;
     
-    const requiredDocs = documentTypes.filter(d => d.required !== false);
+    // Filter only required documents
+    const requiredDocs = documentTypes.filter(d => d.required === true);
     
-    // If no required flag is set, assume all are required
+    console.log('📋 Required docs:', requiredDocs.map(d => d.name));
+    console.log('📋 Uploaded:', Object.keys(uploadedDocuments));
+    
     if (requiredDocs.length === 0) {
-      return Object.keys(uploadedDocuments).length >= documentTypes.length;
+      return Object.keys(uploadedDocuments).length > 0;
     }
     
     return requiredDocs.every(doc => !!uploadedDocuments[doc.id]);
   }, [documentTypes, uploadedDocuments]);
+
+  // Check if passport is uploaded and OCR is verified
+  const isPassportVerified = useMemo(() => {
+    const passportUploaded = !!uploadedDocuments[PASSPORT_DOCUMENT_ID];
+    return passportUploaded && isOCRVerified;
+  }, [uploadedDocuments, isOCRVerified]);
+
+  // Can submit: all required docs uploaded + passport OCR verified
+  const canSubmitDocuments = useMemo(() => {
+    return allRequiredUploaded && isPassportVerified;
+  }, [allRequiredUploaded, isPassportVerified]);
 
   // Get upload statistics
   const uploadStats = useMemo(() => {
     const uploaded = Object.keys(uploadedDocuments).length;
     const total = documentTypes.length;
     
-    const requiredDocs = documentTypes.filter(d => d.required !== false);
-    const required = requiredDocs.length || total;
+    const requiredDocs = documentTypes.filter(d => d.required === true);
+    const required = requiredDocs.length;
     const requiredUploaded = requiredDocs.filter(doc => !!uploadedDocuments[doc.id]).length;
     
     return { 
@@ -231,66 +435,166 @@ const DashboardEmployee = () => {
     };
   }, [documentTypes, uploadedDocuments]);
 
-  // Check if submission is in progress
   const isSubmissionInProgress = isSubmitting || submittingDocuments;
 
   // ==========================================
   // EFFECTS
   // ==========================================
   
-  // Fetch dashboard data on mount
   useEffect(() => {
     dispatch(fetchDashboardData());
   }, [dispatch]);
 
-  // Fetch document types and uploaded documents when modal opens
   useEffect(() => {
     if (showDocumentsModal && user?.empId) {
       fetchDocumentsData();
     }
   }, [showDocumentsModal, user?.empId]);
 
+  // Fetch OCR data when passport is uploaded
+  useEffect(() => {
+    if (uploadedDocuments[PASSPORT_DOCUMENT_ID] && !passportOCRData && !loadingOCR) {
+      fetchPassportOCR();
+    }
+  }, [uploadedDocuments]);
+
   // ==========================================
   // HANDLERS
   // ==========================================
 
-  // Fetch documents data
+  // Fetch documents data with required/optional flag
   const fetchDocumentsData = async () => {
     setLoadingDocs(true);
     try {
-      // Fetch document types
-      const types = await documentService.getAllDocumentTypes();
+      let types = await documentService.getAllDocumentTypes();
+      
+      console.log('📋 Raw document types:', types);
+      
+      // Apply required/optional flag
+      types = types.map(doc => {
+        const isOptionalByName = OPTIONAL_DOCUMENT_NAMES.some(name => 
+          doc.name.toLowerCase().trim() === name.toLowerCase().trim()
+        );
+        const isOptionalById = OPTIONAL_DOCUMENT_IDS.includes(doc.id);
+        const isOptional = isOptionalByName || isOptionalById;
+        
+        return {
+          ...doc,
+          required: !isOptional
+        };
+      });
+      
+      // Log for debugging
+      const requiredDocs = types.filter(d => d.required);
+      const optionalDocs = types.filter(d => !d.required);
+      console.log('📋 Required documents:', requiredDocs.map(d => `${d.name} (ID: ${d.id})`));
+      console.log('📋 Optional documents:', optionalDocs.map(d => `${d.name} (ID: ${d.id})`));
       
       setDocumentTypes(types);
-      console.log('📋 Document types loaded:', types);
 
       // Fetch uploaded documents
-      if (documentService.getEmployeeUploadedDocuments) {
+      if (documentService.getEmployeeUploadedDocuments && user?.empId) {
         try {
           const uploadedMap = await documentService.getEmployeeUploadedDocuments(user.empId);
           if (uploadedMap && typeof uploadedMap === 'object') {
             setUploadedDocuments(uploadedMap);
-            console.log('📋 Uploaded documents loaded:', uploadedMap);
+            console.log('📋 Uploaded documents:', Object.keys(uploadedMap));
           }
         } catch (err) {
-          console.log('📋 No uploaded documents found or API not available');
+          console.log('📋 No uploaded documents found');
         }
       }
+
+      // Check if passport OCR data exists
+      if (user?.empId) {
+        await fetchPassportOCR();
+      }
     } catch (error) {
-      console.error('❌ Error fetching documents data:', error);
+      console.error('❌ Error fetching documents:', error);
       showSnackbarMessage('Failed to load document types', 'error');
     } finally {
       setLoadingDocs(false);
     }
   };
 
-  // Logout handler
+  // Fetch Passport OCR data
+  const fetchPassportOCR = async () => {
+    if (!user?.empId) return;
+    
+    setLoadingOCR(true);
+    try {
+      const response = await documentService.getPassportOCRInfo(user.empId);
+      
+      if (response && response.status === 'Success' && response.result) {
+        setPassportOCRData(response.result);
+        setEditedOCRData(response.result);
+        
+        // Check if already verified (you might want to store this in backend)
+        // For now, we'll assume it needs verification each time
+        setIsOCRVerified(false);
+        
+        console.log('📋 Passport OCR data loaded:', response.result);
+      }
+    } catch (error) {
+      console.log('📋 No passport OCR data found or error:', error);
+    } finally {
+      setLoadingOCR(false);
+    }
+  };
+
+  // Handle OCR Edit
+  const handleEditOCR = () => {
+    setIsEditingOCR(true);
+    setEditedOCRData({ ...passportOCRData });
+  };
+
+  // Handle OCR Save
+// Handle OCR Save
+const handleSaveOCR = async () => {
+  try {
+    showSnackbarMessage('Saving passport data...', 'info');
+    
+    // Call API to update OCR data
+    const response = await documentService.updatePassportOCRInfo(user.empId, editedOCRData);
+    
+    if (response.status === 'Success' || response.Status === 'Success') {
+      setPassportOCRData(editedOCRData);
+      setIsEditingOCR(false);
+      showSnackbarMessage('Passport data updated successfully!', 'success');
+    } else {
+      throw new Error(response.message || response.Message || 'Update failed');
+    }
+  } catch (error) {
+    console.error('Error updating OCR data:', error);
+    showSnackbarMessage(error.message || 'Failed to update passport data', 'error');
+  }
+};
+
+  // Handle OCR Cancel
+  const handleCancelOCR = () => {
+    setEditedOCRData({ ...passportOCRData });
+    setIsEditingOCR(false);
+  };
+
+  // Handle OCR Field Change
+  const handleOCRFieldChange = (field, value) => {
+    setEditedOCRData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  // Handle OCR Verify
+  const handleVerifyOCR = () => {
+    setIsOCRVerified(true);
+    showSnackbarMessage('Passport data verified successfully!', 'success');
+  };
+
   const handleLogout = async () => {
     await dispatch(logout());
     navigate('/login', { replace: true });
   };
 
-  // Snackbar handler
   const showSnackbarMessage = (message, severity = 'success') => {
     setSnackbar({ open: true, message, severity });
   };
@@ -299,20 +603,18 @@ const DashboardEmployee = () => {
     setSnackbar({ ...snackbar, open: false });
   };
 
-  // Open upload modal for a document
   const openUploadModal = (doc) => {
     setSelectedDoc(doc);
     setShowUploadModal(true);
   };
 
-  // Handle file upload
+  // Handle file upload with OCR trigger for passport
   const handleFileUpload = async (file) => {
     if (!selectedDoc || !user?.empId) {
       showSnackbarMessage('Missing document or user information', 'error');
       return;
     }
 
-    // Validate file
     const validation = documentService.validateFile(file);
     if (!validation.valid) {
       showSnackbarMessage(validation.error, 'error');
@@ -323,7 +625,6 @@ const DashboardEmployee = () => {
     setUploadProgress(0);
 
     try {
-      // Simulate progress
       const progressInterval = setInterval(() => {
         setUploadProgress(prev => Math.min(prev + 10, 90));
       }, 200);
@@ -353,7 +654,17 @@ const DashboardEmployee = () => {
 
       showSnackbarMessage(`${selectedDoc.name} uploaded successfully!`, 'success');
 
-      // Close modal after short delay
+      // If passport was uploaded, trigger OCR
+      if (selectedDoc.id === PASSPORT_DOCUMENT_ID) {
+        showSnackbarMessage('Processing passport with OCR...', 'info');
+        setIsOCRVerified(false); // Reset verification
+        
+        // Small delay to let backend process
+        setTimeout(async () => {
+          await fetchPassportOCR();
+        }, 1500);
+      }
+
       setTimeout(() => {
         setShowUploadModal(false);
         setSelectedDoc(null);
@@ -368,14 +679,12 @@ const DashboardEmployee = () => {
     }
   };
 
-  // View document
   const handleViewDocument = async (doc) => {
     const uploaded = uploadedDocuments[doc.id];
     if (!uploaded) return;
 
     setLoadingPreview(true);
     try {
-      // Check if we already have the base64 cached
       if (uploaded.base64String) {
         setPreviewData({
           fileName: uploaded.fileName,
@@ -389,11 +698,9 @@ const DashboardEmployee = () => {
 
       showSnackbarMessage('Loading document...', 'info');
       
-      // Fetch document with content from API
       const fileData = await documentService.getDocumentWithContent(user.empId, doc.id);
       
       if (fileData && fileData.base64String) {
-        // Cache the base64 in local state
         setUploadedDocuments(prev => ({
           ...prev,
           [doc.id]: { 
@@ -420,7 +727,6 @@ const DashboardEmployee = () => {
     }
   };
 
-  // Delete document
   const handleDeleteDocument = async (doc) => {
     if (!window.confirm(`Are you sure you want to delete "${doc.name}"?`)) return;
 
@@ -429,12 +735,17 @@ const DashboardEmployee = () => {
       
       await documentService.deleteDocument(user.empId, doc.id);
       
-      // Remove from local state
       setUploadedDocuments(prev => {
         const newState = { ...prev };
         delete newState[doc.id];
         return newState;
       });
+
+      // If passport was deleted, clear OCR data
+      if (doc.id === PASSPORT_DOCUMENT_ID) {
+        setPassportOCRData(null);
+        setIsOCRVerified(false);
+      }
 
       showSnackbarMessage(`${doc.name} deleted successfully!`, 'success');
     } catch (error) {
@@ -443,19 +754,27 @@ const DashboardEmployee = () => {
     }
   };
 
-  // ✅ SUBMIT DOCUMENTS (Status 13 → 14)
+  // Submit Documents (Status 13 → 14)
   const handleSubmitDocuments = async () => {
-    if (!allRequiredUploaded) {
-      showSnackbarMessage('Please upload all required documents before submitting.', 'error');
+    if (!canSubmitDocuments) {
+      if (!allRequiredUploaded) {
+        showSnackbarMessage('Please upload all required documents before submitting.', 'error');
+      } else if (!isPassportVerified) {
+        showSnackbarMessage('Please verify your passport OCR data before submitting.', 'error');
+      }
       return;
     }
-
-    // Get travel ID from active request or recent requests
+    console.log("activeRequsest:::",activeRequest);
     const tId = activeRequest?.travelId || 
                 activeRequest?.tId || 
                 recentRequests[0]?.travelId || 
                 recentRequests[0]?.tId;
-    
+    const empId =activeRequest?.employeeId || 
+                activeRequest?.empId || 
+                recentRequests[0]?.employeeId || 
+                recentRequests[0]?.empId;
+
+    console.log("empId:::",empId);
     if (!tId) {
       showSnackbarMessage('No active travel request found.', 'error');
       return;
@@ -464,12 +783,11 @@ const DashboardEmployee = () => {
     setIsSubmitting(true);
 
     try {
-      console.log('📄 Submitting documents for tId:', tId);
+      console.log('📄 Submitting documents for tId:', tId, empId);
       
-      // Use the thunk to submit documents (changes status 13 → 14)
       const result = await dispatch(submitDocumentsThunk({ 
         tId, 
-        empId: user?.empId 
+        empId
       })).unwrap();
 
       if (result.success) {
@@ -478,7 +796,6 @@ const DashboardEmployee = () => {
           'success'
         );
         
-        // Close modal after delay
         setTimeout(() => {
           setShowDocumentsModal(false);
         }, 2000);
@@ -486,7 +803,6 @@ const DashboardEmployee = () => {
     } catch (error) {
       console.error('Submit documents error:', error);
       
-      // Try fallback with direct service call
       try {
         const response = await documentService.submitDocuments(tId, user?.empId);
         
@@ -494,6 +810,7 @@ const DashboardEmployee = () => {
           dispatch(updateRequestStatus({
             tId,
             statusId: 14,
+            empId,
             statusLabel: getStatusLabel(14)
           }));
           
@@ -546,7 +863,6 @@ const DashboardEmployee = () => {
   // HELPER FUNCTIONS
   // ==========================================
 
-  // Format file size
   const formatFileSize = (bytes) => {
     if (!bytes) return '';
     if (bytes < 1024) return bytes + ' B';
@@ -554,7 +870,6 @@ const DashboardEmployee = () => {
     return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
   };
 
-  // Format date
   const formatDate = (dateString) => {
     if (!dateString) return '';
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -565,7 +880,6 @@ const DashboardEmployee = () => {
     });
   };
 
-  // Get file icon
   const getFileIcon = (fileType) => {
     if (!fileType) return <Description sx={{ fontSize: 28, color: '#b91c1c' }} />;
     if (fileType.includes('pdf')) return <PictureAsPdf sx={{ fontSize: 28, color: '#ef4444' }} />;
@@ -573,7 +887,6 @@ const DashboardEmployee = () => {
     return <Description sx={{ fontSize: 28, color: '#64748b' }} />;
   };
 
-  // Get status info for display
   const getStatusInfo = (status) => {
     return statusToChip(status);
   };
@@ -599,9 +912,7 @@ const DashboardEmployee = () => {
         exit="exit"
       >
         <Box sx={{ p: 3 }}>
-          {/* ==========================================
-              HEADER
-          ========================================== */}
+          {/* Header */}
           <motion.div variants={staggerItem}>
             <Box sx={{ mb: 4, display: 'flex', alignItems: 'center', gap: 2 }}>
               <motion.div
@@ -631,9 +942,7 @@ const DashboardEmployee = () => {
             </Box>
           </motion.div>
 
-          {/* ==========================================
-              ACTIVE APPLICATION CARD
-          ========================================== */}
+          {/* Active Application Card */}
           <AnimatePresence mode="wait">
             {activeRequest ? (
               <motion.div
@@ -722,11 +1031,11 @@ const DashboardEmployee = () => {
                     </Box>
                   </motion.div>
 
-                  {/* Status-based message */}
+                  {/* Status-based messages */}
                   {currentStatus === 13 && (
                     <Alert severity="warning" sx={{ mb: 3 }}>
                       <Typography variant="body2">
-                        <strong>Action Required:</strong> Please upload your documents to proceed.
+                        <strong>Action Required:</strong> Please upload your documents and verify passport OCR data to proceed.
                       </Typography>
                     </Alert>
                   )}
@@ -739,23 +1048,7 @@ const DashboardEmployee = () => {
                     </Alert>
                   )}
 
-                  {currentStatus === 15 && (
-                    <Alert severity="info" sx={{ mb: 3 }}>
-                      <Typography variant="body2">
-                        <strong>Booking in Progress:</strong> Helpdesk is booking your flights and hotels.
-                      </Typography>
-                    </Alert>
-                  )}
-
-                  {currentStatus === 16 && (
-                    <Alert severity="success" sx={{ mb: 3 }}>
-                      <Typography variant="body2">
-                        <strong>Tickets Uploaded:</strong> Your travel has been booked! Check your email for details.
-                      </Typography>
-                    </Alert>
-                  )}
-
-                  {/* Action Button - Only show if status is 13 */}
+                  {/* Action Button */}
                   <Box sx={{ display: 'flex', justifyContent: 'center' }}>
                     <motion.div
                       variants={buttonVariants}
@@ -813,17 +1106,12 @@ const DashboardEmployee = () => {
                   <Typography variant="h6" color="text.secondary">
                     No active travel applications
                   </Typography>
-                  <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                    Click the button above to raise a new travel request
-                  </Typography>
                 </SharedCard>
               </motion.div>
             )}
           </AnimatePresence>
 
-          {/* ==========================================
-              TRAVEL HISTORY
-          ========================================== */}
+          {/* Travel History */}
           <AnimatePresence>
             {recentRequests && recentRequests.length > 0 && (
               <motion.div
@@ -848,13 +1136,7 @@ const DashboardEmployee = () => {
                       {recentRequests.map((request, index) => {
                         const statusInfo = getStatusInfo(request.status || request.statusId);
                         return (
-                          <motion.tr
-                            key={request.id || index}
-                            initial={{ opacity: 0, x: -10 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            transition={{ delay: index * 0.05 }}
-                            style={{ display: 'table-row' }}
-                          >
+                          <TableRow key={request.id || index}>
                             <TableCell>{request.destination}</TableCell>
                             <TableCell>
                               {new Date(request.departureDate).toLocaleDateString()} - {new Date(request.returnDate).toLocaleDateString()}
@@ -868,7 +1150,7 @@ const DashboardEmployee = () => {
                                 sx={{ bgcolor: statusInfo.bgColor }}
                               />
                             </TableCell>
-                          </motion.tr>
+                          </TableRow>
                         );
                       })}
                     </TableBody>
@@ -930,125 +1212,97 @@ const DashboardEmployee = () => {
                       overflow: 'hidden'
                     }}
                   >
-                    <Box
-                      sx={{
-                        position: 'absolute',
-                        top: 0,
-                        right: 0,
-                        width: '40%',
-                        height: '100%',
-                        background: 'radial-gradient(circle at top right, rgba(255,255,255,0.1) 0%, transparent 60%)',
-                        pointerEvents: 'none'
-                      }}
-                    />
-                    
-                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2, position: 'relative' }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                        <motion.div
-                          animate={{ rotate: [0, 5, -5, 0] }}
-                          transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-                        >
-                          <CloudUpload sx={{ fontSize: 28 }} />
-                        </motion.div>
+                        <CloudUpload sx={{ fontSize: 28 }} />
                         <Typography variant="h6" fontWeight={600}>
                           Document Upload Center
                         </Typography>
                       </Box>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <motion.div
-                          initial={{ scale: 0 }}
-                          animate={{ scale: 1 }}
-                          transition={{ type: "spring", stiffness: 500, delay: 0.2 }}
-                        >
-                          <Chip
-                            label={`${uploadStats.requiredUploaded}/${uploadStats.required} Required`}
-                            sx={{
-                              bgcolor: uploadStats.allRequiredDone ? '#4ade80' : 'rgba(255,255,255,0.2)',
-                              color: uploadStats.allRequiredDone ? '#166534' : 'white',
-                              fontWeight: 600,
-                              '& .MuiChip-label': { px: 2 }
-                            }}
-                          />
-                        </motion.div>
+                        <Chip
+                          label={`${uploadStats.requiredUploaded}/${uploadStats.required} Required`}
+                          sx={{
+                            bgcolor: uploadStats.allRequiredDone ? '#4ade80' : 'rgba(255,255,255,0.2)',
+                            color: uploadStats.allRequiredDone ? '#166534' : 'white',
+                            fontWeight: 600,
+                          }}
+                        />
                         <Tooltip title="Refresh documents">
                           <IconButton
                             size="small"
                             onClick={fetchDocumentsData}
-                            sx={{ 
-                              color: 'white', 
-                              '&:hover': { bgcolor: 'rgba(255,255,255,0.1)' }
-                            }}
+                            sx={{ color: 'white' }}
                           >
-                            <motion.div whileHover={{ rotate: 180 }} transition={{ duration: 0.3 }}>
-                              <Refresh />
-                            </motion.div>
+                            <Refresh />
                           </IconButton>
                         </Tooltip>
                       </Box>
                     </Box>
                     
                     <Typography variant="body2" sx={{ opacity: 0.9, mb: 2 }}>
-                      Please upload all required documents. Supported formats: PNG, JPG, PDF (Max 5MB)
+                      Please upload all required documents (9 required, Visa is optional). Verify passport OCR data before submitting.
                     </Typography>
                     
                     {/* Progress Bar */}
-                    <Box sx={{ position: 'relative' }}>
-                      <Box sx={{ 
-                        height: 10, 
-                        borderRadius: 5, 
-                        bgcolor: 'rgba(255,255,255,0.2)',
-                        overflow: 'hidden'
-                      }}>
-                        <motion.div
-                          initial={{ width: 0 }}
-                          animate={{ width: `${uploadStats.requiredPercentage}%` }}
-                          transition={{ duration: 0.8, ease: [0, 0, 0.2, 1] }}
-                          style={{
-                            height: '100%',
-                            borderRadius: 5,
-                            background: uploadStats.allRequiredDone 
-                              ? 'linear-gradient(90deg, #4ade80, #22c55e)'
-                              : 'linear-gradient(90deg, #fbbf24, #f59e0b)',
-                          }}
-                        />
-                      </Box>
-                      <Typography 
-                        variant="caption" 
-                        sx={{ 
-                          position: 'absolute', 
-                          right: 0, 
-                          top: 14,
-                          opacity: 0.9 
+                    <Box sx={{ height: 10, borderRadius: 5, bgcolor: 'rgba(255,255,255,0.2)', overflow: 'hidden' }}>
+                      <motion.div
+                        initial={{ width: 0 }}
+                        animate={{ width: `${uploadStats.requiredPercentage}%` }}
+                        transition={{ duration: 0.8 }}
+                        style={{
+                          height: '100%',
+                          borderRadius: 5,
+                          background: uploadStats.allRequiredDone 
+                            ? 'linear-gradient(90deg, #4ade80, #22c55e)'
+                            : 'linear-gradient(90deg, #fbbf24, #f59e0b)',
                         }}
-                      >
-                        {Math.round(uploadStats.requiredPercentage)}% Complete
-                      </Typography>
+                      />
                     </Box>
                   </Box>
                 </motion.div>
 
+                {/* Passport OCR Section */}
+                {(passportOCRData || loadingOCR) && (
+                  <Box sx={{ mb: 3 }}>
+                    {loadingOCR ? (
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, p: 2 }}>
+                        <CircularProgress size={24} />
+                        <Typography>Processing passport with OCR...</Typography>
+                      </Box>
+                    ) : (
+                      <PassportOCRCard
+                        ocrData={passportOCRData}
+                        isEditing={isEditingOCR}
+                        editedData={editedOCRData}
+                        onEdit={handleEditOCR}
+                        onSave={handleSaveOCR}
+                        onCancel={handleCancelOCR}
+                        onChange={handleOCRFieldChange}
+                        isVerified={isOCRVerified}
+                        onVerify={handleVerifyOCR}
+                      />
+                    )}
+                  </Box>
+                )}
+
+                {/* OCR Verification Warning */}
+                {uploadedDocuments[PASSPORT_DOCUMENT_ID] && !isOCRVerified && !loadingOCR && (
+                  <Alert severity="warning" sx={{ mb: 2 }}>
+                    <Typography variant="body2">
+                      <strong>Passport Verification Required:</strong> Please verify your passport OCR data above before submitting documents.
+                    </Typography>
+                  </Alert>
+                )}
+
                 {/* Documents Grid */}
-                <Box sx={{ 
-                  maxHeight: '50vh', 
-                  overflowY: 'auto',
-                  pr: 1,
-                  '&::-webkit-scrollbar': { width: '6px' },
-                  '&::-webkit-scrollbar-track': { background: '#f1f5f9', borderRadius: '3px' },
-                  '&::-webkit-scrollbar-thumb': { 
-                    background: '#cbd5e1', 
-                    borderRadius: '3px',
-                    '&:hover': { background: '#94a3b8' }
-                  },
-                }}>
-                  <motion.div
-                    variants={staggerContainer}
-                    initial="initial"
-                    animate="animate"
-                  >
+                <Box sx={{ maxHeight: '40vh', overflowY: 'auto', pr: 1 }}>
+                  <motion.div variants={staggerContainer} initial="initial" animate="animate">
                     {documentTypes.map((doc, index) => {
                       const uploaded = uploadedDocuments[doc.id];
                       const isUploaded = !!uploaded;
-                      const isRequired = doc.required !== false;
+                      const isRequired = doc.required === true;
+                      const isPassport = doc.id === PASSPORT_DOCUMENT_ID;
                       
                       return (
                         <motion.div
@@ -1072,114 +1326,90 @@ const DashboardEmployee = () => {
                             }}
                           >
                             {/* Document Icon */}
-                            <motion.div
-                              initial={{ scale: 0.8, opacity: 0 }}
-                              animate={{ scale: 1, opacity: 1 }}
-                              transition={{ delay: index * 0.03 + 0.1 }}
+                            <Box
+                              sx={{
+                                width: 50,
+                                height: 50,
+                                borderRadius: 2,
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                bgcolor: isUploaded ? '#dcfce7' : '#fee2e2',
+                                flexShrink: 0,
+                              }}
                             >
-                              <Box
-                                sx={{
-                                  width: 50,
-                                  height: 50,
-                                  borderRadius: 2,
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  justifyContent: 'center',
-                                  bgcolor: isUploaded ? '#dcfce7' : '#fee2e2',
-                                  flexShrink: 0,
-                                }}
-                              >
-                                {isUploaded ? (
-                                  getFileIcon(uploaded.fileType)
-                                ) : (
-                                  <Description sx={{ fontSize: 28, color: '#b91c1c' }} />
-                                )}
-                              </Box>
-                            </motion.div>
+                              {isUploaded ? (
+                                getFileIcon(uploaded.fileType)
+                              ) : (
+                                <Description sx={{ fontSize: 28, color: '#b91c1c' }} />
+                              )}
+                            </Box>
 
                             {/* Document Info */}
                             <Box sx={{ flexGrow: 1, minWidth: 0 }}>
                               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5, flexWrap: 'wrap' }}>
-                                <Typography 
-                                  variant="subtitle1" 
-                                  fontWeight={600}
-                                  sx={{ color: '#1e293b' }}
-                                >
+                                <Typography variant="subtitle1" fontWeight={600} sx={{ color: '#1e293b' }}>
                                   {doc.name}
                                 </Typography>
-                                {isRequired && (
+                                
+                                {/* Required/Optional Badge */}
+                                <Chip
+                                  size="small"
+                                  label={isRequired ? 'Required' : 'Optional'}
+                                  sx={{
+                                    height: 20,
+                                    fontSize: '0.65rem',
+                                    bgcolor: isRequired ? '#fee2e2' : '#f0f9ff',
+                                    color: isRequired ? '#dc2626' : '#0369a1',
+                                    fontWeight: 600
+                                  }}
+                                />
+                                
+                                {/* Upload Status */}
+                                <Chip
+                                  size="small"
+                                  icon={isUploaded ? <CheckCircle sx={{ fontSize: 14 }} /> : <ErrorIcon sx={{ fontSize: 14 }} />}
+                                  label={isUploaded ? 'UPLOADED' : 'PENDING'}
+                                  sx={{
+                                    height: 22,
+                                    fontSize: '0.7rem',
+                                    fontWeight: 600,
+                                    bgcolor: isUploaded ? '#dcfce7' : '#fef3c7',
+                                    color: isUploaded ? '#16a34a' : '#d97706',
+                                  }}
+                                />
+                                
+                                {/* Passport OCR Status */}
+                                {isPassport && isUploaded && (
                                   <Chip
                                     size="small"
-                                    label="Required"
-                                    sx={{
-                                      height: 20,
-                                      fontSize: '0.65rem',
-                                      bgcolor: '#fee2e2',
-                                      color: '#dc2626',
-                                      fontWeight: 600
-                                    }}
-                                  />
-                                )}
-                                <motion.div
-                                  initial={{ scale: 0 }}
-                                  animate={{ scale: 1 }}
-                                  transition={{ type: "spring", stiffness: 500, damping: 25, delay: index * 0.03 + 0.15 }}
-                                >
-                                  <Chip
-                                    size="small"
-                                    icon={isUploaded ? <CheckCircle sx={{ fontSize: 14 }} /> : <ErrorIcon sx={{ fontSize: 14 }} />}
-                                    label={isUploaded ? 'UPLOADED' : 'PENDING'}
+                                    icon={isOCRVerified ? <VerifiedIcon sx={{ fontSize: 14 }} /> : <WarningIcon sx={{ fontSize: 14 }} />}
+                                    label={isOCRVerified ? 'OCR Verified' : 'OCR Pending'}
                                     sx={{
                                       height: 22,
                                       fontSize: '0.7rem',
                                       fontWeight: 600,
-                                      bgcolor: isUploaded ? '#dcfce7' : '#fef3c7',
-                                      color: isUploaded ? '#16a34a' : '#d97706',
-                                      '& .MuiChip-icon': {
-                                        color: isUploaded ? '#16a34a' : '#d97706',
-                                      }
+                                      bgcolor: isOCRVerified ? '#dcfce7' : '#fef3c7',
+                                      color: isOCRVerified ? '#16a34a' : '#d97706',
                                     }}
                                   />
-                                </motion.div>
+                                )}
                               </Box>
                               
                               {isUploaded ? (
-                                <motion.div
-                                  initial={{ opacity: 0, y: 5 }}
-                                  animate={{ opacity: 1, y: 0 }}
-                                  transition={{ delay: index * 0.03 + 0.2 }}
-                                >
-                                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
-                                    <Typography 
-                                      variant="caption" 
-                                      sx={{ 
-                                        color: '#64748b',
-                                        maxWidth: 200,
-                                        overflow: 'hidden',
-                                        textOverflow: 'ellipsis',
-                                        whiteSpace: 'nowrap'
-                                      }}
-                                    >
-                                      📄 {uploaded.fileName}
-                                    </Typography>
-                                    {uploaded.fileSize && (
-                                      <>
-                                        <Typography variant="caption" sx={{ color: '#94a3b8' }}>•</Typography>
-                                        <Typography variant="caption" sx={{ color: '#64748b' }}>
-                                          {formatFileSize(uploaded.fileSize)}
-                                        </Typography>
-                                      </>
-                                    )}
-                                    {uploaded.uploadedAt && (
-                                      <>
-                                        <Typography variant="caption" sx={{ color: '#94a3b8' }}>•</Typography>
-                                        <Typography variant="caption" sx={{ color: '#16a34a' }}>
-                                          ✓ {formatDate(uploaded.uploadedAt)}
-                                        </Typography>
-                                      </>
-                                    )}
-                                  </Box>
-                                </motion.div>
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+                                  <Typography variant="caption" sx={{ color: '#64748b' }}>
+                                    📄 {uploaded.fileName}
+                                  </Typography>
+                                  {uploaded.fileSize && (
+                                    <>
+                                      <Typography variant="caption" sx={{ color: '#94a3b8' }}>•</Typography>
+                                      <Typography variant="caption" sx={{ color: '#64748b' }}>
+                                        {formatFileSize(uploaded.fileSize)}
+                                      </Typography>
+                                    </>
+                                  )}
+                                </Box>
                               ) : (
                                 <Typography variant="caption" sx={{ color: '#94a3b8' }}>
                                   No file uploaded yet • Click to upload
@@ -1192,55 +1422,48 @@ const DashboardEmployee = () => {
                               {isUploaded && (
                                 <>
                                   <Tooltip title="View document">
-                                    <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.95 }}>
-                                      <IconButton
-                                        size="small"
-                                        onClick={() => handleViewDocument(doc)}
-                                        disabled={loadingPreview}
-                                        sx={{ color: '#3b82f6', '&:hover': { bgcolor: '#eff6ff' } }}
-                                      >
-                                        <Visibility fontSize="small" />
-                                      </IconButton>
-                                    </motion.div>
+                                    <IconButton
+                                      size="small"
+                                      onClick={() => handleViewDocument(doc)}
+                                      disabled={loadingPreview}
+                                      sx={{ color: '#3b82f6' }}
+                                    >
+                                      <Visibility fontSize="small" />
+                                    </IconButton>
                                   </Tooltip>
                                   <Tooltip title="Delete">
-                                    <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.95 }}>
-                                      <IconButton
-                                        size="small"
-                                        onClick={() => handleDeleteDocument(doc)}
-                                        sx={{ color: '#ef4444', '&:hover': { bgcolor: '#fef2f2' } }}
-                                      >
-                                        <Delete fontSize="small" />
-                                      </IconButton>
-                                    </motion.div>
+                                    <IconButton
+                                      size="small"
+                                      onClick={() => handleDeleteDocument(doc)}
+                                      sx={{ color: '#ef4444' }}
+                                    >
+                                      <Delete fontSize="small" />
+                                    </IconButton>
                                   </Tooltip>
                                 </>
                               )}
-                              <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                                <Button
-                                  variant={isUploaded ? 'outlined' : 'contained'}
-                                  size="small"
-                                  onClick={() => openUploadModal(doc)}
-                                  startIcon={isUploaded ? <UploadFile /> : <CloudUpload />}
-                                  sx={{
-                                    ml: 1,
-                                    minWidth: 100,
-                                    borderRadius: 2,
-                                    textTransform: 'none',
-                                    fontWeight: 600,
-                                    ...(isUploaded ? {
-                                      borderColor: '#16a34a',
-                                      color: '#16a34a',
-                                      '&:hover': { borderColor: '#15803d', bgcolor: '#f0fdf4' }
-                                    } : {
-                                      bgcolor: '#b91c1c',
-                                      '&:hover': { bgcolor: '#991b1b' }
-                                    })
-                                  }}
-                                >
-                                  {isUploaded ? 'Replace' : 'Upload'}
-                                </Button>
-                              </motion.div>
+                              <Button
+                                variant={isUploaded ? 'outlined' : 'contained'}
+                                size="small"
+                                onClick={() => openUploadModal(doc)}
+                                startIcon={isUploaded ? <UploadFile /> : <CloudUpload />}
+                                sx={{
+                                  ml: 1,
+                                  minWidth: 100,
+                                  borderRadius: 2,
+                                  textTransform: 'none',
+                                  fontWeight: 600,
+                                  ...(isUploaded ? {
+                                    borderColor: '#16a34a',
+                                    color: '#16a34a',
+                                  } : {
+                                    bgcolor: '#b91c1c',
+                                    '&:hover': { bgcolor: '#991b1b' }
+                                  })
+                                }}
+                              >
+                                {isUploaded ? 'Replace' : 'Upload'}
+                              </Button>
                             </Box>
                           </Box>
                         </motion.div>
@@ -1250,208 +1473,157 @@ const DashboardEmployee = () => {
                 </Box>
 
                 {/* Footer Actions */}
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.3 }}
+                <Box 
+                  sx={{ 
+                    mt: 3, 
+                    pt: 3,
+                    borderTop: '1px solid #e2e8f0',
+                    display: 'flex', 
+                    justifyContent: 'space-between', 
+                    alignItems: 'center',
+                    flexWrap: 'wrap',
+                    gap: 2
+                  }}
                 >
-                  <Box 
-                    sx={{ 
-                      mt: 3, 
-                      pt: 3,
-                      borderTop: '1px solid #e2e8f0',
-                      display: 'flex', 
-                      justifyContent: 'space-between', 
-                      alignItems: 'center',
-                      flexWrap: 'wrap',
-                      gap: 2
-                    }}
+                  <Button 
+                    onClick={() => setShowDocumentsModal(false)} 
+                    disabled={isSubmissionInProgress}
+                    sx={{ color: '#64748b' }}
                   >
-                    <Button 
-                      onClick={() => setShowDocumentsModal(false)} 
-                      disabled={isSubmissionInProgress}
-                      sx={{ color: '#64748b', '&:hover': { bgcolor: '#f1f5f9' } }}
-                    >
-                      Cancel
-                    </Button>
-                    
-                    <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
-                      {/* Progress indicator */}
+                    Cancel
+                  </Button>
+                  
+                  <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+                    <Box sx={{ textAlign: 'right' }}>
                       <Typography variant="body2" color="text.secondary">
                         {uploadStats.requiredUploaded}/{uploadStats.required} required docs
                       </Typography>
-                      
-                      {/* Submit Button with Tooltip */}
-                      <Tooltip 
-                        title={
-                          allRequiredUploaded 
-                            ? 'Submit documents for Helpdesk review' 
-                            : `Upload all required documents first (${uploadStats.required - uploadStats.requiredUploaded} remaining)`
-                        }
-                        arrow
-                      >
-                        <span>
-                          <motion.div 
-                            whileHover={allRequiredUploaded && !isSubmissionInProgress ? { scale: 1.02 } : {}} 
-                            whileTap={allRequiredUploaded && !isSubmissionInProgress ? { scale: 0.98 } : {}}
-                          >
-                            <Button
-                              variant="contained"
-                              onClick={handleSubmitDocuments}
-                              disabled={!allRequiredUploaded || isSubmissionInProgress}
-                              startIcon={
-                                isSubmissionInProgress 
-                                  ? <CircularProgress size={18} color="inherit" /> 
-                                  : <SendIcon />
-                              }
-                              sx={{
-                                minWidth: 200,
-                                bgcolor: allRequiredUploaded ? '#16a34a' : '#94a3b8',
-                                '&:hover': {
-                                  bgcolor: allRequiredUploaded ? '#15803d' : '#94a3b8',
-                                },
-                                '&.Mui-disabled': { 
-                                  bgcolor: '#e2e8f0', 
-                                  color: '#94a3b8' 
-                                }
-                              }}
-                            >
-                              {isSubmissionInProgress ? 'Submitting...' : 'Submit Documents'}
-                            </Button>
-                          </motion.div>
-                        </span>
-                      </Tooltip>
+                      {!isOCRVerified && uploadedDocuments[PASSPORT_DOCUMENT_ID] && (
+                        <Typography variant="caption" color="warning.main">
+                          ⚠️ Verify passport OCR data
+                        </Typography>
+                      )}
                     </Box>
+                    
+                    <Tooltip 
+                      title={
+                        canSubmitDocuments 
+                          ? 'Submit documents for Helpdesk review' 
+                          : !allRequiredUploaded 
+                            ? `Upload ${uploadStats.required - uploadStats.requiredUploaded} more required document(s)`
+                            : 'Verify passport OCR data first'
+                      }
+                      arrow
+                    >
+                      <span>
+                        <Button
+                          variant="contained"
+                          onClick={handleSubmitDocuments}
+                          disabled={!canSubmitDocuments || isSubmissionInProgress}
+                          startIcon={
+                            isSubmissionInProgress 
+                              ? <CircularProgress size={18} color="inherit" /> 
+                              : <SendIcon />
+                          }
+                          sx={{
+                            minWidth: 200,
+                            bgcolor: canSubmitDocuments ? '#16a34a' : '#94a3b8',
+                            '&:hover': {
+                              bgcolor: canSubmitDocuments ? '#15803d' : '#94a3b8',
+                            },
+                            '&.Mui-disabled': { 
+                              bgcolor: '#e2e8f0', 
+                              color: '#94a3b8' 
+                            }
+                          }}
+                        >
+                          {isSubmissionInProgress ? 'Submitting...' : 'Submit Documents'}
+                        </Button>
+                      </span>
+                    </Tooltip>
                   </Box>
-                </motion.div>
+                </Box>
               </Box>
             </motion.div>
           )}
         </AnimatePresence>
       </SharedModal>
 
-      {/* ==========================================
-          FILE UPLOAD MODAL (Drag & Drop)
-      ========================================== */}
+      {/* Upload Modal */}
       <SharedModal
         open={showUploadModal}
         onClose={() => !uploading && setShowUploadModal(false)}
         title={selectedDoc ? `Upload ${selectedDoc.name}` : 'Upload Document'}
         maxWidth="sm"
       >
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.3 }}
+        <Box
+          {...getRootProps()}
+          sx={{
+            border: '2px dashed',
+            borderColor: isDragActive ? '#b91c1c' : uploading ? '#94a3b8' : '#cbd5e1',
+            borderRadius: 2,
+            p: 6,
+            textAlign: 'center',
+            cursor: uploading ? 'not-allowed' : 'pointer',
+            bgcolor: isDragActive ? '#fef2f2' : '#f8fafc',
+            opacity: uploading ? 0.7 : 1,
+          }}
         >
-          <Box
-            {...getRootProps()}
-            sx={{
-              border: '2px dashed',
-              borderColor: isDragActive ? '#b91c1c' : uploading ? '#94a3b8' : '#cbd5e1',
-              borderRadius: 2,
-              p: 6,
-              textAlign: 'center',
-              cursor: uploading ? 'not-allowed' : 'pointer',
-              bgcolor: isDragActive ? '#fef2f2' : '#f8fafc',
-              transition: 'all 0.2s',
-              opacity: uploading ? 0.7 : 1,
-            }}
-          >
-            <input {...getInputProps()} />
+          <input {...getInputProps()} />
 
-            <AnimatePresence mode="wait">
-              {uploading ? (
-                <motion.div
-                  key="uploading"
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.9 }}
-                >
-                  <Box>
-                    <motion.div
-                      animate={{ rotate: 360 }}
-                      transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
-                    >
-                      <CircularProgress size={48} sx={{ mb: 2, color: '#b91c1c' }} />
-                    </motion.div>
-                    <Typography variant="h6" color="text.secondary">
-                      Uploading... {uploadProgress}%
-                    </Typography>
-                    <Box sx={{ mt: 2, position: 'relative', height: 8, borderRadius: 4, bgcolor: '#e2e8f0', overflow: 'hidden' }}>
-                      <motion.div
-                        initial={{ width: 0 }}
-                        animate={{ width: `${uploadProgress}%` }}
-                        style={{
-                          height: '100%',
-                          borderRadius: 4,
-                          background: 'linear-gradient(90deg, #b91c1c, #ef4444)'
-                        }}
-                      />
-                    </Box>
-                  </Box>
-                </motion.div>
-              ) : (
-                <motion.div
-                  key="ready"
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.9 }}
-                >
-                  <Box sx={{ mb: 2, display: 'flex', justifyContent: 'center' }}>
-                    <motion.div
-                      animate={isDragActive ? { scale: 1.1, y: -5 } : { scale: 1, y: 0 }}
-                      transition={{ type: "spring", stiffness: 300 }}
-                    >
-                      <Box sx={{
-                        p: 2,
-                        bgcolor: isDragActive ? '#b91c1c' : '#fee2e2',
-                        borderRadius: '50%',
-                        color: isDragActive ? 'white' : '#b91c1c',
-                        transition: 'all 0.2s'
-                      }}>
-                        <UploadFile fontSize="large" />
-                      </Box>
-                    </motion.div>
-                  </Box>
-
-                  <Typography variant="h6" sx={{ mb: 1, color: '#1e293b' }}>
-                    {isDragActive ? 'Drop the file here!' : 'Drag & drop or click to upload'}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Supported: PNG, JPG, PDF (Max 5MB)
-                  </Typography>
-
-                  {uploadedDocuments[selectedDoc?.id] && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                    >
-                      <Alert severity="info" sx={{ mt: 2, textAlign: 'left' }}>
-                        This will replace: <strong>{uploadedDocuments[selectedDoc.id].fileName}</strong>
-                      </Alert>
-                    </motion.div>
-                  )}
-                </motion.div>
+          {uploading ? (
+            <Box>
+              <CircularProgress size={48} sx={{ mb: 2, color: '#b91c1c' }} />
+              <Typography variant="h6" color="text.secondary">
+                Uploading... {uploadProgress}%
+              </Typography>
+              <Box sx={{ mt: 2, height: 8, borderRadius: 4, bgcolor: '#e2e8f0', overflow: 'hidden' }}>
+                <Box
+                  sx={{
+                    width: `${uploadProgress}%`,
+                    height: '100%',
+                    borderRadius: 4,
+                    background: 'linear-gradient(90deg, #b91c1c, #ef4444)'
+                  }}
+                />
+              </Box>
+            </Box>
+          ) : (
+            <Box>
+              <Box sx={{ mb: 2, display: 'flex', justifyContent: 'center' }}>
+                <Box sx={{
+                  p: 2,
+                  bgcolor: isDragActive ? '#b91c1c' : '#fee2e2',
+                  borderRadius: '50%',
+                  color: isDragActive ? 'white' : '#b91c1c',
+                }}>
+                  <UploadFile fontSize="large" />
+                </Box>
+              </Box>
+              <Typography variant="h6" sx={{ mb: 1, color: '#1e293b' }}>
+                {isDragActive ? 'Drop the file here!' : 'Drag & drop or click to upload'}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Supported: PNG, JPG, PDF (Max 5MB)
+              </Typography>
+              
+              {selectedDoc?.id === PASSPORT_DOCUMENT_ID && (
+                <Alert severity="info" sx={{ mt: 2, textAlign: 'left' }}>
+                  After uploading, OCR will automatically extract passport data for verification.
+                </Alert>
               )}
-            </AnimatePresence>
-          </Box>
-        </motion.div>
+            </Box>
+          )}
+        </Box>
 
         <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end' }}>
-          <Button
-            onClick={() => setShowUploadModal(false)}
-            disabled={uploading}
-            sx={{ color: '#64748b' }}
-          >
+          <Button onClick={() => setShowUploadModal(false)} disabled={uploading} sx={{ color: '#64748b' }}>
             Cancel
           </Button>
         </Box>
       </SharedModal>
 
-      {/* ==========================================
-          DOCUMENT PREVIEW MODAL
-      ========================================== */}
+      {/* Preview Modal */}
       <SharedModal
         open={showPreviewModal}
         onClose={() => {
@@ -1461,95 +1633,63 @@ const DashboardEmployee = () => {
         title={`Preview: ${previewData?.fileName || 'Document'}`}
         maxWidth="md"
       >
-        <AnimatePresence>
-          {previewData && (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-            >
-              <Box sx={{ textAlign: 'center' }}>
-                {previewData.fileType?.includes('pdf') ? (
-                  <Box sx={{ height: '60vh', minHeight: 400 }}>
-                    <iframe
-                      src={`data:application/pdf;base64,${previewData.base64}`}
-                      width="100%"
-                      height="100%"
-                      style={{ border: 'none', borderRadius: 8 }}
-                      title={previewData.fileName}
-                    />
-                  </Box>
-                ) : (
-                  <Box sx={{ maxHeight: '60vh', overflow: 'auto' }}>
-                    <motion.img
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      src={`data:${previewData.fileType};base64,${previewData.base64}`}
-                      alt={previewData.fileName}
-                      style={{
-                        maxWidth: '100%',
-                        maxHeight: '55vh',
-                        borderRadius: 8,
-                        boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-                      }}
-                    />
-                  </Box>
-                )}
-                <Box sx={{ mt: 3, display: 'flex', justifyContent: 'center', gap: 2 }}>
-                  <Button
-                    variant="outlined"
-                    onClick={() => {
-                      setShowPreviewModal(false);
-                      setPreviewData(null);
-                    }}
-                  >
-                    Close
-                  </Button>
-                  <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                    <Button
-                      variant="contained"
-                      startIcon={<Download />}
-                      onClick={() => {
-                        const link = document.createElement('a');
-                        link.href = `data:${previewData.fileType};base64,${previewData.base64}`;
-                        link.download = previewData.fileName;
-                        link.click();
-                      }}
-                      sx={{ bgcolor: '#3b82f6' }}
-                    >
-                      Download
-                    </Button>
-                  </motion.div>
-                </Box>
+        {previewData && (
+          <Box sx={{ textAlign: 'center' }}>
+            {previewData.fileType?.includes('pdf') ? (
+              <Box sx={{ height: '60vh', minHeight: 400 }}>
+                <iframe
+                  src={`data:application/pdf;base64,${previewData.base64}`}
+                  width="100%"
+                  height="100%"
+                  style={{ border: 'none', borderRadius: 8 }}
+                  title={previewData.fileName}
+                />
               </Box>
-            </motion.div>
-          )}
-        </AnimatePresence>
+            ) : (
+              <Box sx={{ maxHeight: '60vh', overflow: 'auto' }}>
+                <img
+                  src={`data:${previewData.fileType};base64,${previewData.base64}`}
+                  alt={previewData.fileName}
+                  style={{
+                    maxWidth: '100%',
+                    maxHeight: '55vh',
+                    borderRadius: 8,
+                  }}
+                />
+              </Box>
+            )}
+            <Box sx={{ mt: 3, display: 'flex', justifyContent: 'center', gap: 2 }}>
+              <Button variant="outlined" onClick={() => setShowPreviewModal(false)}>
+                Close
+              </Button>
+              <Button
+                variant="contained"
+                startIcon={<Download />}
+                onClick={() => {
+                  const link = document.createElement('a');
+                  link.href = `data:${previewData.fileType};base64,${previewData.base64}`;
+                  link.download = previewData.fileName;
+                  link.click();
+                }}
+                sx={{ bgcolor: '#3b82f6' }}
+              >
+                Download
+              </Button>
+            </Box>
+          </Box>
+        )}
       </SharedModal>
 
-      {/* ==========================================
-          SNACKBAR NOTIFICATIONS
-      ========================================== */}
+      {/* Snackbar */}
       <Snackbar
         open={snackbar.open}
         autoHideDuration={4000}
         onClose={closeSnackbar}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
       >
-        <motion.div
-          initial={{ opacity: 0, y: 20, scale: 0.95 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          exit={{ opacity: 0, y: 20, scale: 0.95 }}
-        >
-          <Alert
-            onClose={closeSnackbar}
-            severity={snackbar.severity}
-            variant="filled"
-            sx={{ width: '100%' }}
-          >
-            {snackbar.message}
-          </Alert>
-        </motion.div>
+        <Alert onClose={closeSnackbar} severity={snackbar.severity} variant="filled">
+          {snackbar.message}
+        </Alert>
       </Snackbar>
     </BaseLayout>
   );
