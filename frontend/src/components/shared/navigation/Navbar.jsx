@@ -15,7 +15,6 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useSelector, useDispatch } from 'react-redux';
 import { markNotificationRead } from '../../../redux/slices/dashboardSlice';
-import './Navbar.css'; 
 
 const Navbar = ({ user, onLogout }) => {
   const [anchorEl, setAnchorEl] = React.useState(null);
