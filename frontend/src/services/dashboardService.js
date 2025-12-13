@@ -158,7 +158,7 @@ const dashboardService = {
       const statsManager = {
         totalRequests: travels.length,
         pending: travels.filter(t => t.status === 7).length,
-        approved: travels.filter(t => t.status === 1 || t.status === 10 || t.status === 17).length,
+        approved: travels.filter(t => t.status === 1 ||t.status === 5|| t.status === 10 || t.status === 17).length,
         // completed: travels.filter(t => t.status === 17).length,
         rejected: travels.filter(t => t.status === 100).length,
       }
