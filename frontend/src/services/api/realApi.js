@@ -1,6 +1,7 @@
 /**
  * Real API - All actual HTTP calls
  * Complete version with Visa OCR support
+ * UPDATED: Use employee endpoints for all document operations
  */
 
 import apiClient from '../../api/client';
@@ -38,12 +39,9 @@ const realApi = {
   },
 
   getTravelDetailByTId: async (TiD) => {
-
-    const formData = new FormData()
-    formData.append('TID', TiD)
-
-    console.log('🟢 REAL: POST /api/employee/TravelDetailByTID' + TiD);
-
+    const formData = new FormData();
+    formData.append('TID', TiD);
+    console.log('🟢 REAL: POST /api/employee/TravelDetailByTID ' + TiD);
     const response = await apiClient.post(`/api/employee/TravelDetailByTID`, formData);
     return response.data;
   },
@@ -133,7 +131,7 @@ const realApi = {
   },
 
   // ==========================================
-  // DOCUMENT MANAGEMENT
+  // DOCUMENT MANAGEMENT (Using Employee Endpoints Only)
   // ==========================================
 
   addDocument: async (empId, documentId, document) => {
@@ -231,7 +229,7 @@ const realApi = {
   },
 
   // ==========================================
-  // VISA OCR - NEW ENDPOINTS
+  // VISA OCR
   // ==========================================
 
   getVisaInfo: async (empId) => {
@@ -261,7 +259,6 @@ const realApi = {
     formData.append('VisaNumber', visaData.visaNumber || '');
     formData.append('Nationality', visaData.nationality || '');
     
-    // Format dates
     if (visaData.dateOfBirth) {
       let dob = visaData.dateOfBirth;
       if (!dob.includes('T')) {
@@ -286,12 +283,6 @@ const realApi = {
     
     formData.append('CompositeCheck', String(visaData.compositeCheck ?? true));
     
-    // Debug log
-    console.log('📋 Visa FormData entries:');
-    for (let [key, value] of formData.entries()) {
-      console.log(`  ${key}: ${value}`);
-    }
-    
     const response = await apiClient.post('/api/HelpDesk/UpdateVisaInfo', formData);
     return response.data;
   },
@@ -299,50 +290,6 @@ const realApi = {
   // ==========================================
   // TRAVEL DESK / HELPDESK SPECIFIC
   // ==========================================
-
-  getEmployeeDocuments: async (empId, docId) => {
-    console.log('🟢 REAL: POST /api/HelpDesk/GetEmployeeDocuments');
-    const formData = new FormData();
-    formData.append('EmpId', empId);
-    formData.append('DocumentId', docId);
-    const response = await apiClient.post('/api/HelpDesk/GetEmployeeDocuments', formData);
-    return response.data;
-  },
-
-  getHelpDeskDocumentFile: async (empId, documentId) => {
-    console.log('🟢 REAL: POST /api/HelpDesk/GetDocumentFile');
-    
-    const formData = new FormData();
-    formData.append('EmpId', empId);
-    formData.append('DocumentId', documentId);
-    
-    try {
-      const response = await apiClient.post('/api/HelpDesk/GetDocumentFile', formData);
-      return response.data;
-    } catch (error) {
-      if (error.response?.status === 404) {
-        console.log('🟡 HelpDesk GetDocumentFile endpoint not available');
-        return { status: 'NotFound', fallbackRequired: true };
-      }
-      throw error;
-    }
-  },
-
-  getHelpDeskEmployeeDocuments: async (empId) => {
-    console.log('🟢 REAL: GET /api/HelpDesk/GetUploadedDocuments');
-    
-    try {
-      const response = await apiClient.get(`/api/HelpDesk/GetUploadedDocuments?empId=${empId}`);
-      return response.data;
-    } catch (error) {
-      if (error.response?.status === 404) {
-        console.log('🟡 HelpDesk GetUploadedDocuments endpoint not available');
-        return { status: 'NotFound', fallbackRequired: true };
-      }
-      throw error;
-    }
-  },
-  
 
   getAllTravelDetails: async () => {
     console.log('🟢 REAL: POST /api/HelpDesk/GetAllTravelDetails');

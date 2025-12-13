@@ -1,21 +1,119 @@
 /**
  * Document Service
  * Handles all document-related API calls including Visa OCR
+ * UPDATED: Uses only employee endpoints for document operations
+ * UPDATED: Added Visa Form (ID 8) to Status 14 uploads
  */
 import api from './apiService';
 
-// Document IDs
-const HIDDEN_DOCUMENT_IDS = [5,6,7,10]; // Visa - hidden from employee
-const HIDDEN_DOCUMENT_NAMES =  ['visa','Hotel Booking','Flight Booking','Travel Insurance'];
+// ==========================================
+// DOCUMENT ID CONSTANTS
+// ==========================================
+const PASSPORT_DOCUMENT_ID = 1;
+const INVITATION_LETTER_DOCUMENT_ID = 2;
+const COVER_LETTER_DOCUMENT_ID = 3;
+const KT_PLAN_DOCUMENT_ID = 4;
+const HOTEL_BOOKING_DOCUMENT_ID = 5;
+const FLIGHT_BOOKING_DOCUMENT_ID = 6;
+const TRAVEL_INSURANCE_DOCUMENT_ID = 7;
+const VISA_FORM_DOCUMENT_ID = 8;
+const LETTER_OF_INTENT_DOCUMENT_ID = 9;
 const VISA_DOCUMENT_ID = 10;
+const INSURANCE_DECLARATION_DOCUMENT_ID = 11;
+const VISA_APPOINTMENT_DOCUMENT_ID = 12;
+
+// ==========================================
+// DOCUMENT VISIBILITY RULES
+// ==========================================
+
+// Documents hidden from employee view (employee cannot see or upload these)
+const HIDDEN_FROM_EMPLOYEE = [
+  HOTEL_BOOKING_DOCUMENT_ID,      // 5 - Travel Desk uploads
+  FLIGHT_BOOKING_DOCUMENT_ID,     // 6 - Travel Desk uploads
+  TRAVEL_INSURANCE_DOCUMENT_ID,   // 7 - Travel Desk uploads
+  VISA_FORM_DOCUMENT_ID,          // 8 - Travel Desk uploads at Status 14
+  VISA_DOCUMENT_ID,               // 10 - Travel Desk uploads
+  VISA_APPOINTMENT_DOCUMENT_ID,   // 12 - Travel Desk uploads
+];
+
+// Documents employee uploads (Status 13)
+const EMPLOYEE_UPLOAD_DOCUMENTS = [
+  PASSPORT_DOCUMENT_ID,           // 1
+  INVITATION_LETTER_DOCUMENT_ID,  // 2
+  COVER_LETTER_DOCUMENT_ID,       // 3
+  KT_PLAN_DOCUMENT_ID,            // 4
+  LETTER_OF_INTENT_DOCUMENT_ID,   // 9
+  INSURANCE_DECLARATION_DOCUMENT_ID, // 11
+];
+
+// Documents Travel Desk uploads at Status 14 (Visa Review)
+const STATUS_14_UPLOAD_DOCUMENTS = [
+  VISA_FORM_DOCUMENT_ID,          // 8 - NEW!
+  VISA_DOCUMENT_ID,               // 10
+  VISA_APPOINTMENT_DOCUMENT_ID,   // 12
+];
+
+// Documents Travel Desk uploads at Status 15 (Booking)
+const STATUS_15_UPLOAD_DOCUMENTS = [
+  HOTEL_BOOKING_DOCUMENT_ID,      // 5
+  FLIGHT_BOOKING_DOCUMENT_ID,     // 6
+  TRAVEL_INSURANCE_DOCUMENT_ID,   // 7
+];
+
+// Documents visible to employee after Status 14 (read-only)
+const VISIBLE_TO_EMPLOYEE_AFTER_STATUS_14 = [
+  VISA_FORM_DOCUMENT_ID,          // 8
+  VISA_DOCUMENT_ID,               // 10
+  VISA_APPOINTMENT_DOCUMENT_ID,   // 12
+];
+
+// Documents visible to employee after Status 15 (read-only)
+const VISIBLE_TO_EMPLOYEE_AFTER_STATUS_15 = [
+  HOTEL_BOOKING_DOCUMENT_ID,      // 5
+  FLIGHT_BOOKING_DOCUMENT_ID,     // 6
+  TRAVEL_INSURANCE_DOCUMENT_ID,   // 7
+];
 
 const documentService = {
+  // ==========================================
+  // CONSTANTS EXPORT
+  // ==========================================
+  DOCUMENT_IDS: {
+    PASSPORT: PASSPORT_DOCUMENT_ID,
+    INVITATION_LETTER: INVITATION_LETTER_DOCUMENT_ID,
+    COVER_LETTER: COVER_LETTER_DOCUMENT_ID,
+    KT_PLAN: KT_PLAN_DOCUMENT_ID,
+    HOTEL_BOOKING: HOTEL_BOOKING_DOCUMENT_ID,
+    FLIGHT_BOOKING: FLIGHT_BOOKING_DOCUMENT_ID,
+    TRAVEL_INSURANCE: TRAVEL_INSURANCE_DOCUMENT_ID,
+    VISA_FORM: VISA_FORM_DOCUMENT_ID,
+    LETTER_OF_INTENT: LETTER_OF_INTENT_DOCUMENT_ID,
+    VISA: VISA_DOCUMENT_ID,
+    INSURANCE_DECLARATION: INSURANCE_DECLARATION_DOCUMENT_ID,
+    VISA_APPOINTMENT: VISA_APPOINTMENT_DOCUMENT_ID,
+  },
+
+  DOCUMENT_GROUPS: {
+    EMPLOYEE_UPLOADS: EMPLOYEE_UPLOAD_DOCUMENTS,
+    STATUS_14_UPLOADS: STATUS_14_UPLOAD_DOCUMENTS,
+    STATUS_15_UPLOADS: STATUS_15_UPLOAD_DOCUMENTS,
+    HIDDEN_FROM_EMPLOYEE: HIDDEN_FROM_EMPLOYEE,
+    VISIBLE_AFTER_STATUS_14: VISIBLE_TO_EMPLOYEE_AFTER_STATUS_14,
+    VISIBLE_AFTER_STATUS_15: VISIBLE_TO_EMPLOYEE_AFTER_STATUS_15,
+  },
+
   // ==========================================
   // DOCUMENT TYPES
   // ==========================================
   
-  getAllDocumentTypes: async () => {
-    console.log('📄 Getting all document types (employee view)');
+  /**
+   * Get document types for Employee view
+   * Filters out documents that employee should not see
+   * @param {number} statusId - Current travel request status
+   * @param {object} uploadedDocs - Map of uploaded document IDs
+   */
+  getAllDocumentTypes: async (statusId = null, uploadedDocs = {}) => {
+    console.log('📄 Getting all document types (employee view)', { statusId });
     
     const response = await api.getAllDocumentsList();
     
@@ -25,24 +123,55 @@ const documentService = {
     
     const allDocs = response.result.map(doc => ({
       id: doc.documentID,
+      documentID: doc.documentID,
       name: doc.documentName,
+      documentName: doc.documentName,
       required: doc.isRequired ?? doc.isMandatory ?? true
     }));
     
-    // Filter out Visa for employee view
+    // Filter documents based on status
     const filteredDocs = allDocs.filter(doc => {
-      if (HIDDEN_DOCUMENT_IDS.includes(doc.id)) return false;
-      if (HIDDEN_DOCUMENT_NAMES.some(name => 
-        doc.name.toLowerCase().trim() === name.toLowerCase().trim()
-      )) return false;
+      const docId = doc.id;
+      
+      // Always show employee upload documents
+      if (EMPLOYEE_UPLOAD_DOCUMENTS.includes(docId)) {
+        return true;
+      }
+      
+      // Status 14+: Show visa-related docs if uploaded (read-only for employee)
+      if (statusId >= 14 && VISIBLE_TO_EMPLOYEE_AFTER_STATUS_14.includes(docId)) {
+        return !!uploadedDocs[docId]; // Only show if uploaded
+      }
+      
+      // Status 15+: Show booking docs if uploaded (read-only for employee)
+      if (statusId >= 15 && VISIBLE_TO_EMPLOYEE_AFTER_STATUS_15.includes(docId)) {
+        return !!uploadedDocs[docId]; // Only show if uploaded
+      }
+      
+      // Hide all other documents from employee
+      if (HIDDEN_FROM_EMPLOYEE.includes(docId)) {
+        return false;
+      }
+      
       return true;
     });
     
-    return filteredDocs;
+    // Mark which docs employee can edit
+    const docsWithPermissions = filteredDocs.map(doc => ({
+      ...doc,
+      canEdit: EMPLOYEE_UPLOAD_DOCUMENTS.includes(doc.id),
+      isReadOnly: !EMPLOYEE_UPLOAD_DOCUMENTS.includes(doc.id)
+    }));
+    
+    return docsWithPermissions;
   },
 
+  /**
+   * Get ALL document types for HelpDesk/Travel Desk view
+   * Includes all documents
+   */
   getAllDocumentTypesForHelpDesk: async () => {
-    console.log('📄 Getting all document types (HelpDesk view - includes Visa)');
+    console.log('📄 Getting all document types (HelpDesk view)');
     
     const response = await api.getAllDocumentsList();
     
@@ -52,14 +181,55 @@ const documentService = {
     
     const allDocs = response.result.map(doc => ({
       id: doc.documentID,
+      documentID: doc.documentID,
       name: doc.documentName,
+      documentName: doc.documentName,
       required: doc.isRequired ?? doc.isMandatory ?? true,
-      canUpload: doc.documentID === VISA_DOCUMENT_ID,
-      isVisa: doc.documentID === VISA_DOCUMENT_ID
+      isEmployeeDoc: EMPLOYEE_UPLOAD_DOCUMENTS.includes(doc.documentID),
+      isStatus14Doc: STATUS_14_UPLOAD_DOCUMENTS.includes(doc.documentID),
+      isStatus15Doc: STATUS_15_UPLOAD_DOCUMENTS.includes(doc.documentID),
+      isVisa: doc.documentID === VISA_DOCUMENT_ID,
+      isVisaForm: doc.documentID === VISA_FORM_DOCUMENT_ID,
+      isVisaAppointment: doc.documentID === VISA_APPOINTMENT_DOCUMENT_ID,
+      isHotelBooking: doc.documentID === HOTEL_BOOKING_DOCUMENT_ID,
+      isFlightBooking: doc.documentID === FLIGHT_BOOKING_DOCUMENT_ID,
+      isTravelInsurance: doc.documentID === TRAVEL_INSURANCE_DOCUMENT_ID
     }));
     
     console.log(`📄 Returning ${allDocs.length} documents for HelpDesk`);
     return allDocs;
+  },
+
+  /**
+   * Check if a document should be visible based on status and role
+   */
+  isDocumentVisible: (docId, statusId, isHelpDesk = false) => {
+    // HelpDesk can see all documents
+    if (isHelpDesk) return true;
+    
+    // Employee view
+    if (EMPLOYEE_UPLOAD_DOCUMENTS.includes(docId)) return true;
+    
+    // After Status 14: Visa docs visible to employee
+    if (statusId >= 14 && VISIBLE_TO_EMPLOYEE_AFTER_STATUS_14.includes(docId)) return true;
+    
+    // After Status 15: Booking docs visible to employee
+    if (statusId >= 15 && VISIBLE_TO_EMPLOYEE_AFTER_STATUS_15.includes(docId)) return true;
+    
+    return false;
+  },
+
+  /**
+   * Check if employee can edit a document
+   */
+  canEmployeeEdit: (docId, statusId) => {
+    // Employee can only edit their own upload documents
+    if (!EMPLOYEE_UPLOAD_DOCUMENTS.includes(docId)) return false;
+    
+    // Can only edit at Status 13
+    if (statusId !== 13) return false;
+    
+    return true;
   },
 
   // ==========================================
@@ -80,7 +250,7 @@ const documentService = {
 
   validateFile: (file) => {
     const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg', 'application/pdf'];
-    const maxSize = 5 * 1024 * 1024;
+    const maxSize = 5 * 1024 * 1024; // 5MB
     
     if (!file) return { valid: false, error: 'No file provided' };
     if (!allowedTypes.includes(file.type)) return { valid: false, error: 'Only PNG, JPG, and PDF files are allowed' };
@@ -90,7 +260,7 @@ const documentService = {
   },
 
   // ==========================================
-  // DOCUMENT CRUD
+  // DOCUMENT CRUD (Using Employee Endpoints)
   // ==========================================
 
   addDocument: async (empId, documentId, file) => {
@@ -100,7 +270,6 @@ const documentService = {
     if (!validation.valid) throw new Error(validation.error);
     
     const fileBase64 = await documentService.fileToBase64(file);
-    console.log("fileBase64Visa:::",fileBase64);
     
     const response = await api.addDocumentWithMetadata(
       empId, documentId, fileBase64, file.type, file.name, file.size
@@ -122,6 +291,10 @@ const documentService = {
     return documentService.addDocument(empId, documentId, file);
   },
 
+  /**
+   * Get all uploaded documents for an employee
+   * Uses /api/employee/GetUploadedDocuments
+   */
   getEmployeeUploadedDocuments: async (empId) => {
     console.log('📄 Getting uploaded documents for:', empId);
     
@@ -151,6 +324,10 @@ const documentService = {
     }
   },
 
+  /**
+   * Get document with content (base64)
+   * Uses /api/employee/GetDocumentFile
+   */
   getDocumentWithContent: async (empId, documentId) => {
     console.log('📄 Getting document content:', { empId, documentId });
     
@@ -185,6 +362,9 @@ const documentService = {
     return response.result;
   },
 
+  /**
+   * Submit documents (Status 13 → 14)
+   */
   submitDocuments: async (tId, empId) => {
     console.log('📄 Submitting documents:', { tId, empId });
     try {
@@ -211,7 +391,7 @@ const documentService = {
   },
 
   // ==========================================
-  // PASSPORT OCR (Employee Dashboard)
+  // PASSPORT OCR
   // ==========================================
 
   getPassportOCRInfo: async (empId) => {
@@ -249,7 +429,7 @@ const documentService = {
   },
 
   // ==========================================
-  // VISA OCR (TravelDesk Only)
+  // VISA OCR
   // ==========================================
 
   getVisaOCRInfo: async (empId) => {
@@ -294,22 +474,18 @@ const documentService = {
 
   // ==========================================
   // HELPDESK / TRAVEL DESK METHODS
+  // (Using Employee Endpoints Directly)
   // ==========================================
 
-  _needsFallback: (response) => {
-    return response?.fallbackRequired === true || response?.status === 'NotFound';
-  },
-
+  /**
+   * Get employee documents for HelpDesk view
+   * Uses /api/employee/GetUploadedDocuments directly
+   */
   getHelpDeskEmployeeDocuments: async (empId) => {
     console.log('📄 [HelpDesk] Getting documents for:', empId);
     
     try {
-      let response = await api.getEmployeeAllDocuments(empId);
-      
-      if (documentService._needsFallback(response)) {
-        console.log('📄 [HelpDesk] Using employee endpoint as fallback');
-        response = await api.getEmployeeAllDocuments(empId);
-      }
+      const response = await api.getEmployeeAllDocuments(empId);
       
       if (response.status !== 'Success') return {};
       
@@ -333,16 +509,15 @@ const documentService = {
     }
   },
 
+  /**
+   * Get document content for HelpDesk view
+   * Uses /api/employee/GetDocumentFile directly
+   */
   getHelpDeskDocumentWithContent: async (empId, documentId) => {
     console.log('📄 [HelpDesk] Getting document content:', { empId, documentId });
     
     try {
-      let response = await api.getHelpDeskDocumentFile(empId, documentId);
-      
-      if (documentService._needsFallback(response)) {
-        console.log('📄 [HelpDesk] Using employee endpoint as fallback');
-        response = await api.getDocumentFile(empId, documentId);
-      }
+      const response = await api.getDocumentFile(empId, documentId);
       
       if (response.status !== 'Success' || !response.result) return null;
       
@@ -360,9 +535,64 @@ const documentService = {
     }
   },
 
+  /**
+   * Upload any document (HelpDesk/Travel Desk)
+   */
+  helpDeskUploadDocument: async (empId, documentId, file) => {
+    console.log('📄 [HelpDesk] Uploading document:', { empId, documentId, fileName: file.name });
+    
+    const validation = documentService.validateFile(file);
+    if (!validation.valid) {
+      throw new Error(validation.error);
+    }
+    
+    const fileBase64 = await documentService.fileToBase64(file);
+    
+    try {
+      const response = await api.addDocumentWithMetadata(
+        empId, 
+        documentId, 
+        fileBase64, 
+        file.type, 
+        file.name, 
+        file.size
+      );
+      
+      if (response.status !== 'Success') {
+        throw new Error(response.result || 'Failed to upload document');
+      }
+      
+      console.log('📄 [HelpDesk] Document uploaded successfully:', documentId);
+      return response.result;
+    } catch (error) {
+      console.error('📄 [HelpDesk] Upload error:', error);
+      throw error;
+    }
+  },
+
+  // Convenience methods for specific documents
   helpDeskUploadVisa: async (empId, file) => {
-    console.log('📄 [HelpDesk] Uploading visa for:', empId);
-    return documentService.addDocument(empId, VISA_DOCUMENT_ID, file);
+    return documentService.helpDeskUploadDocument(empId, VISA_DOCUMENT_ID, file);
+  },
+
+  helpDeskUploadVisaForm: async (empId, file) => {
+    return documentService.helpDeskUploadDocument(empId, VISA_FORM_DOCUMENT_ID, file);
+  },
+
+  helpDeskUploadVisaAppointment: async (empId, file) => {
+    return documentService.helpDeskUploadDocument(empId, VISA_APPOINTMENT_DOCUMENT_ID, file);
+  },
+
+  helpDeskUploadHotelBooking: async (empId, file) => {
+    return documentService.helpDeskUploadDocument(empId, HOTEL_BOOKING_DOCUMENT_ID, file);
+  },
+
+  helpDeskUploadFlightBooking: async (empId, file) => {
+    return documentService.helpDeskUploadDocument(empId, FLIGHT_BOOKING_DOCUMENT_ID, file);
+  },
+
+  helpDeskUploadTravelInsurance: async (empId, file) => {
+    return documentService.helpDeskUploadDocument(empId, TRAVEL_INSURANCE_DOCUMENT_ID, file);
   }
 };
 

@@ -9,6 +9,22 @@
 /**
  * Status Code Constants - Based on Backend API
  */
+
+export const DOCUMENT_IDS = {
+  PASSPORT: 1,
+  INVITATION_LETTER: 2,
+  COVER_LETTER: 3,
+  KT_PLAN: 4,
+  HOTEL_BOOKING: 5,
+  FLIGHT_BOOKING: 6,
+  TRAVEL_INSURANCE: 7,
+  VISA_FORM: 8,
+  LETTER_OF_INTENT: 9,
+  VISA: 10,
+  INSURANCE_DECLARATION: 11,
+  VISA_APPOINTMENT: 12,
+};
+
 export const STATUS_CODES = {
     // Initial Initiated (1-3)
     INITIAL_MANAGER_INITIATED: 1,
@@ -50,6 +66,41 @@ export const STATUS_CODES = {
     TD_BOOKING_IN_PROGRESS: 'TD_BOOKING_IN_PROGRESS',
     TD_BOOKED: 'TD_BOOKED'
 };
+export const DOCUMENT_GROUPS = {
+  // Documents employee uploads (Status 13)
+  EMPLOYEE_UPLOADS: [
+    DOCUMENT_IDS.PASSPORT,
+    DOCUMENT_IDS.INVITATION_LETTER,
+    DOCUMENT_IDS.COVER_LETTER,
+    DOCUMENT_IDS.KT_PLAN,
+    DOCUMENT_IDS.VISA_FORM,
+    DOCUMENT_IDS.LETTER_OF_INTENT,
+    DOCUMENT_IDS.INSURANCE_DECLARATION,
+  ],
+  
+  // Documents Travel Desk uploads at Status 14 (Visa Review)
+  TD_VISA_REVIEW: [
+    DOCUMENT_IDS.VISA,
+    DOCUMENT_IDS.VISA_APPOINTMENT,
+  ],
+  
+  // Documents Travel Desk uploads at Status 15 (Booking)
+  TD_BOOKING: [
+    DOCUMENT_IDS.HOTEL_BOOKING,
+    DOCUMENT_IDS.FLIGHT_BOOKING,
+    DOCUMENT_IDS.TRAVEL_INSURANCE,
+  ],
+  
+  // All Travel Desk documents
+  TD_ALL: [
+    DOCUMENT_IDS.VISA,
+    DOCUMENT_IDS.VISA_APPOINTMENT,
+    DOCUMENT_IDS.HOTEL_BOOKING,
+    DOCUMENT_IDS.FLIGHT_BOOKING,
+    DOCUMENT_IDS.TRAVEL_INSURANCE,
+  ],
+};
+
 
 /**
  * Role ID mapping
@@ -61,7 +112,42 @@ export const ROLE_IDS = {
     AVP_DVP: 104,
     SVP: 105
 };
-
+export const getDocumentsForStatus = (statusId, allDocuments, uploadedDocuments) => {
+  const employeeDocs = [];
+  const tdUploadDocs = [];
+  
+  allDocuments.forEach(doc => {
+    const docId = doc.documentID || doc.id;
+    const isUploaded = !!uploadedDocuments[docId];
+    
+    // Employee uploaded documents (always show if uploaded)
+    if (DOCUMENT_GROUPS.EMPLOYEE_UPLOADS.includes(docId)) {
+      if (isUploaded) {
+        employeeDocs.push({ ...doc, isUploaded: true, category: 'employee' });
+      }
+    }
+    
+    // Status 14: Show Visa and Visa Appointment for upload
+    if (statusId === 14) {
+      if (DOCUMENT_GROUPS.TD_VISA_REVIEW.includes(docId)) {
+        tdUploadDocs.push({ ...doc, isUploaded, category: 'td_visa' });
+      }
+    }
+    
+    // Status 15: Show Hotel, Flight, Insurance for upload + all previous docs
+    if (statusId === 15) {
+      if (DOCUMENT_GROUPS.TD_VISA_REVIEW.includes(docId)) {
+        // Show visa docs as uploaded (should already be uploaded)
+        employeeDocs.push({ ...doc, isUploaded, category: 'td_visa_uploaded' });
+      }
+      if (DOCUMENT_GROUPS.TD_BOOKING.includes(docId)) {
+        tdUploadDocs.push({ ...doc, isUploaded, category: 'td_booking' });
+      }
+    }
+  });
+  
+  return { employeeDocs, tdUploadDocs };
+};
 /**
  * Convert numeric/string status code to status object for UI display
  * @param {number|string} code - Status code from backend
@@ -283,6 +369,21 @@ export const statusToChip = (code) => {
                     roleId: 101,
                     stage: 'completed'
                 };
+            
+// Add this case inside the statusToChip function's switch statement (around line 125)
+// After case 17:
+
+case 18:
+    return {
+        key: 'VISA_REJECTED',
+        label: 'Visa Rejected',
+        shortLabel: 'Visa Rejected',
+        color: 'error',
+        bgColor: '#fee2e2',
+        description: 'Visa was rejected by Travel Desk',
+        roleId: 103,
+        stage: 'rejected'
+    };
                 
             default:
                 return {
