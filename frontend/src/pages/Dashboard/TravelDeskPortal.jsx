@@ -87,6 +87,9 @@ import realApi from '../../services/api/realApi';
 // ==========================================
 // CONSTANTS
 // ==========================================
+// ==========================================
+// CONSTANTS
+// ==========================================
 const VISA_DOCUMENT_ID = 10;
 const VISA_APPOINTMENT_DOCUMENT_ID = 12;
 const VISA_FORM_DOCUMENT_ID = 8;
@@ -97,15 +100,19 @@ const TRAVEL_INSURANCE_DOCUMENT_ID = 7;
 // Documents that employee uploads
 const EMPLOYEE_DOCUMENT_IDS = [1, 2, 3, 4, 9, 11];
 
-// Documents for Status 14 (Visa Review)
-const STATUS_14_UPLOAD_DOCS = [VISA_FORM_DOCUMENT_ID, VISA_DOCUMENT_ID, VISA_APPOINTMENT_DOCUMENT_ID];
+// Documents for Status 14 (Visa Review) - includes Visa Form
+const STATUS_14_UPLOAD_DOCS = [
+  VISA_FORM_DOCUMENT_ID,         // 8 - Visa Form
+  VISA_DOCUMENT_ID,              // 10 - Visa
+  VISA_APPOINTMENT_DOCUMENT_ID   // 12 - Visa Appointment
+];
 
 // Documents for Status 15 (Booking)
-const STATUS_15_UPLOAD_DOCS = [HOTEL_BOOKING_DOCUMENT_ID, FLIGHT_BOOKING_DOCUMENT_ID, TRAVEL_INSURANCE_DOCUMENT_ID];
-
-// Documents to hide in Status 14
-const HIDE_IN_STATUS_14 = [HOTEL_BOOKING_DOCUMENT_ID, FLIGHT_BOOKING_DOCUMENT_ID, TRAVEL_INSURANCE_DOCUMENT_ID];
-
+const STATUS_15_UPLOAD_DOCS = [
+  HOTEL_BOOKING_DOCUMENT_ID,     // 5
+  FLIGHT_BOOKING_DOCUMENT_ID,    // 6
+  TRAVEL_INSURANCE_DOCUMENT_ID   // 7
+];
 // ==========================================
 // ANIMATION VARIANTS
 // ==========================================
@@ -1203,12 +1210,6 @@ const TravelDeskPortal = () => {
               <StatsCard title="Awaiting Docs" value={statusCounts.awaitingDocs} icon={<Schedule sx={{ color: '#6b7280', fontSize: 24 }} />} color="#6b7280" bgColor="#f9fafb" />
             </Grid>
             <Grid item xs={6} md={1.7}>
-              <StatsCard title="Visa Review" value={statusCounts.visaReview} icon={<Verified sx={{ color: '#f59e0b', fontSize: 24 }} />} color="#f59e0b" bgColor="#fffbeb" />
-            </Grid>
-            <Grid item xs={6} md={1.7}>
-              <StatsCard title="Mgr Dates" value={statusCounts.managerDates} icon={<CalendarToday sx={{ color: '#6366f1', fontSize: 24 }} />} color="#6366f1" bgColor="#eef2ff" />
-            </Grid>
-            <Grid item xs={6} md={1.7}>
               <StatsCard title="Ready" value={statusCounts.readyForBooking} icon={<Flight sx={{ color: '#0ea5e9', fontSize: 24 }} />} color="#0ea5e9" bgColor="#e0f2fe" />
             </Grid>
             <Grid item xs={6} md={1.7}>
@@ -1362,345 +1363,464 @@ const TravelDeskPortal = () => {
       {/* ==========================================
           DOCUMENTS MODAL
       ========================================== */}
-      <SharedModal
-        open={showDocumentsModal}
-        onClose={() => setShowDocumentsModal(false)}
-        title={`Documents - ${selectedEmployee?.employee || 'Employee'} (Status: ${selectedEmployee?.statusId})`}
-        maxWidth="lg"
-        fullWidth
-      >
-        {loadingEmployeeDocs ? (
-          <Box sx={{ p: 2 }}>
-            <Skeleton variant="rounded" height={80} sx={{ mb: 2 }} />
-            <Skeleton variant="rounded" height={150} sx={{ mb: 2 }} />
-            <Skeleton variant="rounded" height={200} />
-          </Box>
-        ) : (
-          <Box>
-            {/* Employee Info Header */}
-            <Box sx={{ p: 2, bgcolor: '#f8fafc', borderRadius: 2, mb: 3 }}>
-              <Grid container spacing={2}>
-                <Grid item xs={6} md={3}>
-                  <Typography variant="caption" color="text.secondary">Employee</Typography>
-                  <Typography variant="body2" fontWeight={600}>{selectedEmployee?.employee}</Typography>
-                </Grid>
-                <Grid item xs={6} md={3}>
-                  <Typography variant="caption" color="text.secondary">Destination</Typography>
-                  <Typography variant="body2" fontWeight={600}>{selectedEmployee?.destination}</Typography>
-                </Grid>
-                <Grid item xs={6} md={3}>
-                  <Typography variant="caption" color="text.secondary">Departure</Typography>
-                  <Typography variant="body2" fontWeight={600}>{selectedEmployee?.departure}</Typography>
-                </Grid>
-                <Grid item xs={6} md={3}>
-                  <Typography variant="caption" color="text.secondary">Status</Typography>
-                  <StatusChipMapped statusId={selectedEmployee?.statusId} />
-                </Grid>
-              </Grid>
-            </Box>
+     {/* ==========================================
+    DOCUMENTS MODAL
+========================================== */}
+<SharedModal
+  open={showDocumentsModal}
+  onClose={() => setShowDocumentsModal(false)}
+  title={`Documents - ${selectedEmployee?.employee || 'Employee'} (Status: ${selectedEmployee?.statusId})`}
+  maxWidth="lg"
+  fullWidth
+>
+  {loadingEmployeeDocs ? (
+    <Box sx={{ p: 2 }}>
+      <Skeleton variant="rounded" height={80} sx={{ mb: 2 }} />
+      <Skeleton variant="rounded" height={150} sx={{ mb: 2 }} />
+      <Skeleton variant="rounded" height={200} />
+    </Box>
+  ) : (
+    <Box>
+      {/* Employee Info Header */}
+      <Box sx={{ p: 2, bgcolor: '#f8fafc', borderRadius: 2, mb: 3 }}>
+        <Grid container spacing={2}>
+          <Grid item xs={6} md={3}>
+            <Typography variant="caption" color="text.secondary">Employee</Typography>
+            <Typography variant="body2" fontWeight={600}>{selectedEmployee?.employee}</Typography>
+          </Grid>
+          <Grid item xs={6} md={3}>
+            <Typography variant="caption" color="text.secondary">Destination</Typography>
+            <Typography variant="body2" fontWeight={600}>{selectedEmployee?.destination}</Typography>
+          </Grid>
+          <Grid item xs={6} md={3}>
+            <Typography variant="caption" color="text.secondary">Departure</Typography>
+            <Typography variant="body2" fontWeight={600}>{selectedEmployee?.departure}</Typography>
+          </Grid>
+          <Grid item xs={6} md={3}>
+            <Typography variant="caption" color="text.secondary">Status</Typography>
+            <StatusChipMapped statusId={selectedEmployee?.statusId} />
+          </Grid>
+        </Grid>
+      </Box>
 
-            {/* ==========================================
-                STATUS 14: VISA REVIEW
-            ========================================== */}
-            {selectedEmployee?.statusId === 14 && (
-              <>
-                {/* Section: Employee Uploaded Documents */}
-                <Typography variant="h6" fontWeight={600} sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <Person sx={{ color: '#3b82f6' }} />
-                  Employee Uploaded Documents
-                </Typography>
+      {/* ==========================================
+          STATUS 14: VISA REVIEW - Upload Visa, Visa Form, Visa Appointment
+      ========================================== */}
+      {selectedEmployee?.statusId === 14 && (
+        <>
+          {/* Employee Uploaded Documents - View Only */}
+          <Typography variant="h6" fontWeight={600} sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Person sx={{ color: '#3b82f6' }} />
+            Employee Uploaded Documents
+          </Typography>
 
-                <Box sx={{ maxHeight: '25vh', overflowY: 'auto', mb: 3 }}>
-                  {documentTypes
-                    .filter(doc => EMPLOYEE_DOCUMENT_IDS.includes(doc.documentID) && employeeDocuments[doc.documentID])
-                    .map((doc) => (
-                      <Box
-                        key={doc.documentID}
-                        sx={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: 2,
-                          p: 2,
-                          mb: 1,
-                          borderRadius: 2,
-                          border: '1px solid #86efac',
-                          bgcolor: '#f0fdf4',
-                        }}
-                      >
-                        <Box sx={{ width: 40, height: 40, borderRadius: 2, display: 'flex', alignItems: 'center', justifyContent: 'center', bgcolor: '#dcfce7' }}>
-                          {getFileIcon(employeeDocuments[doc.documentID]?.fileType)}
-                        </Box>
-                        <Box sx={{ flexGrow: 1 }}>
-                          <Typography variant="subtitle2" fontWeight={600}>{doc.documentName}</Typography>
-                          <Typography variant="caption" color="text.secondary">
-                            📄 {employeeDocuments[doc.documentID]?.fileName} • {formatFileSize(employeeDocuments[doc.documentID]?.fileSize)}
-                          </Typography>
-                        </Box>
-                        <Button size="small" variant="outlined" onClick={() => handleViewDocument(doc)} startIcon={<Visibility />}>
-                          View
-                        </Button>
-                      </Box>
-                    ))}
-                  
-                  {documentTypes.filter(doc => EMPLOYEE_DOCUMENT_IDS.includes(doc.documentID) && employeeDocuments[doc.documentID]).length === 0 && (
-                    <Alert severity="warning">No documents uploaded by employee yet.</Alert>
-                  )}
+          <Box sx={{ maxHeight: '25vh', overflowY: 'auto', mb: 3 }}>
+            {documentTypes
+              .filter(doc => EMPLOYEE_DOCUMENT_IDS.includes(doc.documentID) && employeeDocuments[doc.documentID])
+              .map((doc) => (
+                <Box
+                  key={doc.documentID}
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 2,
+                    p: 2,
+                    mb: 1,
+                    borderRadius: 2,
+                    border: '1px solid #86efac',
+                    bgcolor: '#f0fdf4',
+                  }}
+                >
+                  <Box sx={{ width: 40, height: 40, borderRadius: 2, display: 'flex', alignItems: 'center', justifyContent: 'center', bgcolor: '#dcfce7' }}>
+                    {getFileIcon(employeeDocuments[doc.documentID]?.fileType)}
+                  </Box>
+                  <Box sx={{ flexGrow: 1 }}>
+                    <Typography variant="subtitle2" fontWeight={600}>{doc.documentName}</Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      📄 {employeeDocuments[doc.documentID]?.fileName} • {formatFileSize(employeeDocuments[doc.documentID]?.fileSize)}
+                    </Typography>
+                  </Box>
+                  <Button size="small" variant="outlined" onClick={() => handleViewDocument(doc)} startIcon={<Visibility />}>
+                    View
+                  </Button>
                 </Box>
+              ))}
+            
+            {documentTypes.filter(doc => EMPLOYEE_DOCUMENT_IDS.includes(doc.documentID) && employeeDocuments[doc.documentID]).length === 0 && (
+              <Alert severity="warning">No documents uploaded by employee yet.</Alert>
+            )}
+          </Box>
 
-                <Divider sx={{ my: 3 }} />
+          <Divider sx={{ my: 3 }} />
 
-                {/* Section: Upload Visa & Visa Appointment */}
-                <Typography variant="h6" fontWeight={600} sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <Verified sx={{ color: '#f59e0b' }} />
-                  Upload Visa Documents (Required)
-                </Typography>
+          {/* Upload Visa Documents Section */}
+          <Typography variant="h6" fontWeight={600} sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Verified sx={{ color: '#f59e0b' }} />
+            Upload Visa Documents (Required)
+          </Typography>
 
-                <Grid container spacing={2} sx={{ mb: 3 }}>
-                  {documentTypes
-                    .filter(doc => STATUS_14_UPLOAD_DOCS.includes(doc.documentID))
-                    .map((doc) => {
-                      const docId = doc.documentID;
-                      const isUploaded = !!employeeDocuments[docId];
-                      
-                      return (
-                        <Grid item xs={12} md={6} key={docId}>
-                          <DocumentUploadCard
-                            doc={doc}
-                            isUploaded={isUploaded}
-                            uploadedData={employeeDocuments[docId]}
-                            onUpload={() => document.getElementById(`file-input-${docId}`).click()}
-                            onView={() => handleViewDocument(doc)}
-                            uploading={uploadingDocId === docId}
-                            disabled={loadingOCR}
-                          />
-                          <input
-                            id={`file-input-${docId}`}
-                            type="file"
-                            accept=".pdf,.jpg,.jpeg,.png"
-                            style={{ display: 'none' }}
-                            onChange={handleFileSelect(doc)}
-                          />
-                        </Grid>
-                      );
-                    })}
-                </Grid>
-
-                {/* Visa OCR Section (only show if visa uploaded) */}
-                {employeeDocuments[VISA_DOCUMENT_ID] && (
-                  <Box sx={{ mb: 3 }}>
-                    <VisaOCRCard
-                      data={visaOCRData}
-                      isVerified={visaVerified}
-                      onEdit={() => setShowVisaEditModal(true)}
-                      onVerify={() => {}}
-                      loading={loadingOCR}
+          <Grid container spacing={2} sx={{ mb: 3 }}>
+            {documentTypes
+              .filter(doc => STATUS_14_UPLOAD_DOCS.includes(doc.documentID))
+              .map((doc) => {
+                const docId = doc.documentID;
+                const isUploaded = !!employeeDocuments[docId];
+                
+                return (
+                  <Grid item xs={12} md={4} key={docId}>
+                    <DocumentUploadCard
+                      doc={doc}
+                      isUploaded={isUploaded}
+                      uploadedData={employeeDocuments[docId]}
+                      onUpload={() => document.getElementById(`file-input-${docId}`).click()}
+                      onView={() => handleViewDocument(doc)}
+                      uploading={uploadingDocId === docId}
+                      disabled={loadingOCR}
                     />
+                    <input
+                      id={`file-input-${docId}`}
+                      type="file"
+                      accept=".pdf,.jpg,.jpeg,.png"
+                      style={{ display: 'none' }}
+                      onChange={handleFileSelect(doc)}
+                    />
+                  </Grid>
+                );
+              })}
+          </Grid>
+
+          {/* Visa OCR Section */}
+          {employeeDocuments[VISA_DOCUMENT_ID] && (
+            <Box sx={{ mb: 3 }}>
+              <VisaOCRCard
+                data={visaOCRData}
+                isVerified={visaVerified}
+                onEdit={() => setShowVisaEditModal(true)}
+                onVerify={() => {}}
+                loading={loadingOCR}
+              />
+            </Box>
+          )}
+
+          {/* Footer Actions */}
+          <Divider sx={{ my: 2 }} />
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
+            <Button onClick={() => setShowDocumentsModal(false)}>Close</Button>
+            
+            <Box sx={{ display: 'flex', gap: 2 }}>
+              <Button
+                variant="outlined"
+                color="error"
+                onClick={handleRejectVisa}
+                startIcon={<Cancel />}
+                disabled={bookingInProgress}
+              >
+                Reject
+              </Button>
+              
+              <Tooltip title={!areRequiredDocsUploaded() ? "Upload all 3 documents (Visa Form, Visa, Visa Appointment)" : "Submit and send for new dates"}>
+                <span>
+                  <Button
+                    variant="contained"
+                    onClick={handleSubmitVisaDocuments}
+                    disabled={!areRequiredDocsUploaded() || loadingOCR}
+                    startIcon={loadingOCR ? <CircularProgress size={16} /> : <Done />}
+                    sx={{ bgcolor: '#16a34a', '&:hover': { bgcolor: '#15803d' } }}
+                  >
+                    {loadingOCR ? 'Processing...' : 'Submit & Request New Dates'}
+                  </Button>
+                </span>
+              </Tooltip>
+            </Box>
+          </Box>
+        </>
+      )}
+
+      {/* ==========================================
+          STATUS 15: UPLOAD BOOKINGS
+      ========================================== */}
+      {selectedEmployee?.statusId === 15 && (
+        <>
+          {/* All Previously Uploaded Documents */}
+          <Typography variant="h6" fontWeight={600} sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+            <CheckCircle sx={{ color: '#16a34a' }} />
+            Previously Uploaded Documents
+          </Typography>
+
+          <Box sx={{ maxHeight: '20vh', overflowY: 'auto', mb: 3 }}>
+            {documentTypes
+              .filter(doc => (EMPLOYEE_DOCUMENT_IDS.includes(doc.documentID) || STATUS_14_UPLOAD_DOCS.includes(doc.documentID)) && employeeDocuments[doc.documentID])
+              .map((doc) => (
+                <Box
+                  key={doc.documentID}
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 2,
+                    p: 1.5,
+                    mb: 1,
+                    borderRadius: 2,
+                    border: '1px solid #86efac',
+                    bgcolor: '#f0fdf4',
+                  }}
+                >
+                  <Box sx={{ width: 36, height: 36, borderRadius: 2, display: 'flex', alignItems: 'center', justifyContent: 'center', bgcolor: '#dcfce7' }}>
+                    {getFileIcon(employeeDocuments[doc.documentID]?.fileType)}
                   </Box>
-                )}
-
-                {/* Footer Actions */}
-                <Divider sx={{ my: 2 }} />
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
-                  <Button onClick={() => setShowDocumentsModal(false)}>Close</Button>
-                  
-                  <Box sx={{ display: 'flex', gap: 2 }}>
-                    <Button
-                      variant="outlined"
-                      color="error"
-                      onClick={handleRejectVisa}
-                      startIcon={<Cancel />}
-                      disabled={bookingInProgress}
-                    >
-                      Reject
-                    </Button>
-                    
-                    <Tooltip title={!areRequiredDocsUploaded() ? "Upload both Visa and Visa Appointment first" : "Submit and send for new dates"}>
-                      <span>
-                        <Button
-                          variant="contained"
-                          onClick={handleSubmitVisaDocuments}
-                          disabled={!areRequiredDocsUploaded() || loadingOCR}
-                          startIcon={loadingOCR ? <CircularProgress size={16} /> : <Done />}
-                          sx={{ bgcolor: '#16a34a', '&:hover': { bgcolor: '#15803d' } }}
-                        >
-                          {loadingOCR ? 'Processing...' : 'Submit & Request New Dates'}
-                        </Button>
-                      </span>
-                    </Tooltip>
+                  <Box sx={{ flexGrow: 1 }}>
+                    <Typography variant="body2" fontWeight={600}>{doc.documentName}</Typography>
+                    <Typography variant="caption" color="text.secondary">{employeeDocuments[doc.documentID]?.fileName}</Typography>
                   </Box>
+                  <IconButton size="small" onClick={() => handleViewDocument(doc)}><Visibility fontSize="small" /></IconButton>
                 </Box>
-              </>
-            )}
+              ))}
+          </Box>
 
-            {/* ==========================================
-                STATUS 15: UPLOAD BOOKINGS
-            ========================================== */}
-            {selectedEmployee?.statusId === 15 && (
-              <>
-                {/* Section: All Previously Uploaded Documents */}
-                <Typography variant="h6" fontWeight={600} sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <CheckCircle sx={{ color: '#16a34a' }} />
-                  Uploaded Documents
-                </Typography>
+          <Divider sx={{ my: 3 }} />
 
-                <Box sx={{ maxHeight: '20vh', overflowY: 'auto', mb: 3 }}>
-                  {documentTypes
-                    .filter(doc => {
-                      const docId = doc.documentID;
-                      // Show employee docs + visa docs that are uploaded
-                      return (EMPLOYEE_DOCUMENT_IDS.includes(docId) || STATUS_14_UPLOAD_DOCS.includes(docId)) 
-                             && employeeDocuments[docId];
-                    })
-                    .map((doc) => (
-                      <Box
-                        key={doc.documentID}
-                        sx={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: 2,
-                          p: 1.5,
-                          mb: 1,
-                          borderRadius: 2,
-                          border: '1px solid #86efac',
-                          bgcolor: '#f0fdf4',
-                        }}
-                      >
-                        <Box sx={{ width: 36, height: 36, borderRadius: 2, display: 'flex', alignItems: 'center', justifyContent: 'center', bgcolor: '#dcfce7' }}>
-                          {getFileIcon(employeeDocuments[doc.documentID]?.fileType)}
-                        </Box>
-                        <Box sx={{ flexGrow: 1 }}>
-                          <Typography variant="body2" fontWeight={600}>{doc.documentName}</Typography>
-                          <Typography variant="caption" color="text.secondary">
-                            {employeeDocuments[doc.documentID]?.fileName}
-                          </Typography>
-                        </Box>
-                        <IconButton size="small" onClick={() => handleViewDocument(doc)}>
-                          <Visibility fontSize="small" />
-                        </IconButton>
-                      </Box>
-                    ))}
+          {/* Upload Booking Documents */}
+          <Typography variant="h6" fontWeight={600} sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Hotel sx={{ color: '#8b5cf6' }} />
+            Upload Booking Documents (Required)
+          </Typography>
+
+          <Grid container spacing={2} sx={{ mb: 3 }}>
+            {documentTypes
+              .filter(doc => STATUS_15_UPLOAD_DOCS.includes(doc.documentID))
+              .map((doc) => {
+                const docId = doc.documentID;
+                const isUploaded = !!employeeDocuments[docId];
+                
+                return (
+                  <Grid item xs={12} md={4} key={docId}>
+                    <DocumentUploadCard
+                      doc={doc}
+                      isUploaded={isUploaded}
+                      uploadedData={employeeDocuments[docId]}
+                      onUpload={() => document.getElementById(`file-input-${docId}`).click()}
+                      onView={() => handleViewDocument(doc)}
+                      uploading={uploadingDocId === docId}
+                      disabled={loadingOCR}
+                    />
+                    <input
+                      id={`file-input-${docId}`}
+                      type="file"
+                      accept=".pdf,.jpg,.jpeg,.png"
+                      style={{ display: 'none' }}
+                      onChange={handleFileSelect(doc)}
+                    />
+                  </Grid>
+                );
+              })}
+          </Grid>
+
+          {/* Footer Actions */}
+          <Divider sx={{ my: 2 }} />
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
+            <Button onClick={() => setShowDocumentsModal(false)}>Close</Button>
+            
+            <Tooltip title={!areRequiredDocsUploaded() ? "Upload all 3 booking documents" : "Complete and send to employee"}>
+              <span>
+                <Button
+                  variant="contained"
+                  onClick={handleSubmitBookingDocuments}
+                  disabled={!areRequiredDocsUploaded() || loadingOCR}
+                  startIcon={loadingOCR ? <CircularProgress size={16} /> : <Done />}
+                  sx={{ bgcolor: '#16a34a', '&:hover': { bgcolor: '#15803d' } }}
+                >
+                  {loadingOCR ? 'Processing...' : 'Complete & Send to Employee'}
+                </Button>
+              </span>
+            </Tooltip>
+          </Box>
+        </>
+      )}
+
+      {/* ==========================================
+          STATUS 16, 17 & OTHER: VIEW ALL DOCUMENTS
+      ========================================== */}
+      {(selectedEmployee?.statusId === 16 || selectedEmployee?.statusId === 17 || 
+        (selectedEmployee?.statusId !== 14 && selectedEmployee?.statusId !== 15)) && (
+        <>
+          {/* Employee Uploaded Documents */}
+          <Typography variant="h6" fontWeight={600} sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Person sx={{ color: '#3b82f6' }} />
+            Employee Uploaded Documents
+          </Typography>
+
+          <Box sx={{ maxHeight: '25vh', overflowY: 'auto', mb: 3 }}>
+            {documentTypes
+              .filter(doc => EMPLOYEE_DOCUMENT_IDS.includes(doc.documentID) && employeeDocuments[doc.documentID])
+              .map((doc) => (
+                <Box
+                  key={doc.documentID}
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 2,
+                    p: 2,
+                    mb: 1,
+                    borderRadius: 2,
+                    border: '1px solid #86efac',
+                    bgcolor: '#f0fdf4',
+                  }}
+                >
+                  <Box sx={{ width: 40, height: 40, borderRadius: 2, display: 'flex', alignItems: 'center', justifyContent: 'center', bgcolor: '#dcfce7' }}>
+                    {getFileIcon(employeeDocuments[doc.documentID]?.fileType)}
+                  </Box>
+                  <Box sx={{ flexGrow: 1 }}>
+                    <Typography variant="subtitle2" fontWeight={600}>{doc.documentName}</Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      📄 {employeeDocuments[doc.documentID]?.fileName} • {formatFileSize(employeeDocuments[doc.documentID]?.fileSize)}
+                    </Typography>
+                  </Box>
+                  <Button size="small" variant="outlined" onClick={() => handleViewDocument(doc)} startIcon={<Visibility />}>View</Button>
                 </Box>
-
-                <Divider sx={{ my: 3 }} />
-
-                {/* Section: Upload Booking Documents */}
-                <Typography variant="h6" fontWeight={600} sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <Hotel sx={{ color: '#8b5cf6' }} />
-                  Upload Booking Documents (Required)
-                </Typography>
-
-                <Grid container spacing={2} sx={{ mb: 3 }}>
-                  {documentTypes
-                    .filter(doc => STATUS_15_UPLOAD_DOCS.includes(doc.documentID))
-                    .map((doc) => {
-                      const docId = doc.documentID;
-                      const isUploaded = !!employeeDocuments[docId];
-                      
-                      return (
-                        <Grid item xs={12} md={4} key={docId}>
-                          <DocumentUploadCard
-                            doc={doc}
-                            isUploaded={isUploaded}
-                            uploadedData={employeeDocuments[docId]}
-                            onUpload={() => document.getElementById(`file-input-${docId}`).click()}
-                            onView={() => handleViewDocument(doc)}
-                            uploading={uploadingDocId === docId}
-                            disabled={loadingOCR}
-                          />
-                          <input
-                            id={`file-input-${docId}`}
-                            type="file"
-                            accept=".pdf,.jpg,.jpeg,.png"
-                            style={{ display: 'none' }}
-                            onChange={handleFileSelect(doc)}
-                          />
-                        </Grid>
-                      );
-                    })}
-                </Grid>
-
-                {/* Footer Actions */}
-                <Divider sx={{ my: 2 }} />
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
-                  <Button onClick={() => setShowDocumentsModal(false)}>Close</Button>
-                  
-                  <Tooltip title={!areRequiredDocsUploaded() ? "Upload all booking documents first" : "Complete and send to employee"}>
-                    <span>
-                      <Button
-                        variant="contained"
-                        onClick={handleSubmitBookingDocuments}
-                        disabled={!areRequiredDocsUploaded() || loadingOCR}
-                        startIcon={loadingOCR ? <CircularProgress size={16} /> : <Done />}
-                        sx={{ bgcolor: '#16a34a', '&:hover': { bgcolor: '#15803d' } }}
-                      >
-                        {loadingOCR ? 'Processing...' : 'Complete & Send to Employee'}
-                      </Button>
-                    </span>
-                  </Tooltip>
-                </Box>
-              </>
-            )}
-
-            {/* ==========================================
-                OTHER STATUSES: VIEW ONLY
-            ========================================== */}
-            {selectedEmployee?.statusId !== 14 && selectedEmployee?.statusId !== 15 && (
-              <>
-                <Typography variant="h6" fontWeight={600} sx={{ mb: 2 }}>
-                  All Documents
-                </Typography>
-
-                <Box sx={{ maxHeight: '50vh', overflowY: 'auto' }}>
-                  {documentTypes.map((doc) => {
-                    const docId = doc.documentID;
-                    const isUploaded = !!employeeDocuments[docId];
-                    
-                    if (!isUploaded) return null;
-                    
-                    return (
-                      <Box
-                        key={docId}
-                        sx={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: 2,
-                          p: 2,
-                          mb: 1,
-                          borderRadius: 2,
-                          border: '1px solid #86efac',
-                          bgcolor: '#f0fdf4',
-                        }}
-                      >
-                        <Box sx={{ width: 40, height: 40, borderRadius: 2, display: 'flex', alignItems: 'center', justifyContent: 'center', bgcolor: '#dcfce7' }}>
-                          {getFileIcon(employeeDocuments[docId]?.fileType)}
-                        </Box>
-                        <Box sx={{ flexGrow: 1 }}>
-                          <Typography variant="subtitle2" fontWeight={600}>{doc.documentName}</Typography>
-                          <Typography variant="caption" color="text.secondary">
-                            📄 {employeeDocuments[docId]?.fileName} • {formatFileSize(employeeDocuments[docId]?.fileSize)}
-                          </Typography>
-                        </Box>
-                                                <Button size="small" variant="outlined" onClick={() => handleViewDocument(doc)} startIcon={<Visibility />}>
-                          View
-                        </Button>
-                      </Box>
-                    );
-                  })}
-                  
-                  {Object.keys(employeeDocuments).length === 0 && (
-                    <Alert severity="info">No documents uploaded yet.</Alert>
-                  )}
-                </Box>
-
-                <Divider sx={{ my: 2 }} />
-                <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-                  <Button onClick={() => setShowDocumentsModal(false)}>Close</Button>
-                </Box>
-              </>
+              ))}
+            
+            {documentTypes.filter(doc => EMPLOYEE_DOCUMENT_IDS.includes(doc.documentID) && employeeDocuments[doc.documentID]).length === 0 && (
+              <Alert severity="info" sx={{ mb: 2 }}>No employee documents uploaded.</Alert>
             )}
           </Box>
-        )}
-      </SharedModal>
+
+          <Divider sx={{ my: 3 }} />
+
+          {/* Visa Documents */}
+          <Typography variant="h6" fontWeight={600} sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Verified sx={{ color: '#f59e0b' }} />
+            Visa Documents
+          </Typography>
+
+          <Box sx={{ maxHeight: '20vh', overflowY: 'auto', mb: 3 }}>
+            {documentTypes
+              .filter(doc => STATUS_14_UPLOAD_DOCS.includes(doc.documentID))
+              .map((doc) => {
+                const isUploaded = !!employeeDocuments[doc.documentID];
+                return (
+                  <Box
+                    key={doc.documentID}
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 2,
+                      p: 2,
+                      mb: 1,
+                      borderRadius: 2,
+                      border: isUploaded ? '1px solid #86efac' : '1px dashed #d1d5db',
+                      bgcolor: isUploaded ? '#f0fdf4' : '#f9fafb',
+                    }}
+                  >
+                    <Box sx={{ width: 40, height: 40, borderRadius: 2, display: 'flex', alignItems: 'center', justifyContent: 'center', bgcolor: isUploaded ? '#dcfce7' : '#f3f4f6' }}>
+                      {isUploaded ? getFileIcon(employeeDocuments[doc.documentID]?.fileType) : <Description sx={{ color: '#9ca3af' }} />}
+                    </Box>
+                    <Box sx={{ flexGrow: 1 }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Typography variant="subtitle2" fontWeight={600}>{doc.documentName}</Typography>
+                        <Chip size="small" label={isUploaded ? 'Uploaded' : 'Not Uploaded'} sx={{ height: 20, fontSize: '0.65rem', bgcolor: isUploaded ? '#dcfce7' : '#fee2e2', color: isUploaded ? '#16a34a' : '#dc2626' }} />
+                      </Box>
+                      {isUploaded && <Typography variant="caption" color="text.secondary">📄 {employeeDocuments[doc.documentID]?.fileName} • {formatFileSize(employeeDocuments[doc.documentID]?.fileSize)}</Typography>}
+                    </Box>
+                    {isUploaded && <Button size="small" variant="outlined" onClick={() => handleViewDocument(doc)} startIcon={<Visibility />}>View</Button>}
+                  </Box>
+                );
+              })}
+          </Box>
+
+          <Divider sx={{ my: 3 }} />
+
+          {/* Booking Documents */}
+          <Typography variant="h6" fontWeight={600} sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Hotel sx={{ color: '#8b5cf6' }} />
+            Booking Documents
+          </Typography>
+
+          <Box sx={{ maxHeight: '20vh', overflowY: 'auto', mb: 3 }}>
+            {documentTypes
+              .filter(doc => STATUS_15_UPLOAD_DOCS.includes(doc.documentID))
+              .map((doc) => {
+                const isUploaded = !!employeeDocuments[doc.documentID];
+                return (
+                  <Box
+                    key={doc.documentID}
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 2,
+                      p: 2,
+                      mb: 1,
+                      borderRadius: 2,
+                      border: isUploaded ? '1px solid #86efac' : '1px dashed #d1d5db',
+                      bgcolor: isUploaded ? '#f0fdf4' : '#f9fafb',
+                    }}
+                  >
+                    <Box sx={{ width: 40, height: 40, borderRadius: 2, display: 'flex', alignItems: 'center', justifyContent: 'center', bgcolor: isUploaded ? '#dcfce7' : '#f3f4f6' }}>
+                      {isUploaded ? getFileIcon(employeeDocuments[doc.documentID]?.fileType) : <Description sx={{ color: '#9ca3af' }} />}
+                    </Box>
+                    <Box sx={{ flexGrow: 1 }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Typography variant="subtitle2" fontWeight={600}>{doc.documentName}</Typography>
+                        <Chip size="small" label={isUploaded ? 'Uploaded' : 'Not Uploaded'} sx={{ height: 20, fontSize: '0.65rem', bgcolor: isUploaded ? '#dcfce7' : '#fee2e2', color: isUploaded ? '#16a34a' : '#dc2626' }} />
+                      </Box>
+                      {isUploaded && <Typography variant="caption" color="text.secondary">📄 {employeeDocuments[doc.documentID]?.fileName} • {formatFileSize(employeeDocuments[doc.documentID]?.fileSize)}</Typography>}
+                    </Box>
+                    {isUploaded && <Button size="small" variant="outlined" onClick={() => handleViewDocument(doc)} startIcon={<Visibility />}>View</Button>}
+                  </Box>
+                );
+              })}
+          </Box>
+
+          {/* Summary Stats */}
+          <Divider sx={{ my: 2 }} />
+          <Box sx={{ p: 2, bgcolor: '#f8fafc', borderRadius: 2, mb: 2 }}>
+            <Grid container spacing={2}>
+              <Grid item xs={4}>
+                <Box sx={{ textAlign: 'center' }}>
+                  <Typography variant="h5" fontWeight={700} color="primary">
+                    {documentTypes.filter(doc => EMPLOYEE_DOCUMENT_IDS.includes(doc.documentID) && employeeDocuments[doc.documentID]).length}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">Employee Docs</Typography>
+                </Box>
+              </Grid>
+              <Grid item xs={4}>
+                <Box sx={{ textAlign: 'center' }}>
+                  <Typography variant="h5" fontWeight={700} sx={{ color: '#f59e0b' }}>
+                    {documentTypes.filter(doc => STATUS_14_UPLOAD_DOCS.includes(doc.documentID) && employeeDocuments[doc.documentID]).length}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">Visa Docs</Typography>
+                </Box>
+              </Grid>
+              <Grid item xs={4}>
+                <Box sx={{ textAlign: 'center' }}>
+                  <Typography variant="h5" fontWeight={700} sx={{ color: '#8b5cf6' }}>
+                    {documentTypes.filter(doc => STATUS_15_UPLOAD_DOCS.includes(doc.documentID) && employeeDocuments[doc.documentID]).length}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">Booking Docs</Typography>
+                </Box>
+              </Grid>
+            </Grid>
+          </Box>
+
+          {/* Completion Badge */}
+          {(selectedEmployee?.statusId === 16 || selectedEmployee?.statusId === 17) && (
+            <Alert severity="success" icon={<CheckCircle />} sx={{ mb: 2 }}>
+              <Typography variant="subtitle2" fontWeight={600}>
+                {selectedEmployee?.statusId === 16 ? 'Tickets Uploaded - Sent to Employee' : 'Travel Completed'}
+              </Typography>
+              <Typography variant="body2">
+                All documents have been processed and {selectedEmployee?.statusId === 16 ? 'sent to employee dashboard' : 'travel is complete'}.
+              </Typography>
+            </Alert>
+          )}
+
+          {/* Footer */}
+          <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+            <Button onClick={() => setShowDocumentsModal(false)} variant="outlined">Close</Button>
+          </Box>
+        </>
+      )}
+    </Box>
+  )}
+</SharedModal>
 
       {/* Visa OCR Edit Modal */}
       <VisaOCREditModal
