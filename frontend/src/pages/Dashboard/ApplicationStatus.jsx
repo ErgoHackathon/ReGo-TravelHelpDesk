@@ -246,7 +246,7 @@ const ApplicationStatus = () => {
 
 
         // toast.success(`Action ${actionType} completed successfully`) : 
-        // navigate('/dashboard');
+        navigate('/dashboard');
     };
 
     // Mock data for the stepper
@@ -278,6 +278,30 @@ const ApplicationStatus = () => {
         else if (user.roleId === 105 && comment!=='') {
             if (travelDetails[0]?.status === 5) {
                 disableButton = false
+            }
+        }
+        return disableButton
+    }
+
+    const newGetTravelAndForwardButtonDisability  = (travelDetails) => {
+        let disableButton = false
+        // if(travelDetails[0]?.rptEmpId === user.empId)
+        if (user.roleId === 102 && comment!=='') {
+            // if(travelDetails[0]?.rptEmpId === user.empId){
+            //     disableButton = true
+            // }
+            if (travelDetails[0]?.status === 7) {
+                disableButton = true
+            }
+        }
+        else if (user.roleId === 104 && comment!=='') {
+            if (travelDetails[0]?.status === 1) {
+                disableButton = true
+            }//else if()
+        }
+        else if (user.roleId === 105 && comment!=='') {
+            if (travelDetails[0]?.status === 5) {
+                disableButton = true
             }
         }
         return disableButton
@@ -333,7 +357,7 @@ const ApplicationStatus = () => {
                                             Travel - ID: {fullTravelDeatilsByTiD[0]?.travelId}
                                         </Typography>
                                         <Typography variant="h5" sx={{ fontWeight: 700, color: '#1e293b', mb: 1 }}>
-                                            Process Start Date: {formatDateToDateString(fullTravelDeatilsByTiD[0]?.departureDate)}
+                                            Process Start Date: {formatDateToDateString(fullTravelDeatilsByTiD[0]?.suggestedDate)}
                                         </Typography>
                                     </Box>
                                     <Typography variant="body2" color="text.secondary">
@@ -589,7 +613,7 @@ const ApplicationStatus = () => {
                                         )} */}
                                                 <Button
                                                     variant="contained"
-                                                    disabled={getTravelAndForwardButtonDisability(travelDetails) && comment===''}
+                                                    disabled={getTravelAndForwardButtonDisability(travelDetails)}
                                                     color="success"
                                                     onClick={() => {
                                                         // travelDetails[0].status===7?handleDateUpdate():

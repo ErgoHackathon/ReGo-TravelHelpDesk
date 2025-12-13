@@ -11,8 +11,8 @@ export const getActiveStep = (status) => {
       currentStep = 0; break; // Initial Submission || Initial Submission by AVP/DVP || Initial Submission by SVP
     // case 2: currentStep = 1; break; // Initial Submission by AVP/DVP
     // case 3: currentStep = 2; break; // Initial Submission by SVP
-    case 4:
-    case 5:
+    // case 4:
+    // case 5:
     case 6: currentStep = 1; break; // Initial Approved by Manager || Initial Approved by AVP/DVP || Initial Approved by SVP
     // case 5: currentStep = 4; break; // Initial Approved by AVP/DVP
     // case 6: currentStep = 5; break; // Initial Approved by SVP

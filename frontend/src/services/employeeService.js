@@ -108,6 +108,7 @@ const employeeService = {
       history: travel.statusHistory,
       finalStartDate: travel.finalStartDate,
       finalEndDate: travel.finalEndDate,
+      suggestedDate: travel.suggestedDate
     }));
   },
 

@@ -250,6 +250,7 @@ const DashboardManager = () => {
   }
 
   const handleSubmitRequest = async () => {
+    // console.log("user in here::::::::: ", user)
     const jsonData = checkedEmployees.map(employeeId => ({
       empId: employeeId,
       country: country,
@@ -291,7 +292,7 @@ const DashboardManager = () => {
 
     const managerStatusMap = {
         PENDING: [7], // PENDING includes statuses 1, 2, 3
-        APPROVED: [1, 10, 17], // APPROVED includes statuses 4, 5, 6, 10, 11, 12
+        APPROVED: [1, 5, 10, 17], // APPROVED includes statuses 4, 5, 6, 10, 11, 12
         REJECTED: [100] // Assuming REJECTED is still just status 3
     }
 
@@ -463,7 +464,12 @@ const DashboardManager = () => {
             animate="animate"
             whileHover="hover"
           >
-            <SharedCard variant="dashboard">
+            <SharedCard sx={{
+                    p: 3,
+                    border: "1.5px solid #b91c1c",
+                    borderTop: `7px solid #b91c1c`,
+                    borderRadius: 2
+                  }}>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3, flexWrap: 'wrap', gap: 2 }}>
                 <SharedTypography variant="cardTitle">
                   Recent Application Status
