@@ -35,6 +35,7 @@ const Navbar = ({ user, onLogout }) => {
         bgcolor: '#b91c1c',
         boxShadow: '0 4px 20px rgba(185, 28, 28, 0.15)'
       }}
+      // className='navbar'
     >
       <Toolbar>
         <motion.div

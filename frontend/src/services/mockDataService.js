@@ -1,269 +1,368 @@
-// Mock Data Service - Simulates backend API responses
-// This will be replaced with real API calls later
+/**
+ * MockDataService.js - Mock Data for Development/Testing
+ * Matches exact backend response structure
+ */
 
-// Mock users database (for testing login)
-const mockUsers = {
-  // Employee
-  'employee@company.com': {
-    email: 'employee@company.com',
-    password: 'Test123!', // In real app, this would be hashed
-    user: {
-      id: '1',
-      email: 'employee@company.com',
-      firstName: 'John',
-      lastName: 'Doe',
-      role: 'EMPLOYEE',
-      department: 'Engineering',
-      employeeId: 'EMP001',
-      phone: '+91 9876543210',
-      isActive: true
-    }
+import { STATUS_CODES } from '../utils/statusMapper';
+
+// Mock Users
+export const MOCK_USERS = {
+  employee: {
+    empId: '787',
+    name: 'John Doe',
+    email: 'john.doe@company.com',
+    role: 'EMPLOYEE',
+    department: 'Engineering',
+    phone: '+91 9876543210'
   },
-  // Manager/AVP (combined)
-  'manager@company.com': {
-    email: 'manager@company.com',
-    password: 'Test123!',
-    user: {
-      id: '2',
-      email: 'manager@company.com',
-      firstName: 'Sarah',
-      lastName: 'Smith',
-      role: 'MANAGER',
-      department: 'Engineering',
-      employeeId: 'MGR001',
-      phone: '+91 9876543211',
-      isActive: true
-    }
+  manager: {
+    empId: '128',
+    name: 'Sarah Manager',
+    email: 'sarah.manager@company.com',
+    role: 'MANAGER',
+    department: 'Engineering'
   },
-  'avp@company.com': {
-    email: 'avp@company.com',
-    password: 'Test123!',
-    user: {
-      id: '3',
-      email: 'avp@company.com',
-      firstName: 'Mike',
-      lastName: 'Johnson',
-      role: 'AVP',
-      department: 'Operations',
-      employeeId: 'AVP001',
-      phone: '+91 9876543212',
-      isActive: true
-    }
+  svp: {
+    empId: '100',
+    name: 'Michael SVP',
+    email: 'michael.svp@company.com',
+    role: 'SVP',
+    department: 'Operations'
   },
-  // SVP/CHRO/Finance (combined)
-  'svp@company.com': {
-    email: 'svp@company.com',
-    password: 'Test123!',
-    user: {
-      id: '4',
-      email: 'svp@company.com',
-      firstName: 'Lisa',
-      lastName: 'Brown',
-      role: 'SVP',
-      department: 'Operations',
-      employeeId: 'SVP001',
-      phone: '+91 9876543213',
-      isActive: true
-    }
+  travelDesk: {
+    empId: '50',
+    name: 'Vikram Singh',
+    email: 'vikram.singh@demo.com',
+    role: 'TRAVEL_DESK',
+    department: 'Admin'
   },
-  'chro@company.com': {
-    email: 'chro@company.com',
-    password: 'Test123!',
-    user: {
-      id: '5',
-      email: 'chro@company.com',
-      firstName: 'David',
-      lastName: 'Wilson',
-      role: 'CHRO',
-      department: 'HR',
-      employeeId: 'CHRO001',
-      phone: '+91 9876543214',
-      isActive: true
-    }
+  chro: {
+    empId: '10',
+    name: 'Lisa CHRO',
+    email: 'lisa.chro@company.com',
+    role: 'CHRO',
+    department: 'HR'
   },
-  'finance@company.com': {
-    email: 'finance@company.com',
-    password: 'Test123!',
-    user: {
-      id: '6',
-      email: 'finance@company.com',
-      firstName: 'Emily',
-      lastName: 'Davis',
-      role: 'FINANCE',
-      department: 'Finance',
-      employeeId: 'FIN001',
-      phone: '+91 9876543215',
-      isActive: true
-    }
-  },
-  // Admin/Travel Desk (combined)
-  'admin@company.com': {
-    email: 'admin@company.com',
-    password: 'Test123!',
-    user: {
-      id: '7',
-      email: 'admin@company.com',
-      firstName: 'Alex',
-      lastName: 'Taylor',
-      role: 'ADMIN',
-      department: 'Admin',
-      employeeId: 'ADM001',
-      phone: '+91 9876543216',
-      isActive: true
-    }
-  },
-  'traveldesk@company.com': {
-    email: 'traveldesk@company.com',
-    password: 'Test123!',
-    user: {
-      id: '8',
-      email: 'traveldesk@company.com',
-      firstName: 'Travel',
-      lastName: 'Coordinator',
-      role: 'TRAVEL_DESK',
-      department: 'Admin',
-      employeeId: 'TD001',
-      phone: '+91 9876543217',
-      isActive: true
-    }
+  finance: {
+    empId: '20',
+    name: 'David Finance',
+    email: 'david.finance@company.com',
+    role: 'FINANCE',
+    department: 'Finance'
   }
 };
 
-// Simulate API delay
-const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+// Mock Travel Requests
+export const MOCK_TRAVEL_REQUESTS = [
+  {
+    tId: 1,
+    empId: '787',
+    employeeName: 'John Doe',
+    country: 'Germany',
+    city: 'Berlin',
+    remark: 'Client Meeting & Knowledge Transfer',
+    suggestedDate: '2025-12-15T00:00:00',
+    travelStartDate: '2025-12-20T00:00:00',
+    travelEndDate: '2025-12-28T00:00:00',
+    finalStartDate: null,
+    finalEndDate: null,
+    status: STATUS_CODES.TD_RECEIVED_FAKE_DATES,
+    rptEmpId: '128',
+    priority: 'HIGH',
+    estimatedBudget: 250000
+  },
+  {
+    tId: 2,
+    empId: '18',
+    employeeName: 'Alice Johnson',
+    country: 'USA',
+    city: 'New York',
+    remark: 'Annual Conference',
+    suggestedDate: '2025-12-10T00:00:00',
+    travelStartDate: '2025-12-15T00:00:00',
+    travelEndDate: '2025-12-22T00:00:00',
+    finalStartDate: '2025-12-16T00:00:00',
+    finalEndDate: '2025-12-23T00:00:00',
+    status: STATUS_CODES.TD_REQUESTED_DOCUMENTS,
+    rptEmpId: '128',
+    priority: 'MEDIUM',
+    estimatedBudget: 350000
+  },
+  {
+    tId: 3,
+    empId: '25',
+    employeeName: 'Bob Smith',
+    country: 'Singapore',
+    city: 'Singapore',
+    remark: 'Partner Meeting',
+    suggestedDate: '2025-12-08T00:00:00',
+    travelStartDate: '2025-12-12T00:00:00',
+    travelEndDate: '2025-12-18T00:00:00',
+    finalStartDate: '2025-12-12T00:00:00',
+    finalEndDate: '2025-12-18T00:00:00',
+    status: STATUS_CODES.TD_OCR_IN_PROGRESS,
+    rptEmpId: '100',
+    priority: 'HIGH',
+    estimatedBudget: 180000
+  },
+  {
+    tId: 4,
+    empId: '30',
+    employeeName: 'Carol White',
+    country: 'UK',
+    city: 'London',
+    remark: 'Training Program',
+    suggestedDate: '2025-12-05T00:00:00',
+    travelStartDate: '2025-12-10T00:00:00',
+    travelEndDate: '2025-12-17T00:00:00',
+    finalStartDate: '2025-12-10T00:00:00',
+    finalEndDate: '2025-12-17T00:00:00',
+    status: STATUS_CODES.TD_OCR_VERIFIED,
+    rptEmpId: '100',
+    priority: 'LOW',
+    estimatedBudget: 280000
+  },
+  {
+    tId: 5,
+    empId: '35',
+    employeeName: 'David Brown',
+    country: 'Japan',
+    city: 'Tokyo',
+    remark: 'Tech Summit',
+    suggestedDate: '2025-12-01T00:00:00',
+    travelStartDate: '2025-12-05T00:00:00',
+    travelEndDate: '2025-12-12T00:00:00',
+    finalStartDate: '2025-12-05T00:00:00',
+    finalEndDate: '2025-12-12T00:00:00',
+    status: STATUS_CODES.TD_BOOKING_IN_PROGRESS,
+    rptEmpId: '128',
+    priority: 'HIGH',
+    estimatedBudget: 400000
+  },
+  {
+    tId: 6,
+    empId: '40',
+    employeeName: 'Emma Davis',
+    country: 'Australia',
+    city: 'Sydney',
+    remark: 'Product Launch',
+    suggestedDate: '2025-11-28T00:00:00',
+    travelStartDate: '2025-12-02T00:00:00',
+    travelEndDate: '2025-12-08T00:00:00',
+    finalStartDate: '2025-12-02T00:00:00',
+    finalEndDate: '2025-12-08T00:00:00',
+    status: STATUS_CODES.TD_BOOKED,
+    rptEmpId: '100',
+    priority: 'MEDIUM',
+    estimatedBudget: 320000,
+    bookingDetails: {
+      airline: 'Qantas',
+      flightNumber: 'QF123',
+      pnr: 'ABC456',
+      hotelName: 'Hilton Sydney',
+      hotelConfirmation: 'HTL789'
+    }
+  }
+];
+
+// Mock Passport Info
+export const MOCK_PASSPORT_INFO = {
+  '787': {
+    passportNumber: 'J1234567',
+    fullName: 'John Doe',
+    dateOfBirth: '1990-05-15',
+    placeOfBirth: 'Mumbai',
+    nationality: 'Indian',
+    issueDate: '2020-03-10',
+    expiryDate: '2030-03-09',
+    issuingAuthority: 'Mumbai',
+    address: '123 Main Street, Mumbai 400001',
+    panNumber: 'ABCDE1234F',
+    aadhaarNumber: '1234 5678 9012',
+    ocrVerified: true,
+    ocrConfidence: 95.5
+  }
+};
+
+// Mock Documents
+export const MOCK_DOCUMENTS = [
+  { documentId: 1, documentName: 'Passport', required: true },
+  { documentId: 2, documentName: 'PAN Card', required: true },
+  { documentId: 3, documentName: 'Aadhaar Card', required: true },
+  { documentId: 4, documentName: 'Visa', required: false },
+  { documentId: 5, documentName: 'Travel Insurance', required: false },
+  { documentId: 6, documentName: 'Flight Ticket', required: false },
+  { documentId: 7, documentName: 'Hotel Booking', required: false }
+];
+
+// Mock Employee Documents
+export const MOCK_EMPLOYEE_DOCUMENTS = {
+  '787': [
+    { documentId: 1, fileName: 'passport.pdf', fileSize: 2048000, uploadDate: '2025-12-01', verified: true },
+    { documentId: 2, fileName: 'pan_card.jpg', fileSize: 512000, uploadDate: '2025-12-01', verified: true },
+    { documentId: 3, fileName: 'aadhaar.pdf', fileSize: 1024000, uploadDate: '2025-12-02', verified: false }
+  ]
+};
+
+// Mock API Response Wrapper
+export const wrapResponse = (data, success = true) => ({
+  Status: success ? 'Success' : 'Failure',
+  Result: data
+});
 
 // Mock API Service
 const mockDataService = {
-  /**
-   * Mock Login
-   */
-  login: async (credentials) => {
-    await delay(800); // Simulate network delay
-
-    const { email, password } = credentials;
-    const mockUser = mockUsers[email.toLowerCase()];
-
-    if (!mockUser) {
-      throw {
-        response: {
-          data: {
-            success: false,
-            error: { message: 'Invalid email or password' }
-          }
-        }
-      };
-    }
-
-    if (mockUser.password !== password) {
-      throw {
-        response: {
-          data: {
-            success: false,
-            error: { message: 'Invalid email or password' }
-          }
-        }
-      };
-    }
-
-    // Generate mock tokens
-    const mockToken = `mock_token_${Date.now()}`;
-    const mockRefreshToken = `mock_refresh_${Date.now()}`;
-
-    return {
-      data: {
-        success: true,
-        data: {
-          user: mockUser.user,
-          token: mockToken,
-          refreshToken: mockRefreshToken
-        },
-        message: 'Login successful'
-      }
-    };
-  },
-
-  /**
-   * Mock Register (for future use)
-   */
-  register: async (userData) => {
-    await delay(1000);
-    
-    // Check if user already exists
-    if (mockUsers[userData.email.toLowerCase()]) {
-      throw {
-        response: {
-          data: {
-            success: false,
-            error: { message: 'User already exists' }
-          }
-        }
-      };
-    }
-
-    const newUser = {
-      id: `${Date.now()}`,
-      ...userData,
-      isActive: true,
-      employeeId: `EMP${Math.floor(Math.random() * 1000)}`
-    };
-
-    const mockToken = `mock_token_${Date.now()}`;
-    const mockRefreshToken = `mock_refresh_${Date.now()}`;
-
-    return {
-      data: {
-        success: true,
-        data: {
-          user: newUser,
-          token: mockToken,
-          refreshToken: mockRefreshToken
-        },
-        message: 'Registration successful'
-      }
-    };
-  },
-
-  /**
-   * Mock Get Profile
-   */
-  getProfile: async () => {
+  // Auth
+  login: async (email, password) => {
     await delay(500);
-
-    const userStr = localStorage.getItem('user');
-    if (!userStr) {
-      throw {
-        response: {
-          data: {
-            success: false,
-            error: { message: 'Not authenticated' }
-          }
-        }
-      };
+    const user = Object.values(MOCK_USERS).find(u => u.email === email);
+    if (user) {
+      return wrapResponse({ ...user, token: 'mock-jwt-token-' + Date.now() });
     }
-
-    return {
-      data: {
-        success: true,
-        data: JSON.parse(userStr)
-      }
-    };
+    return wrapResponse(null, false);
   },
 
-  /**
-   * Mock Logout
-   */
-  logout: async () => {
+  // Travel Requests
+  getAllTravelDetails: async () => {
     await delay(300);
-    return {
-      data: {
-        success: true,
-        message: 'Logged out successfully'
-      }
-    };
+    return wrapResponse(MOCK_TRAVEL_REQUESTS);
+  },
+
+  getTravelDetailByTId: async (tId) => {
+    await delay(200);
+    const request = MOCK_TRAVEL_REQUESTS.find(r => r.tId === parseInt(tId));
+    return wrapResponse(request || null);
+  },
+
+  getTravelDetailByEmpId: async (empId) => {
+    await delay(200);
+    const requests = MOCK_TRAVEL_REQUESTS.filter(r => r.empId === empId);
+    return wrapResponse(requests);
+  },
+
+  // Employee
+  getEmployeeData: async (idOrEmail) => {
+    await delay(150);
+    const user = Object.values(MOCK_USERS).find(
+      u => u.empId === idOrEmail || u.email === idOrEmail
+    );
+    return wrapResponse(user || { empId: idOrEmail, name: `Employee ${idOrEmail}` });
+  },
+
+  // Passport Info
+  getPassportInfo: async (empId) => {
+    await delay(200);
+    return wrapResponse(MOCK_PASSPORT_INFO[empId] || null);
+  },
+
+  // Documents
+  getAllDocumentsList: async () => {
+    await delay(100);
+    return wrapResponse(MOCK_DOCUMENTS);
+  },
+
+  getEmployeeDocuments: async (empId) => {
+    await delay(200);
+    return wrapResponse(MOCK_EMPLOYEE_DOCUMENTS[empId] || []);
+  },
+
+  // Travel Desk Actions
+  updateTravelStatus: async (tId, newStatus) => {
+    await delay(300);
+    const index = MOCK_TRAVEL_REQUESTS.findIndex(r => r.tId === parseInt(tId));
+    if (index !== -1) {
+      MOCK_TRAVEL_REQUESTS[index].status = newStatus;
+      return wrapResponse({ message: 'Status updated successfully' });
+    }
+    return wrapResponse(null, false);
+  },
+
+  performTravelDeskAction: async (actionName, requestId, payload = {}) => {
+    await delay(400);
+    const index = MOCK_TRAVEL_REQUESTS.findIndex(r => r.tId === parseInt(requestId));
+    if (index === -1) {
+      return wrapResponse({ message: 'Request not found' }, false);
+    }
+
+    const request = MOCK_TRAVEL_REQUESTS[index];
+    let newStatus = request.status;
+
+    switch (actionName) {
+      case 'RECEIVE_FAKE_DATES':
+        newStatus = STATUS_CODES.TD_RECEIVED_FAKE_DATES;
+        break;
+      case 'REQUEST_REAL_DATES':
+        newStatus = STATUS_CODES.TD_REQUESTED_REAL_DATES;
+        break;
+      case 'REQUEST_DOCUMENTS':
+        newStatus = STATUS_CODES.TD_REQUESTED_DOCUMENTS;
+        break;
+      case 'START_OCR':
+        newStatus = STATUS_CODES.TD_OCR_IN_PROGRESS;
+        break;
+      case 'COMPLETE_OCR':
+        newStatus = STATUS_CODES.TD_OCR_VERIFIED;
+        break;
+      case 'FAIL_OCR':
+        newStatus = STATUS_CODES.TD_OCR_FAILED;
+        break;
+      case 'START_BOOKING':
+        newStatus = STATUS_CODES.TD_BOOKING_IN_PROGRESS;
+        break;
+      case 'COMPLETE_BOOKING':
+        newStatus = STATUS_CODES.TD_BOOKED;
+        if (payload.bookingDetails) {
+          MOCK_TRAVEL_REQUESTS[index].bookingDetails = payload.bookingDetails;
+        }
+        break;
+      case 'MARK_COMPLETED':
+        newStatus = STATUS_CODES.COMPLETED;
+        break;
+      default:
+        break;
+    }
+
+    MOCK_TRAVEL_REQUESTS[index].status = newStatus;
+    return wrapResponse({ 
+      message: `Action ${actionName} completed successfully`,
+      newStatus 
+    });
+  },
+
+  // Dashboard Stats
+  getDashboardStats: async (userId, role) => {
+    await delay(200);
+    
+    if (role === 'TRAVEL_DESK') {
+      const requests = MOCK_TRAVEL_REQUESTS;
+      return wrapResponse({
+        total: requests.length,
+        pendingDates: requests.filter(r => 
+          [STATUS_CODES.TD_RECEIVED_FAKE_DATES, STATUS_CODES.TD_REQUESTED_REAL_DATES].includes(r.status)
+        ).length,
+        pendingDocuments: requests.filter(r => 
+          [STATUS_CODES.TD_REQUESTED_DOCUMENTS, STATUS_CODES.TD_DOCUMENTS_RECEIVED].includes(r.status)
+        ).length,
+        pendingOCR: requests.filter(r => r.status === STATUS_CODES.TD_OCR_IN_PROGRESS).length,
+        pendingBooking: requests.filter(r => 
+          [STATUS_CODES.TD_OCR_VERIFIED, STATUS_CODES.TD_BOOKING_IN_PROGRESS].includes(r.status)
+        ).length,
+        completed: requests.filter(r => 
+          [STATUS_CODES.TD_BOOKED, STATUS_CODES.COMPLETED].includes(r.status)
+        ).length
+      });
+    }
+
+    return wrapResponse({
+      totalRequests: 5,
+      pending: 2,
+      approved: 2,
+      rejected: 1
+    });
   }
 };
 
-export default mockDataService;
+// Helper
+const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
-// Export mock users for reference
-export { mockUsers };
+export default mockDataService;

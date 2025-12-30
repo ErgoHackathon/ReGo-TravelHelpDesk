@@ -67,23 +67,13 @@ const ENDPOINTS = {
 };
 
 // ============================================
-// STATUS CODES (from your TMS_TravelMaster.Status)
 // ============================================
-const TRAVEL_STATUS = {
-  PENDING: 0,
-  SUBMITTED: 1,
-  MANAGER_APPROVED: 2,
-  COMPLETED: 3,
-  REJECTED: 4,
-};
-
-const TRAVEL_STATUS_LABELS = {
-  0: 'Pending',
-  1: 'Submitted',
-  2: 'Manager Approved',
-  3: 'Completed',
-  4: 'Rejected',
-};
+// STATUS CODES
+// ============================================
+// DEPRECATED: Status codes have been moved to statusMapper.js
+// Use: import { STATUS_CODES } from '../utils/statusMapper'
+// StatusMapper is the SINGLE SOURCE OF TRUTH for status handling
+// ============================================
 
 // ============================================
 // ROLE MAPPING
@@ -122,6 +112,7 @@ const buildUrl = (endpoint, queryParams = {}) => {
 };
 
 // ============================================
+// ============================================
 // EXPORTS
 // ============================================
 const apiConfig = {
@@ -133,8 +124,6 @@ const apiConfig = {
   RETRY_DELAY,
   HEADERS,
   ENDPOINTS,
-  TRAVEL_STATUS,
-  TRAVEL_STATUS_LABELS,
   ROLE_ID_MAP,
   replaceParams,
   buildUrl
@@ -151,8 +140,6 @@ export {
   RETRY_DELAY,
   HEADERS,
   ENDPOINTS,
-  TRAVEL_STATUS,
-  TRAVEL_STATUS_LABELS,
   ROLE_ID_MAP,
   replaceParams,
   buildUrl

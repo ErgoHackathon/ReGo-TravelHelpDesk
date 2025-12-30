@@ -4,14 +4,13 @@
  */
 
 import api from './apiService';
+import { getStatusLabel } from '../utils/statusMapper';
 
-const TRAVEL_STATUS_LABELS = {
-  0: 'Pending',
-  1: 'Submitted',
-  2: 'Approved',
-  3: 'Completed',
-  4: 'Rejected',
+// Use StatusMapper.getStatusLabel() - single source of truth
+const getTravelStatusLabel = (travelStatus) => {
+  return getStatusLabel(travelStatus);
 };
+
 
 const employeeService = {
   /**
@@ -52,6 +51,7 @@ const employeeService = {
 
     return travels.map((travel, index) => ({
       id: `${travel.empId}-${index}`,
+      travelId: travel.tId,
       empId: travel.empId,
       country: travel.country,
       city: travel.city,
@@ -60,8 +60,43 @@ const employeeService = {
       departureDate: travel.travelStartDate,
       returnDate: travel.travelEndDate,
       status: travel.status,
-      statusLabel: TRAVEL_STATUS_LABELS[travel.status] || 'Unknown',
+      statusLabel: getTravelStatusLabel(travel.status) || 'Unknown',
       rptEmpId: travel.rptEmpId
+    }));
+  },
+
+  getEmployeeTravelByTid: async (TiD) => {
+    if (!TiD) return [];
+
+    const response = await api.getTravelDetailByTId(TiD);
+
+    if (response.status === 'Functional Failure' || !response.result) {
+      return [];
+    }
+
+    const result = response.result;
+    const travels = Array.isArray(result) ? result : [result];
+
+    return travels.map((travel, index) => ({
+      id: `${travel.empId}-${index}`,
+      travelId: travel.tId,
+      asset: travel.asset,
+      empId: travel.empId,
+      empName: travel.empName,
+      position: travel.position,
+      country: travel.country,
+      city: travel.city,
+      destination: `${travel.city}, ${travel.country}`,
+      purpose: travel.remark,
+      departureDate: travel.travelStartDate,
+      returnDate: travel.travelEndDate,
+      status: travel.status,
+      statusLabel: getTravelStatusLabel(travel.status) || 'Unknown',
+      rptEmpId: travel.rptEmpId,
+      history: travel.statusHistory,
+      finalStartDate: travel.finalStartDate,
+      finalEndDate: travel.finalEndDate,
+      suggestedDate: travel.suggestedDate
     }));
   },
 
@@ -86,6 +121,9 @@ const employeeService = {
 
     if (response.status !== 'Success') {
       throw new Error('Failed to update document');
+    }
+    else {
+
     }
 
     return response.result;
