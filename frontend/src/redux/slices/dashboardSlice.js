@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import realApi from '../../services/api/realApi';
+import api from '../../services/apiService';
 import dashboardService from '../../services/dashboardService';
 import managerService from '../../services/managerService';
 import { getStatusLabel as mapStatusLabel } from '../../utils/statusMapper';
@@ -25,7 +25,7 @@ const formatDate = (dateString) => {
 const getEmployeeName = async (empId) => {
   if (!empId) return 'Unknown';
   try {
-    const response = await realApi.getEmployeeData(empId);
+    const response = await api.getEmployeeData(empId);
     const result = response?.Result || response?.result;
     if (result) {
       return result.Name || result.name || `Employee ${empId}`;
@@ -89,7 +89,7 @@ export const fetchTravelDeskData = createAsyncThunk(
   'traveldesk/fetch',
   async (_, { rejectWithValue }) => {
     try {
-      const response = await realApi.getAllTravelDetails();
+      const response = await api.getAllTravelDetails();
       const travels = response?.result || response?.Result || [];
 
       if (travels.length === 0) return { pendingRequests: [], completedRequests: [] };
@@ -126,16 +126,16 @@ export const fetchViewDetailsData = createAsyncThunk(
   'traveldesk/fetchById',
   async (requestId, { rejectWithValue }) => {
     const numericId = typeof requestId === 'string' ? parseInt(requestId.replace(/\D/g, ''), 10) : requestId;
-    
+
     try {
-      const travelResponse = await realApi.getTravelDetailByTId(numericId);
+      const travelResponse = await api.getTravelDetailByTId(numericId);
       const travel = travelResponse?.Result || travelResponse?.result;
 
       if (!travel) throw new Error("Travel details not found");
 
       let employee = {};
       try {
-        const empRes = await realApi.getEmployeeData(travel.empId);
+        const empRes = await api.getEmployeeData(travel.empId);
         employee = empRes?.Result || empRes?.result || {};
       } catch (e) { console.warn("No employee data"); }
 
@@ -171,10 +171,10 @@ export const processBooking = createAsyncThunk(
   async ({ tId, newStatus = 16, empId }, { rejectWithValue, dispatch }) => {
     try {
       const comment = "Status updated by Travel Desk";
-      
+
       // FIX: Pass empId and comment to updateTravelStatus
-      await realApi.updateTravelStatus(tId, newStatus, empId, comment);
-      
+      await api.updateTravelStatus(tId, newStatus, empId, comment);
+
       dispatch(fetchTravelDeskData());
       return { success: true, tId, newStatus, empId };
     } catch (error) {
@@ -190,24 +190,24 @@ export const submitDocumentsThunk = createAsyncThunk(
   async ({ tId, empId }, { rejectWithValue, dispatch }) => {
     try {
       console.log('📄 Submitting documents:', { tId, empId });
-      
+
       const NEW_STATUS = 14;
-      
+
       // Pass all required parameters including empId and comment
-      const response = await realApi.updateTravelStatus(
-        tId, 
-        NEW_STATUS, 
-        empId, 
+      const response = await api.updateTravelStatus(
+        tId,
+        NEW_STATUS,
+        empId,
         'Documents submitted by employee'
       );
-      
+
       console.log('📄 Update status response:', response);
-      
+
       dispatch(fetchDashboardData());
-      
-      return { 
-        success: true, 
-        tId, 
+
+      return {
+        success: true,
+        tId,
         previousStatus: 13,
         newStatus: NEW_STATUS,
         statusLabel: getStatusLabel(NEW_STATUS)
@@ -260,7 +260,7 @@ const dashboardSlice = createSlice({
         }
       }
 
-      const recentIdx = state.recentRequests.findIndex(r => 
+      const recentIdx = state.recentRequests.findIndex(r =>
         r.id === requestId || r.tId === requestId || r.travelId === requestId
       );
       if (recentIdx !== -1) {
@@ -269,7 +269,7 @@ const dashboardSlice = createSlice({
         state.recentRequests[recentIdx].statusLabel = newStatusLabel;
       }
 
-      const approvalIdx = state.pendingApprovals.findIndex(r => 
+      const approvalIdx = state.pendingApprovals.findIndex(r =>
         r.id === requestId || r.tId === requestId
       );
       if (approvalIdx !== -1) {
@@ -277,7 +277,7 @@ const dashboardSlice = createSlice({
         state.pendingApprovals[approvalIdx].statusId = newStatus;
       }
 
-      const pendingIdx = state.pendingRequests.findIndex(r => 
+      const pendingIdx = state.pendingRequests.findIndex(r =>
         r.id === requestId || r.tId === requestId
       );
       if (pendingIdx !== -1) {
@@ -381,15 +381,15 @@ const dashboardSlice = createSlice({
       .addCase(submitDocumentsThunk.fulfilled, (state, action) => {
         state.submittingDocuments = false;
         const { tId, newStatus, statusLabel } = action.payload;
-        
-        if (state.activeRequest && 
-            (state.activeRequest.tId === tId || state.activeRequest.travelId === tId)) {
+
+        if (state.activeRequest &&
+          (state.activeRequest.tId === tId || state.activeRequest.travelId === tId)) {
           state.activeRequest.status = newStatus;
           state.activeRequest.statusId = newStatus;
           state.activeRequest.statusLabel = statusLabel;
         }
-        
-        const idx = state.recentRequests.findIndex(r => 
+
+        const idx = state.recentRequests.findIndex(r =>
           r.tId === tId || r.travelId === tId
         );
         if (idx !== -1) {
@@ -397,7 +397,7 @@ const dashboardSlice = createSlice({
           state.recentRequests[idx].statusId = newStatus;
           state.recentRequests[idx].statusLabel = statusLabel;
         }
-        
+
         state.notifications.unshift({
           id: Date.now(),
           message: "Documents submitted successfully! Helpdesk will review.",

@@ -5,7 +5,6 @@
 import api from './apiService';
 import employeeService from './employeeService';
 import managerService from './managerService';
-import realApi from './api/realApi';
 import { getStatusLabel as mapStatusLabel } from '../utils/statusMapper'; // ✅ STABILITY: Use StatusMapper
 
 const STATUS = {
@@ -343,8 +342,32 @@ const dashboardService = {
   },
 
   updateRequestStatus: async (travelId, status) => {
-    const updateRequest = await api.updateTravelStatus(travelId, status)
+    await api.updateTravelStatus(travelId, status);
+  },
 
+  /**
+   * Get all travel details (for Travel Desk)
+   */
+  getAllTravelDetails: async () => {
+    try {
+      console.log('📊 Fetching all travel details for Travel Desk...');
+
+      // Use api service which respects mock/real toggle
+      const response = await api.getAllTravelDetails();
+
+      console.log('📊 GetAllTravelDetails response:', response);
+
+      if (!response || response.status === 'Functional Failure') {
+        return [];
+      }
+
+      const travels = response.result || response.Result || [];
+      return travels;
+
+    } catch (error) {
+      console.error('❌ Error fetching all travel details:', error);
+      throw error;
+    }
   },
 
   /**
@@ -354,7 +377,7 @@ const dashboardService = {
     console.log('🟢 Getting pending requests for Travel Desk');
 
     try {
-      const response = await realApi.getAllTravelDetails();
+      const response = await dashboardService.getAllTravelDetails();
       console.log('📊 GetAllTravelDetails response:', response);
 
       const travels = response?.result || response?.Result || [];
@@ -424,7 +447,7 @@ const dashboardService = {
     console.log('🟢 Getting completed bookings for Travel Desk');
 
     try {
-      const response = await realApi.getAllTravelDetails();
+      const response = await dashboardService.getAllTravelDetails();
       const travels = response?.result || response?.Result || [];
 
       // ✅ STABILITY FIX: Ensure travels is always an array
@@ -480,7 +503,7 @@ const dashboardService = {
     console.log('🟢 Processing booking for travel:', travelId);
 
     try {
-      const response = await realApi.updateTravelStatus(travelId, STATUS.TICKETS_UPLOADED);
+      const response = await api.updateTravelStatus(travelId, STATUS.TICKETS_UPLOADED);
       console.log('📊 Process booking response:', response);
       return response;
     } catch (error) {
@@ -498,7 +521,7 @@ const dashboardService = {
     console.log('🟢 Marking travel as completed:', travelId);
 
     try {
-      const response = await realApi.updateTravelStatus(travelId, STATUS.COMPLETED);
+      const response = await api.updateTravelStatus(travelId, STATUS.COMPLETED);
       console.log('📊 Mark completed response:', response);
       return response;
     } catch (error) {
@@ -516,7 +539,7 @@ const dashboardService = {
     console.log('🟢 Getting passport info for:', empId);
 
     try {
-      const response = await realApi.getPassportInfo(empId);
+      const response = await api.getPassportInfo(empId);
       return response;
     } catch (error) {
       console.error('❌ Error fetching passport info:', error);
@@ -535,7 +558,7 @@ const dashboardService = {
     console.log('🟢 Getting employee documents:', { empId, documentId });
 
     try {
-      const response = await realApi.getEmployeeDocuments(empId, documentId);
+      const response = await api.getEmployeeDocuments(empId, documentId);
       return response;
     } catch (error) {
       console.error('❌ Error fetching employee documents:', error);

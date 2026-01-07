@@ -13,7 +13,7 @@ import {
   LinearProgress
 } from '@mui/material';
 import { Close, CheckCircle, Warning, Person, Badge, CalendarMonth, LocationOn } from '@mui/icons-material';
-import realApi from '../services/api/realApi';
+import api from '../services/apiService';
 
 const style = {
   position: 'absolute',
@@ -24,7 +24,7 @@ const style = {
   bgcolor: '#fff',
   borderRadius: 3,
   boxShadow: 24,
-  
+
   p: 4,
   maxHeight: '90vh',
   overflowY: 'auto'
@@ -45,9 +45,9 @@ const PassportInfoModal = ({ open, onClose, employeeId }) => {
     setLoading(true);
     setError(null);
     try {
-      const response = await realApi.getPassportInfo(employeeId);
+      const response = await api.getPassportInfo(employeeId);
       const data = response?.Result || response?.result;
-      
+
       if (data) {
         setPassportInfo(data);
       } else {
@@ -104,9 +104,9 @@ const PassportInfoModal = ({ open, onClose, employeeId }) => {
                   {passportInfo.ocrConfidence && (
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 1 }}>
                       <Typography variant="caption">Confidence:</Typography>
-                      <LinearProgress 
-                        variant="determinate" 
-                        value={passportInfo.ocrConfidence} 
+                      <LinearProgress
+                        variant="determinate"
+                        value={passportInfo.ocrConfidence}
                         sx={{ width: 100, height: 8, borderRadius: 4 }}
                         color={passportInfo.ocrConfidence > 80 ? 'success' : 'warning'}
                       />
@@ -128,7 +128,7 @@ const PassportInfoModal = ({ open, onClose, employeeId }) => {
                     Passport Details
                   </Typography>
                   <Divider sx={{ mb: 2 }} />
-                  
+
                   <InfoRow label="Passport Number" value={passportInfo.passportNumber} />
                   <InfoRow label="Full Name" value={passportInfo.fullName} icon={<Person fontSize="small" />} />
                   <InfoRow label="Date of Birth" value={formatDate(passportInfo.dateOfBirth)} icon={<CalendarMonth fontSize="small" />} />
@@ -145,11 +145,11 @@ const PassportInfoModal = ({ open, onClose, employeeId }) => {
                     Validity
                   </Typography>
                   <Divider sx={{ mb: 2 }} />
-                  
+
                   <InfoRow label="Issue Date" value={formatDate(passportInfo.issueDate)} />
                   <InfoRow label="Expiry Date" value={formatDate(passportInfo.expiryDate)} />
                   <InfoRow label="Issuing Authority" value={passportInfo.issuingAuthority} />
-                  
+
                   {isExpiringSoon(passportInfo.expiryDate) && (
                     <Alert severity="warning" sx={{ mt: 2 }}>
                       Passport expires within 6 months!
@@ -165,7 +165,7 @@ const PassportInfoModal = ({ open, onClose, employeeId }) => {
                     Other Identity Documents
                   </Typography>
                   <Divider sx={{ mb: 2 }} />
-                  
+
                   <Grid container spacing={2}>
                     <Grid item xs={12} md={6}>
                       <InfoRow label="PAN Number" value={passportInfo.panNumber} />

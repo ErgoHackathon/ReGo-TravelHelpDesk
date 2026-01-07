@@ -88,7 +88,7 @@ import {
 } from '../../redux/slices/dashboardSlice';
 import { logout } from '../../features/authSlice';
 import documentService from '../../services/documentService';
-import realApi from '../../services/api/realApi';
+import api from '../../services/apiService';
 
 // ==========================================
 // CONSTANTS
@@ -651,7 +651,7 @@ const TravelDeskPortal = () => {
 
     try {
       // Get all document types
-      const typesResponse = await realApi.getAllDocumentsList();
+      const typesResponse = await api.getAllDocumentsList();
       const types = typesResponse?.result || [];
       setDocumentTypes(types);
 
@@ -662,7 +662,7 @@ const TravelDeskPortal = () => {
       // Load Visa OCR if visa is uploaded
       if (docs && docs[VISA_DOCUMENT_ID]) {
         try {
-          const visaInfo = await realApi.getVisaInfo(req.employeeId);
+          const visaInfo = await api.getVisaInfo(req.employeeId);
           console.log("visaInfo:::", visaInfo)
           if (visaInfo?.status === 'Success' && visaInfo?.result) {
             setVisaOCRData(visaInfo.result);
@@ -719,7 +719,7 @@ const TravelDeskPortal = () => {
       if (docId === VISA_DOCUMENT_ID) {
         setTimeout(async () => {
           try {
-            const visaInfo = await realApi.getVisaInfo(selectedEmployee.employeeId);
+            const visaInfo = await api.getVisaInfo(selectedEmployee.employeeId);
             if (visaInfo?.status === 'Success' && visaInfo?.result) {
               setVisaOCRData(visaInfo.result);
             }
@@ -798,7 +798,7 @@ const TravelDeskPortal = () => {
   const handleSaveVisaOCR = async (formData) => {
     setSavingOCR(true);
     try {
-      await realApi.updateVisaInfo(selectedEmployee.employeeId, formData);
+      await api.updateVisaInfo(selectedEmployee.employeeId, formData);
       setVisaOCRData(prev => ({ ...prev, ...formData }));
       toast.success('Visa info updated!');
       setShowVisaEditModal(false);
