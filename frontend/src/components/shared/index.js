@@ -7,6 +7,7 @@ export { default as SharedButton } from './buttons/SharedButton';
 
 // Cards
 export { default as SharedCard } from './cards/SharedCard';
+export { default as MetricCard } from './cards/MetricCard';
 
 // Data Display
 export { default as StatDisplay } from './data-display/StatDisplay';
@@ -24,8 +25,7 @@ export { default as SharedTypography } from './typography/SharedTypography';
 
 // Feedback
 export { default as LoadingSpinner } from './feedback/LoadingSpinner';
-export { ContentLoader } from './feedback/contentLoader';
-export { PageLoader } from './feedback/pageLoader';
+export { default as EmptyState } from './feedback/EmptyState';
 export { default as Navbar } from './navigation/Navbar';
 
 // Forms

@@ -10,4 +10,10 @@ import realApi from './api/realApi';          // ✅ Correct path
 // One line switch!
 const api = apiConfig.USE_MOCK_API ? mockApi : realApi;
 
+// DEBUG: Confirm which API is being used
+console.log('🔧 API SERVICE:', {
+    USE_MOCK_API: apiConfig.USE_MOCK_API,
+    usingAPI: apiConfig.USE_MOCK_API ? 'MOCK API' : 'REAL API'
+});
+
 export default api;

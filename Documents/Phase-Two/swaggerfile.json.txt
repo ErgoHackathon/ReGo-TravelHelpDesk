@@ -1,0 +1,896 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "TravelManagement",
+    "version": "1.0"
+  },
+  "paths": {
+    "/api/GetRoleMaster": {
+      "get": {
+        "tags": [
+          "Common"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/LoginRequest": {
+      "post": {
+        "tags": [
+          "Common"
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "username": {
+                    "type": "string"
+                  },
+                  "password": {
+                    "type": "string"
+                  }
+                }
+              },
+              "encoding": {
+                "username": {
+                  "style": "form"
+                },
+                "password": {
+                  "style": "form"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/UpdateTravelStatus": {
+      "post": {
+        "tags": [
+          "Common"
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "TID": {
+                    "type": "integer",
+                    "format": "int32"
+                  },
+                  "Status": {
+                    "type": "integer",
+                    "format": "int32"
+                  },
+                  "EmpId": {
+                    "type": "string"
+                  },
+                  "Comment": {
+                    "type": "string"
+                  }
+                }
+              },
+              "encoding": {
+                "TID": {
+                  "style": "form"
+                },
+                "Status": {
+                  "style": "form"
+                },
+                "EmpId": {
+                  "style": "form"
+                },
+                "Comment": {
+                  "style": "form"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/GetAllDocumentsList": {
+      "get": {
+        "tags": [
+          "Common"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/GetStatusMaster": {
+      "get": {
+        "tags": [
+          "Common"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/GetStatusHistory": {
+      "post": {
+        "tags": [
+          "Common"
+        ],
+        "parameters": [
+          {
+            "name": "Tid",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/GetEmployeeDetail": {
+      "post": {
+        "tags": [
+          "Common"
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "EmpIdOrEmail": {
+                    "type": "string"
+                  }
+                }
+              },
+              "encoding": {
+                "EmpIdOrEmail": {
+                  "style": "form"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/employee/TravelDetailByEmpId": {
+      "post": {
+        "tags": [
+          "Employees"
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  }
+                }
+              },
+              "encoding": {
+                "id": {
+                  "style": "form"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/employee/TravelDetailByTID": {
+      "post": {
+        "tags": [
+          "Employees"
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "TID": {
+                    "type": "integer",
+                    "format": "int32"
+                  }
+                }
+              },
+              "encoding": {
+                "TID": {
+                  "style": "form"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/employee/AddDocument": {
+      "post": {
+        "tags": [
+          "Employees"
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "EmpId": {
+                    "type": "string"
+                  },
+                  "DocumentId": {
+                    "type": "integer",
+                    "format": "int32"
+                  },
+                  "Document": {
+                    "type": "string"
+                  }
+                }
+              },
+              "encoding": {
+                "EmpId": {
+                  "style": "form"
+                },
+                "DocumentId": {
+                  "style": "form"
+                },
+                "Document": {
+                  "style": "form"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/employee/DeleteDocument": {
+      "delete": {
+        "tags": [
+          "Employees"
+        ],
+        "parameters": [
+          {
+            "name": "empId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "documentId",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/employee/UpdatePassportInfo": {
+      "post": {
+        "tags": [
+          "Employees"
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "EmpId": {
+                    "type": "string"
+                  },
+                  "Issuer": {
+                    "type": "string"
+                  },
+                  "FullName": {
+                    "type": "string"
+                  },
+                  "PassportNumber": {
+                    "type": "string"
+                  },
+                  "Nationality": {
+                    "type": "string"
+                  },
+                  "DateOfBirth": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "Sex": {
+                    "type": "string"
+                  },
+                  "ExpiryDate": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "CompositeCheck": {
+                    "type": "boolean"
+                  }
+                }
+              },
+              "encoding": {
+                "EmpId": {
+                  "style": "form"
+                },
+                "Issuer": {
+                  "style": "form"
+                },
+                "FullName": {
+                  "style": "form"
+                },
+                "PassportNumber": {
+                  "style": "form"
+                },
+                "Nationality": {
+                  "style": "form"
+                },
+                "DateOfBirth": {
+                  "style": "form"
+                },
+                "Sex": {
+                  "style": "form"
+                },
+                "ExpiryDate": {
+                  "style": "form"
+                },
+                "CompositeCheck": {
+                  "style": "form"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/employee/GetUploadedDocuments": {
+      "get": {
+        "tags": [
+          "Employees"
+        ],
+        "parameters": [
+          {
+            "name": "empId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/HelpDesk/GetEmployeeDocuments": {
+      "post": {
+        "tags": [
+          "HelpDesk"
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "EmpId": {
+                    "type": "string"
+                  },
+                  "DocumentId": {
+                    "type": "integer",
+                    "format": "int32",
+                    "default": 0
+                  }
+                }
+              },
+              "encoding": {
+                "EmpId": {
+                  "style": "form"
+                },
+                "DocumentId": {
+                  "style": "form"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/HelpDesk/GetPassportInfo": {
+      "post": {
+        "tags": [
+          "HelpDesk"
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "EmpId": {
+                    "type": "string"
+                  }
+                }
+              },
+              "encoding": {
+                "EmpId": {
+                  "style": "form"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/HelpDesk/GetAllTravelDetails": {
+      "post": {
+        "tags": [
+          "HelpDesk"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/HelpDesk/UpdateVisaInfo": {
+      "post": {
+        "tags": [
+          "HelpDesk"
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "EmpId": {
+                    "type": "string"
+                  },
+                  "Issuer": {
+                    "type": "string"
+                  },
+                  "FullName": {
+                    "type": "string"
+                  },
+                  "VisaNumber": {
+                    "type": "string"
+                  },
+                  "Nationality": {
+                    "type": "string"
+                  },
+                  "DateOfBirth": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "Sex": {
+                    "type": "string"
+                  },
+                  "ExpiryDate": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "CompositeCheck": {
+                    "type": "boolean"
+                  }
+                }
+              },
+              "encoding": {
+                "EmpId": {
+                  "style": "form"
+                },
+                "Issuer": {
+                  "style": "form"
+                },
+                "FullName": {
+                  "style": "form"
+                },
+                "VisaNumber": {
+                  "style": "form"
+                },
+                "Nationality": {
+                  "style": "form"
+                },
+                "DateOfBirth": {
+                  "style": "form"
+                },
+                "Sex": {
+                  "style": "form"
+                },
+                "ExpiryDate": {
+                  "style": "form"
+                },
+                "CompositeCheck": {
+                  "style": "form"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/HelpDesk/GetVisaInfo": {
+      "post": {
+        "tags": [
+          "HelpDesk"
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "EmpId": {
+                    "type": "string"
+                  }
+                }
+              },
+              "encoding": {
+                "EmpId": {
+                  "style": "form"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/manager/GetEmployeesByRptId": {
+      "post": {
+        "tags": [
+          "Managers"
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "RptId": {
+                    "type": "string"
+                  }
+                }
+              },
+              "encoding": {
+                "RptId": {
+                  "style": "form"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/manager/TravelDetailByRptId": {
+      "post": {
+        "tags": [
+          "Managers"
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "RptId": {
+                    "type": "string"
+                  }
+                }
+              },
+              "encoding": {
+                "RptId": {
+                  "style": "form"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/manager/InsertTravelDetail": {
+      "post": {
+        "tags": [
+          "Managers"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/TravelMaster"
+                }
+              }
+            },
+            "text/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/TravelMaster"
+                }
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/TravelMaster"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/manager/GetSvpEmployees": {
+      "post": {
+        "tags": [
+          "Managers"
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "RptSvpId": {
+                    "type": "string"
+                  }
+                }
+              },
+              "encoding": {
+                "RptSvpId": {
+                  "style": "form"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/manager/GetAvpEmployees": {
+      "post": {
+        "tags": [
+          "Managers"
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "RptAvpId": {
+                    "type": "string"
+                  }
+                }
+              },
+              "encoding": {
+                "RptAvpId": {
+                  "style": "form"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/manager/UpdateFinalDates": {
+      "post": {
+        "tags": [
+          "Managers"
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "TId": {
+                    "type": "integer",
+                    "format": "int32"
+                  },
+                  "FinalStartDate": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "FinalEndDate": {
+                    "type": "string",
+                    "format": "date-time"
+                  }
+                }
+              },
+              "encoding": {
+                "TId": {
+                  "style": "form"
+                },
+                "FinalStartDate": {
+                  "style": "form"
+                },
+                "FinalEndDate": {
+                  "style": "form"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "TravelMaster": {
+        "required": [
+          "city",
+          "country",
+          "empId",
+          "rptEmpId"
+        ],
+        "type": "object",
+        "properties": {
+          "tId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "empId": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "country": {
+            "maxLength": 100,
+            "minLength": 0,
+            "type": "string"
+          },
+          "city": {
+            "maxLength": 100,
+            "minLength": 0,
+            "type": "string"
+          },
+          "remark": {
+            "maxLength": 500,
+            "minLength": 0,
+            "type": "string",
+            "nullable": true
+          },
+          "suggestedDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "travelStartDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "travelEndDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "finalStartDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "finalEndDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "status": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "rptEmpId": {
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  }
+}

@@ -1,12 +1,21 @@
 /**
  * API Configuration
  * Centralized API configuration for the ReGo Travel Management System
+ * Aligned with Swagger API Specification v1.0
  */
 
 // ============================================
 // MOCK API TOGGLE
 // ============================================
-const USE_MOCK_API = false; // ✅ Set to FALSE to use real API
+// Read from environment variable, fallback to false (use real API)
+const USE_MOCK_API = process.env.REACT_APP_ENABLE_MOCK_API === 'true';
+
+// DEBUG: Log the toggle status
+console.log('🔧 API CONFIG:', {
+  REACT_APP_ENABLE_MOCK_API: process.env.REACT_APP_ENABLE_MOCK_API,
+  USE_MOCK_API: USE_MOCK_API,
+  willUseMockAPI: USE_MOCK_API ? 'YES - Mock Data' : 'NO - Real Backend'
+});
 
 // ============================================
 // API BASE URL
@@ -26,41 +35,57 @@ const HEADERS = {
 };
 
 // ============================================
-// API ENDPOINTS - MAPPED TO YOUR BACKEND
+// API ENDPOINTS - SWAGGER-ALIGNED
 // ============================================
 const ENDPOINTS = {
-  // Authentication
-  AUTH: {
-    LOGIN: '/api/LoginRequest',
-    GET_ROLES: '/api/GetRollMaster',
+  // ========== COMMON APIs ==========
+  COMMON: {
+    GET_ROLE_MASTER: '/api/GetRoleMaster',
+    LOGIN_REQUEST: '/api/LoginRequest',
+    UPDATE_TRAVEL_STATUS: '/api/UpdateTravelStatus',
+    GET_ALL_DOCUMENTS_LIST: '/api/GetAllDocumentsList',
+    GET_STATUS_MASTER: '/api/GetStatusMaster',
+    GET_STATUS_HISTORY: '/api/GetStatusHistory',
+    GET_EMPLOYEE_DETAIL: '/api/GetEmployeeDetail',
   },
 
-  // Employee
+  // ========== EMPLOYEE APIs ==========
   EMPLOYEE: {
-    GET_DATA: '/api/employee/GetEmployeeData',
-    GET_TRAVEL: '/api/employee/TravelDetailByEmpId',
+    TRAVEL_DETAIL_BY_EMP_ID: '/api/employee/TravelDetailByEmpId',
+    TRAVEL_DETAIL_BY_TID: '/api/employee/TravelDetailByTID',
     ADD_DOCUMENT: '/api/employee/AddDocument',
-    UPDATE_DOCUMENT: '/api/employee/UpdateDocument',
+    DELETE_DOCUMENT: '/api/employee/DeleteDocument',
+    UPDATE_PASSPORT_INFO: '/api/employee/UpdatePassportInfo',
+    GET_UPLOADED_DOCUMENTS: '/api/employee/GetUploadedDocuments',
   },
 
-  // Manager
+  // ========== MANAGER APIs ==========
   MANAGER: {
-    GET_TEAM: '/api/manager/GetEmployeesByRptId',
-    GET_TEAM_TRAVEL: '/api/manager/TravelDetailByRptId',
-    INSERT_TRAVEL: '/api/manager/InsertTravelDetail',
+    GET_EMPLOYEES_BY_RPT_ID: '/api/manager/GetEmployeesByRptId',
+    TRAVEL_DETAIL_BY_RPT_ID: '/api/manager/TravelDetailByRptId',
+    INSERT_TRAVEL_DETAIL: '/api/manager/InsertTravelDetail',
+    GET_SVP_EMPLOYEES: '/api/manager/GetSvpEmployees',
+    GET_AVP_EMPLOYEES: '/api/manager/GetAvpEmployees',
+    UPDATE_FINAL_DATES: '/api/manager/UpdateFinalDates',
   },
 
-  // HelpDesk / Travel Desk
+  // ========== HELPDESK / TRAVEL DESK APIs ==========
   HELPDESK: {
     GET_EMPLOYEE_DOCUMENTS: '/api/HelpDesk/GetEmployeeDocuments',
+    GET_PASSPORT_INFO: '/api/HelpDesk/GetPassportInfo',
+    GET_ALL_TRAVEL_DETAILS: '/api/HelpDesk/GetAllTravelDetails',
+    UPDATE_VISA_INFO: '/api/HelpDesk/UpdateVisaInfo',
+    GET_VISA_INFO: '/api/HelpDesk/GetVisaInfo',
   },
 
-  // Travel
+  // ========== LEGACY ALIASES (Backward Compatibility) ==========
+  AUTH: {
+    LOGIN: '/api/LoginRequest',
+    GET_ROLES: '/api/GetRoleMaster',
+  },
   TRAVEL: {
     UPDATE_STATUS: '/api/UpdateTravelStatus',
   },
-
-  // Documents
   DOCUMENTS: {
     GET_ALL_TYPES: '/api/GetAllDocumentsList',
   },

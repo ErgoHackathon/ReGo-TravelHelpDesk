@@ -10,7 +10,7 @@ const realApi = {
   // ==========================================
   // AUTHENTICATION
   // ==========================================
-  
+
   login: async (username, password) => {
     console.log('🟢 REAL: POST /api/LoginRequest');
     const formData = new FormData();
@@ -33,8 +33,10 @@ const realApi = {
   },
 
   getTravelDetailByEmpId: async (empId) => {
-    console.log('🟢 REAL: POST /api/employee/TravelDetailByEmpId?id=' + empId);
-    const response = await apiClient.post(`/api/employee/TravelDetailByEmpId?id=${empId}`, null);
+    console.log('🟢 REAL: POST /api/employee/TravelDetailByEmpId');
+    const formData = new FormData();
+    formData.append('id', empId);
+    const response = await apiClient.post('/api/employee/TravelDetailByEmpId', formData);
     return response.data;
   },
 
@@ -95,19 +97,38 @@ const realApi = {
     return response.data;
   },
 
+  updateFinalDates: async (tId, finalStartDate, finalEndDate) => {
+    console.log('🟢 REAL: POST /api/manager/UpdateFinalDates');
+    const formData = new FormData();
+    formData.append('TId', String(tId));
+
+    // Convert to ISO string if needed
+    if (finalStartDate) {
+      const startDate = finalStartDate.includes('T') ? finalStartDate : new Date(finalStartDate + 'T00:00:00').toISOString();
+      formData.append('FinalStartDate', startDate);
+    }
+    if (finalEndDate) {
+      const endDate = finalEndDate.includes('T') ? finalEndDate : new Date(finalEndDate + 'T00:00:00').toISOString();
+      formData.append('FinalEndDate', endDate);
+    }
+
+    const response = await apiClient.post('/api/manager/UpdateFinalDates', formData);
+    return response.data;
+  },
+
   // ==========================================
   // COMMON / UTILS
   // ==========================================
 
   updateTravelStatus: async (tId, status, empId, comment = '') => {
     console.log('🟢 REAL: POST /api/UpdateTravelStatus', { tId, status, empId, comment });
-    
+
     const formData = new FormData();
     formData.append('TID', String(tId));
     formData.append('Status', String(status));
     formData.append('EmpId', String(empId || ''));
     formData.append('Comment', comment || 'Status updated');
-    
+
     const response = await apiClient.post('/api/UpdateTravelStatus', formData);
     return response.data;
   },
@@ -118,9 +139,9 @@ const realApi = {
     return response.data;
   },
 
-  getRollMaster: async () => {
-    console.log('🟢 REAL: GET /api/GetRollMaster');
-    const response = await apiClient.get('/api/GetRollMaster');
+  getRoleMaster: async () => {
+    console.log('🟢 REAL: GET /api/GetRoleMaster');
+    const response = await apiClient.get('/api/GetRoleMaster');
     return response.data;
   },
 
@@ -193,13 +214,13 @@ const realApi = {
   updatePassportInfo: async (empId, passportData) => {
     console.log('🟢 REAL: POST /api/employee/UpdatePassportInfo', { empId });
     const formData = new FormData();
-    
+
     formData.append('EmpId', String(empId));
     formData.append('Issuer', passportData.issuer || '');
     formData.append('FullName', passportData.fullName || '');
     formData.append('PassportNumber', passportData.passportNumber || '');
     formData.append('Nationality', passportData.nationality || '');
-    
+
     if (passportData.dateOfBirth) {
       let dob = passportData.dateOfBirth;
       if (!dob.includes('T')) {
@@ -209,9 +230,9 @@ const realApi = {
     } else {
       formData.append('DateOfBirth', '');
     }
-    
+
     formData.append('Sex', passportData.sex || '');
-    
+
     if (passportData.expiryDate) {
       let expiry = passportData.expiryDate;
       if (!expiry.includes('T')) {
@@ -221,9 +242,9 @@ const realApi = {
     } else {
       formData.append('ExpiryDate', '');
     }
-    
+
     formData.append('CompositeCheck', String(passportData.compositeCheck ?? true));
-    
+
     const response = await apiClient.post('/api/employee/UpdatePassportInfo', formData);
     return response.data;
   },
@@ -236,7 +257,7 @@ const realApi = {
     console.log('🟢 REAL: POST /api/HelpDesk/GetVisaInfo');
     const formData = new FormData();
     formData.append('EmpId', empId);
-    
+
     try {
       const response = await apiClient.post('/api/HelpDesk/GetVisaInfo', formData);
       return response.data;
@@ -252,13 +273,13 @@ const realApi = {
   updateVisaInfo: async (empId, visaData) => {
     console.log('🟢 REAL: POST /api/HelpDesk/UpdateVisaInfo', { empId });
     const formData = new FormData();
-    
+
     formData.append('EmpId', String(empId));
     formData.append('Issuer', visaData.issuer || '');
     formData.append('FullName', visaData.fullName || '');
     formData.append('VisaNumber', visaData.visaNumber || '');
     formData.append('Nationality', visaData.nationality || '');
-    
+
     if (visaData.dateOfBirth) {
       let dob = visaData.dateOfBirth;
       if (!dob.includes('T')) {
@@ -268,9 +289,9 @@ const realApi = {
     } else {
       formData.append('DateOfBirth', '');
     }
-    
+
     formData.append('Sex', visaData.sex || '');
-    
+
     if (visaData.expiryDate) {
       let expiry = visaData.expiryDate;
       if (!expiry.includes('T')) {
@@ -280,9 +301,9 @@ const realApi = {
     } else {
       formData.append('ExpiryDate', '');
     }
-    
+
     formData.append('CompositeCheck', String(visaData.compositeCheck ?? true));
-    
+
     const response = await apiClient.post('/api/HelpDesk/UpdateVisaInfo', formData);
     return response.data;
   },

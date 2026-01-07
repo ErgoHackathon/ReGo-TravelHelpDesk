@@ -262,7 +262,7 @@ const mockApi = {
     return employee
       ? {
         status: 'Success',
-        Result: {
+        result: {  // Changed from Result to result
           EmpId: employee.empId,
           empId: employee.empId,
           Name: employee.name,
@@ -279,7 +279,7 @@ const mockApi = {
           designation: employee.designation,
         }
       }
-      : { status: 'Functional Failure', Result: null };
+      : { status: 'Functional Failure', result: null };  // Changed from Result to result
   },
 
   // POST /api/employee/TravelDetailByEmpId?id=xxx
@@ -418,10 +418,10 @@ const mockApi = {
     return { status: 'Success', result: mockDB.documents };
   },
 
-  // GET /api/GetRollMaster
-  getRollMaster: async () => {
+  // GET /api/GetRoleMaster
+  getRoleMaster: async () => {
     await delay(200);
-    console.log('🔵 MOCK: GET /api/GetRollMaster');
+    console.log('🔵 MOCK: GET /api/GetRoleMaster');
 
     return { status: 'Success', result: mockDB.roles };
   },
@@ -432,6 +432,24 @@ const mockApi = {
     console.log('🔵 MOCK: GET /api/GetStatusMaster');
 
     return { status: 'Success', result: mockDB.statuses };
+  },
+
+  // POST /api/manager/UpdateFinalDates
+  updateFinalDates: async (tId, finalStartDate, finalEndDate) => {
+    await delay(400);
+    console.log('🔵 MOCK: POST /api/manager/UpdateFinalDates', { tId, finalStartDate, finalEndDate });
+
+    const travel = mockDB.travels.find(t => t.tId === parseInt(tId));
+    if (travel) {
+      travel.finalStartDate = finalStartDate;
+      travel.finalEndDate = finalEndDate;
+      travel.lastUpdated = new Date().toISOString();
+      persistTravels();
+      console.log('✅ Final dates updated');
+      return { status: 'Success', result: 'Final dates updated' };
+    }
+
+    return { status: 'Functional Failure', result: 'Travel not found' };
   },
 
   // ==========================================

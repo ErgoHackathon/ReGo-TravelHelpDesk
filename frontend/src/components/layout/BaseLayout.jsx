@@ -1,7 +1,6 @@
 // src/sharedComponents/layout/BaseLayout.jsx
 import React from 'react';
 import { Box } from '@mui/material';
-import { AnimatedPage } from '../../animations';
 
 const BaseLayout = ({ variant = 'default', children }) => {
   const layouts = {
@@ -28,11 +27,9 @@ const BaseLayout = ({ variant = 'default', children }) => {
   };
 
   return (
-    <AnimatedPage>
-      <Box sx={layouts[variant]}>
-        {children}
-      </Box>
-    </AnimatedPage>
+    <Box sx={layouts[variant]}>
+      {children}
+    </Box>
   );
 };
 

@@ -307,6 +307,49 @@ const managerService = {
    */
   rejectTravelRequest: async (empId) => {
     return managerService.updateTravelStatus(empId, 4); // Status 4 = Rejected
+  },
+
+  /**
+   * Update final travel dates
+   * API: POST /api/manager/UpdateFinalDates
+   * @param {number} tId - Travel ID
+   * @param {string} finalStartDate - Final start date (YYYY-MM-DD or ISO string)
+   * @param {string} finalEndDate - Final end date (YYYY-MM-DD or ISO string)
+   */
+  updateFinalDates: async (tId, finalStartDate, finalEndDate) => {
+    if (apiConfig.USE_MOCK_API) {
+      console.log('🔵 Using MOCK API for updateFinalDates');
+      return { success: true, message: 'Final dates updated' };
+    }
+
+    console.log('🟢 Updating final dates:', { tId, finalStartDate, finalEndDate });
+
+    const formData = new FormData();
+    formData.append('TId', tId.toString());
+
+    // Convert dates to ISO format if needed
+    if (finalStartDate) {
+      const startDate = finalStartDate.includes('T')
+        ? finalStartDate
+        : new Date(finalStartDate + 'T00:00:00').toISOString();
+      formData.append('FinalStartDate', startDate);
+    }
+
+    if (finalEndDate) {
+      const endDate = finalEndDate.includes('T')
+        ? finalEndDate
+        : new Date(finalEndDate + 'T00:00:00').toISOString();
+      formData.append('FinalEndDate', endDate);
+    }
+
+    const response = await apiClient.post('/api/manager/UpdateFinalDates', formData);
+    console.log('Update final dates response:', response.data);
+
+    if (response.data?.status !== 'Success') {
+      throw new Error('Failed to update final dates');
+    }
+
+    return response.data.result;
   }
 };
 

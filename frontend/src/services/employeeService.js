@@ -127,6 +127,48 @@ const employeeService = {
     }
 
     return response.result;
+  },
+
+  /**
+   * Delete document
+   * API: DELETE /api/employee/DeleteDocument
+   */
+  deleteDocument: async (empId, documentId) => {
+    const response = await api.deleteDocument(empId, documentId);
+
+    if (response.status !== 'Success') {
+      throw new Error('Failed to delete document');
+    }
+
+    return response.result;
+  },
+
+  /**
+   * Update passport information
+   * API: POST /api/employee/UpdatePassportInfo
+   */
+  updatePassportInfo: async (empId, passportData) => {
+    const response = await api.updatePassportInfo(empId, passportData);
+
+    if (response.status !== 'Success') {
+      throw new Error('Failed to update passport info');
+    }
+
+    return response.result;
+  },
+
+  /**
+   * Get uploaded documents for employee
+   * API: GET /api/employee/GetUploadedDocuments
+   */
+  getUploadedDocuments: async (empId) => {
+    const response = await api.getEmployeeAllDocuments(empId);
+
+    if (response.status === 'Functional Failure' || !response.result) {
+      return [];
+    }
+
+    return response.result;
   }
 };
 
