@@ -37,21 +37,36 @@ const employeeService = {
   /**
    * Get employee travel
    */
-  getEmployeeTravel: async (empId) => {
-    if (!empId) return [];
+ // employeeService.js - getEmployeeTravel function
 
-    const response = await api.getTravelDetailByEmpId(empId);
+getEmployeeTravel: async (empId) => {
+  if (!empId) return [];
 
-    if (response.status === 'Functional Failure' || !response.result) {
-      return [];
-    }
+  const response = await api.getTravelDetailByEmpId(empId);
 
-    const result = response.result;
-    const travels = Array.isArray(result) ? result : [result];
+  // ✅ ADD THIS DEBUG LOG
+  console.log('🔍 DEBUG - Raw API response:', response);
 
-    return travels.map((travel, index) => ({
+  if (response.status === 'Functional Failure' || !response.result) {
+    return [];
+  }
+
+  const result = response.result;
+  
+  // ✅ ADD THIS DEBUG LOG
+  console.log('🔍 DEBUG - result:', result);
+  console.log('🔍 DEBUG - First item raw:', Array.isArray(result) ? result[0] : result);
+
+  const travels = Array.isArray(result) ? result : [result];
+
+  const mapped = travels.map((travel, index) => {
+    // ✅ ADD THIS DEBUG LOG
+    console.log('🔍 DEBUG - Mapping travel item:', travel);
+    
+    return {
       id: `${travel.empId}-${index}`,
-      travelId: travel.tId,
+      travelId: travel.tId,        // ✅ Check: is it tId or TId?
+      tId: travel.tId,             // ✅ Add both versions
       empId: travel.empId,
       country: travel.country,
       city: travel.city,
@@ -60,10 +75,17 @@ const employeeService = {
       departureDate: travel.travelStartDate,
       returnDate: travel.travelEndDate,
       status: travel.status,
+      statusId: travel.status,     // ✅ Add statusId
       statusLabel: getTravelStatusLabel(travel.status) || 'Unknown',
       rptEmpId: travel.rptEmpId
-    }));
-  },
+    };
+  });
+
+  // ✅ ADD THIS DEBUG LOG
+  console.log('🔍 DEBUG - Mapped travels:', mapped);
+
+  return mapped;
+},
 
   getEmployeeTravelByTid: async (TiD) => {
     if (!TiD) return [];

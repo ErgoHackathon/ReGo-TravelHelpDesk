@@ -9,6 +9,10 @@ import TravelDeskPortal from './TravelDeskPortal';
 /**
  * Dashboard Router - Shows correct dashboard based on user role
  */
+// src/pages/dashboard/DashboardRouter.jsx
+
+// ... imports
+
 const DashboardRouter = () => {
   const { user } = useSelector((state) => state.auth);
 
@@ -28,12 +32,12 @@ const DashboardRouter = () => {
     case 'SVP':
     case 'CHRO':
     case 'FINANCE':
-      // Temporarily show Manager dashboard until we create SVP dashboard
       return <DashboardManager />;
     
+    // ✅ ADD HELPDESK HERE
+    case 'HELPDESK': 
     case 'ADMIN':
     case 'TRAVEL_DESK':
-      // Temporarily show Employee dashboard until we create Admin dashboard
       return <TravelDeskPortal />;
     
     default:

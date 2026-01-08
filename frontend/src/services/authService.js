@@ -9,12 +9,23 @@ import { STORAGE_KEYS } from '../utils/constants';
 import employeeService from './employeeService';
 
 // Role mapping
+// src/services/authService.js
+
+// Role mapping - Updated to support both 1-5 and 101-105 formats
 const ROLE_ID_MAP = {
+  // Legacy/Frontend IDs
   101: 'EMPLOYEE',
   102: 'MANAGER',
-  103: 'TRAVEL_DESK',
+  103: 'HELPDESK', // Changed from TRAVEL_DESK to match your other files if needed
   104: 'AVP',
   105: 'SVP',
+  
+  // Database IDs (The Real Fix)
+  1: 'EMPLOYEE',
+  2: 'MANAGER',
+  3: 'HELPDESK', // Maps ID 3 to HELPDESK role
+  4: 'AVP',
+  5: 'SVP'
 };
 
 const authService = {

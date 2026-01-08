@@ -38,6 +38,8 @@ const getEmployeeName = async (empId) => {
 // ASYNC THUNKS
 // ============================================
 
+// dashboardSlice.js - fetchDashboardData thunk
+
 export const fetchDashboardData = createAsyncThunk(
   'dashboard/fetch',
   async (_, { getState }) => {
@@ -45,75 +47,118 @@ export const fetchDashboardData = createAsyncThunk(
     const user = auth.user;
     const userRole = user?.role;
     const userId = user?.empId;
-    const userRoleID = user?.roleId
+    const userRoleID = user?.roleId;
 
     console.log('📊 Fetching dashboard data for:', { role: userRole, empId: userId });
 
-    // Get stats
+    // 1. Get Stats
     const statsData = await dashboardService.getDashboardStats(userRole, userId, userRoleID);
 
-    let allEmployees = [];
-    if (userRole === 'MANAGER' || userRole === 'SVP' || userRole === 'CHRO') {
-      allEmployees = await managerService.getTeam(userId);
-    }
-
-    let getAllDetails = [];
-    if (userRole === 'MANAGER') {
-      getAllDetails = await dashboardService.getAllDetails(userId);
-    } else if (userRole === 'AVP') {
-      getAllDetails = await dashboardService.getAllAvpDetails(userId);
-    } else if (userRole === 'SVP') {
-      getAllDetails = await dashboardService.getAllSvpDetails(userId);
-    }
-
-    let pendingApprovals = [];
-    if (userRole === 'MANAGER' || userRole === 'AVP' || userRole === 'SVP' || userRole === 'CHRO') {
-      pendingApprovals = await dashboardService.getPendingApprovals(userId);
-    }
-
+    // 2. Get Recent Requests (Active Request)
     const recentRequests = await dashboardService.getRecentRequests(userId, userRole);
+    console.log('🔍 DEBUG - recentRequests returned:', recentRequests);
+    
     const activeRequest = recentRequests.length > 0 ? recentRequests[0] : null;
+    console.log('🔍 DEBUG - activeRequest set to:', activeRequest);
 
+    // 3. Define missing variables based on role
+    let allEmployees = [];
+    let getAllDetails = [];
+    let pendingApprovals = [];
+
+    // Logic for Managers/Approvers
+    if (['MANAGER', 'AVP', 'SVP', 'CHRO'].includes(userRole)) {
+      try {
+        // Get Team (Managers/SVP/CHRO)
+        if (userRole !== 'AVP') { 
+             allEmployees = await managerService.getTeam(userId) || []; 
+        }
+
+        // Get Pending Approvals
+        pendingApprovals = await dashboardService.getPendingApprovals(userId) || [];
+
+        // Get All Details based on specific role
+        if (userRole === 'MANAGER') {
+          getAllDetails = await dashboardService.getAllDetails(userId) || [];
+        } else if (userRole === 'AVP') {
+          getAllDetails = await dashboardService.getAllAvpDetails(userId) || [];
+        } else if (userRole === 'SVP') {
+          getAllDetails = await dashboardService.getAllSvpDetails(userId) || [];
+        }
+      } catch (error) {
+        console.error('Error fetching manager data:', error);
+      }
+    }
+
+    // 4. Return complete object
     return {
-      stats: statsData?.stats || fallbackStats,
-      pendingApprovals: pendingApprovals || [],
-      getAllDetails: getAllDetails || [],
-      allEmployees: allEmployees || [],
+      stats: statsData?.stats || [],
+      pendingApprovals: pendingApprovals,
+      getAllDetails: getAllDetails,
+      allEmployees: allEmployees,
       activeRequest: activeRequest,
       recentRequests: recentRequests || []
     };
   }
 );
+// src/redux/slices/dashboardSlice.js
+
+// ... imports
 
 export const fetchTravelDeskData = createAsyncThunk(
   'traveldesk/fetch',
   async (_, { rejectWithValue }) => {
     try {
+      // 1. Get ALL requests
       const response = await api.getAllTravelDetails();
       const travels = response?.result || response?.Result || [];
 
-      if (travels.length === 0) return { pendingRequests: [], completedRequests: [] };
+      console.log('📊 [TravelDesk] Raw API Data:', travels);
 
+      if (!travels || travels.length === 0) {
+        return { pendingRequests: [], completedRequests: [] };
+      }
+
+      // 2. Map Data (Handle Capital vs Small letters)
       const allRequests = await Promise.all(
         travels.map(async (item) => {
-          const employeeName = await getEmployeeName(item.empId);
+          // ⚠️ KEY FIX: Check both tId and TId, status and Status
+          const tId = item.tId || item.TId || item.TID;
+          const empId = item.empId || item.EmpId;
+          const status = item.status !== undefined ? item.status : item.Status;
+          const country = item.country || item.Country;
+          const city = item.city || item.City;
+          const remark = item.remark || item.Remark;
+          const travelStartDate = item.travelStartDate || item.TravelStartDate;
+          
+          const employeeName = await getEmployeeName(empId);
+
           return {
-            id: `TR-${String(item.tId).padStart(4, '0')}`,
-            tId: item.tId,
+            id: `TR-${String(tId).padStart(4, '0')}`,
+            tId: tId,
             employee: employeeName,
-            employeeId: item.empId,
-            destination: `${item.city || ''}, ${item.country || ''}`.replace(/^, |, $/g, '') || 'N/A',
-            departure: formatDate(item.travelStartDate),
-            status: getStatusLabel(item.status),
-            statusId: item.status,
-            remark: item.remark,
+            employeeId: empId,
+            destination: `${city || ''}, ${country || ''}`.replace(/^, |, $/g, '') || 'N/A',
+            departure: formatDate(travelStartDate),
+            status: getStatusLabel(status),
+            statusId: status, // This was undefined before!
+            remark: remark,
           };
         })
       );
 
+      console.log('📊 [TravelDesk] Mapped Data:', allRequests);
+
+      // 3. Separate Pending vs Completed
+      // Pending: Status < 16 (includes 14 for Visa Review)
+      const pendingRequests = allRequests.filter(req => req.statusId !== undefined && req.statusId < 16);
+      
+      // Completed: Status >= 16
+      const completedRequests = allRequests.filter(req => req.statusId !== undefined && req.statusId >= 16);
+
       return {
-        pendingRequests: allRequests.filter(req => req.statusId < 16),
-        completedRequests: allRequests.filter(req => req.statusId >= 16)
+        pendingRequests,
+        completedRequests
       };
     } catch (error) {
       console.error("Travel Desk Fetch Error:", error);
@@ -189,11 +234,27 @@ export const submitDocumentsThunk = createAsyncThunk(
   'dashboard/submitDocuments',
   async ({ tId, empId }, { rejectWithValue, dispatch }) => {
     try {
-      console.log('📄 Submitting documents:', { tId, empId });
+      console.log('📄 submitDocumentsThunk called with:', { tId, empId });
+      
+      // ✅ Validate inputs
+      if (!tId) {
+        console.error('❌ tId is missing!');
+        throw new Error('Travel ID (tId) is required');
+      }
+      if (!empId) {
+        console.error('❌ empId is missing!');
+        throw new Error('Employee ID (empId) is required');
+      }
 
       const NEW_STATUS = 14;
 
-      // Pass all required parameters including empId and comment
+      console.log('📤 Calling api.updateTravelStatus with:', {
+        tId,
+        status: NEW_STATUS,
+        empId,
+        comment: 'Documents submitted by employee'
+      });
+
       const response = await api.updateTravelStatus(
         tId,
         NEW_STATUS,
@@ -201,8 +262,17 @@ export const submitDocumentsThunk = createAsyncThunk(
         'Documents submitted by employee'
       );
 
-      console.log('📄 Update status response:', response);
+      console.log('📥 API Response:', response);
 
+      // ✅ Check response
+      if (response.status !== 'Success') {
+        console.error('❌ API returned non-success:', response);
+        throw new Error(response.result || response.message || 'Failed to submit documents');
+      }
+
+      console.log('✅ Status updated successfully!');
+      
+      // Refresh dashboard data
       dispatch(fetchDashboardData());
 
       return {
@@ -213,12 +283,11 @@ export const submitDocumentsThunk = createAsyncThunk(
         statusLabel: getStatusLabel(NEW_STATUS)
       };
     } catch (error) {
-      console.error("Submit Documents Error:", error);
-      return rejectWithValue(error.message);
+      console.error("❌ submitDocumentsThunk Error:", error);
+      return rejectWithValue(error.message || error);
     }
   }
 );
-
 // ============================================
 // REDUX SLICE
 // ============================================

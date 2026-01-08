@@ -25,10 +25,10 @@ const realApi = {
   // ==========================================
 
   getEmployeeData: async (idOrEmail) => {
-    console.log('🟢 REAL: POST /api/employee/GetEmployeeData');
+    console.log('🟢 REAL: POST /api/GetEmployeeDetail');
     const formData = new FormData();
-    formData.append('IDorEmail', idOrEmail);
-    const response = await apiClient.post('/api/employee/GetEmployeeData', formData);
+    formData.append('EmpIdOrEmail', idOrEmail)
+    const response = await apiClient.post('/api/GetEmployeeDetail', formData);
     return response.data;
   },
 
@@ -36,7 +36,9 @@ const realApi = {
     console.log('🟢 REAL: POST /api/employee/TravelDetailByEmpId');
     const formData = new FormData();
     formData.append('id', empId);
+    console.log("Emp id :::",empId);
     const response = await apiClient.post('/api/employee/TravelDetailByEmpId', formData);
+    console.log("Emp id response :::",response);
     return response.data;
   },
 
@@ -120,18 +122,36 @@ const realApi = {
   // COMMON / UTILS
   // ==========================================
 
-  updateTravelStatus: async (tId, status, empId, comment = '') => {
-    console.log('🟢 REAL: POST /api/UpdateTravelStatus', { tId, status, empId, comment });
+ updateTravelStatus: async (tId, status, empId, comment = '') => {
+  console.log('🟢 REAL API: updateTravelStatus called');
+  console.log('🟢 Parameters received:', { tId, status, empId, comment });
+  
+  // ✅ Validate before sending
+  if (!tId) console.error('❌ tId is undefined!');
+  if (!status) console.error('❌ status is undefined!');
+  if (!empId) console.error('❌ empId is undefined!');
 
-    const formData = new FormData();
-    formData.append('TID', String(tId));
-    formData.append('Status', String(status));
-    formData.append('EmpId', String(empId || ''));
-    formData.append('Comment', comment || 'Status updated');
+  const formData = new FormData();
+  formData.append('TID', String(tId));
+  formData.append('Status', String(status));
+  formData.append('EmpId', String(empId || ''));
+  formData.append('Comment', comment || 'Status updated');
 
+  // ✅ Log FormData contents
+  console.log('🟢 FormData being sent:');
+  for (let [key, value] of formData.entries()) {
+    console.log(`   ${key}: ${value}`);
+  }
+
+  try {
     const response = await apiClient.post('/api/UpdateTravelStatus', formData);
+    console.log('🟢 API Response:', response.data);
     return response.data;
-  },
+  } catch (error) {
+    console.error('❌ API Error:', error.response?.data || error.message);
+    throw error;
+  }
+},
 
   getAllDocumentsList: async () => {
     console.log('🟢 REAL: GET /api/GetAllDocumentsList');
@@ -184,12 +204,17 @@ const realApi = {
     return response.data;
   },
 
-  getDocumentFile: async (empId, documentId) => {
-    console.log('🟢 REAL: POST /api/employee/GetDocumentFile');
+   getDocumentFile: async (empId, documentId) => {
+    console.log('🟢 REAL: POST /api/HelpDesk/GetEmployeeDocuments (Fetching Content)');
+    
     const formData = new FormData();
-    formData.append('EmpId', empId);
-    formData.append('DocumentId', documentId);
-    const response = await apiClient.post('/api/employee/GetDocumentFile', formData);
+    formData.append('EmpId', String(empId));
+    formData.append('DocumentId', String(documentId));
+    
+    // ❌ OLD: /api/employee/GetDocumentFile (404 Not Found)
+    // ✅ NEW: /api/HelpDesk/GetEmployeeDocuments (From Swagger)
+    const response = await apiClient.post('/api/HelpDesk/GetEmployeeDocuments', formData);
+    
     return response.data;
   },
 

@@ -320,27 +320,32 @@ const dashboardService = {
   /**
    * Get recent travel requests
    */
-  getRecentRequests: async (empId, role) => {
-    console.log('🟢 Getting recent requests for:', { empId, role });
+// dashboardService.js - getRecentRequests function (around line 320)
 
-    if (!empId) return [];
+getRecentRequests: async (empId, role) => {
+  console.log('🟢 Getting recent requests for:', { empId, role });
 
-    try {
-      let travels = [];
+  if (!empId) return [];
 
-      if (role === 'MANAGER' || role === 'AVP' || role === 'SVP' || role === 'CHRO') {
-        travels = await managerService.getTeamTravel(empId);
-      } else {
-        travels = await employeeService.getEmployeeTravel(empId);
-      }
+  try {
+    let travels = [];
 
-      return travels.slice(0, 5);
-    } catch (error) {
-      console.error('❌ Error getting recent requests:', error);
-      return [];
+    if (role === 'MANAGER' || role === 'AVP' || role === 'SVP' || role === 'CHRO') {
+      travels = await managerService.getTeamTravel(empId);
+    } else {
+      travels = await employeeService.getEmployeeTravel(empId);
     }
-  },
 
+    // ✅ ADD THIS DEBUG LOG
+    console.log('🔍 DEBUG - Raw travels data:', travels);
+    console.log('🔍 DEBUG - First travel item:', travels[0]);
+
+    return travels.slice(0, 5);
+  } catch (error) {
+    console.error('❌ Error getting recent requests:', error);
+    return [];
+  }
+},
   updateRequestStatus: async (travelId, status) => {
     await api.updateTravelStatus(travelId, status);
   },

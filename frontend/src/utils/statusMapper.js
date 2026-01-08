@@ -67,11 +67,11 @@ export const STATUS_CODES = {
 // ROLE IDS (Backend-aligned)
 // ============================================
 export const ROLE_IDS = {
-    EMPLOYEE: 101,
-    MANAGER: 102,
-    HELPDESK: 103,
-    AVP_DVP: 104,
-    SVP: 105,
+    EMPLOYEE: 1,    // Changed from 101
+    MANAGER: 2,     // Changed from 102
+    HELPDESK: 3,    // Changed from 103 (Matches your DB now!)
+    AVP_DVP: 4,     // Changed from 104
+    SVP: 5,         // Changed from 105
 };
 
 // ============================================

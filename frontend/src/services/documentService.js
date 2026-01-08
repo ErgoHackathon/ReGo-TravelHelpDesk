@@ -271,8 +271,12 @@ const documentService = {
     
     const fileBase64 = await documentService.fileToBase64(file);
     
-    const response = await api.addDocumentWithMetadata(
-      empId, documentId, fileBase64, file.type, file.name, file.size
+    // ❌ OLD: await api.addDocumentWithMetadata(...) -> Caused 404
+    // ✅ NEW: Use the endpoint that actually exists in Swagger
+    const response = await api.addDocument(
+      empId, 
+      documentId, 
+      fileBase64
     );
     
     if (response.status !== 'Success') {
@@ -334,22 +338,53 @@ const documentService = {
     try {
       const response = await api.getDocumentFile(empId, documentId);
       
-      if (response.status !== 'Success' || !response.result) return null;
+      console.log('📄 RAW API RESPONSE:', response); // <--- Look at this in console
+
+      if (response.status !== 'Success' || !response.result) {
+        console.warn('❌ API status not success or no result');
+        return null;
+      }
       
+      // Handle if result is an Array
+      let docData = response.result;
+      if (Array.isArray(docData)) {
+        docData = docData[0];
+      }
+
+      if (!docData) {
+        console.warn('❌ docData is null/undefined after array check');
+        return null;
+      }
+
+      // 🔍 DEBUG: Print all keys available in the response object
+      console.log('🔍 AVAILABLE KEYS:', Object.keys(docData));
+      console.log('🔍 docData Object:', docData);
+
+      // Try to find the base64 string in various common property names
+      const content = docData.base64String 
+                   || docData.Document 
+                   || docData.document 
+                   || docData.FileContent 
+                   || docData.fileContent
+                   || docData.PdfContent; // Seen in your SQL earlier
+
+      if (!content) {
+        console.error('❌ Could not find file content in response object!');
+      }
+
       return {
-        empDocId: response.result.empDocId,
-        fileName: response.result.fileName || `Document_${documentId}`,
-        fileType: response.result.fileType || 'application/octet-stream',
-        fileSize: response.result.fileSize || 0,
-        base64String: response.result.base64String,
-        createdOn: response.result.createdOn
+        empDocId: docData.empDocId,
+        fileName: docData.fileName || `Document_${documentId}`,
+        fileType: docData.fileType || 'application/octet-stream',
+        fileSize: docData.fileSize || 0,
+        base64String: content, // The found content
+        createdOn: docData.createdOn
       };
     } catch (error) {
       console.error('📄 Error fetching document content:', error);
       throw error;
     }
   },
-
   deleteDocument: async (empId, documentId) => {
     console.log('📄 Deleting document:', { empId, documentId });
     
@@ -549,13 +584,12 @@ const documentService = {
     const fileBase64 = await documentService.fileToBase64(file);
     
     try {
-      const response = await api.addDocumentWithMetadata(
+      // ❌ OLD: await api.addDocumentWithMetadata(...)
+      // ✅ NEW: Use api.addDocument
+      const response = await api.addDocument(
         empId, 
         documentId, 
-        fileBase64, 
-        file.type, 
-        file.name, 
-        file.size
+        fileBase64
       );
       
       if (response.status !== 'Success') {
@@ -569,6 +603,7 @@ const documentService = {
       throw error;
     }
   },
+
 
   // Convenience methods for specific documents
   helpDeskUploadVisa: async (empId, file) => {

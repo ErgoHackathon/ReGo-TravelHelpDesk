@@ -1104,55 +1104,70 @@ const DashboardEmployee = () => {
   };
 
   const handleSubmitDocuments = async () => {
-    if (!canSubmitDocuments) {
-      if (!allRequiredUploaded) {
-        showSnackbarMessage('Please upload all required documents before submitting.', 'error');
-      } else if (!isPassportVerified) {
-        showSnackbarMessage('Please verify your passport OCR data before submitting.', 'error');
-      }
-      return;
+  if (!canSubmitDocuments) {
+    if (!allRequiredUploaded) {
+      showSnackbarMessage('Please upload all required documents before submitting.', 'error');
+    } else if (!isPassportVerified) {
+      showSnackbarMessage('Please verify your passport OCR data before submitting.', 'error');
     }
+    return;
+  }
 
-    const tId = activeRequest?.travelId || activeRequest?.tId || recentRequests[0]?.travelId;
-    const empId = activeRequest?.employeeId || activeRequest?.empId || recentRequests[0]?.empId;
+  // ✅ DEBUG: Log all possible sources
+  console.log('🔍 DEBUG - activeRequest:', activeRequest);
+  console.log('🔍 DEBUG - recentRequests[0]:', recentRequests[0]);
+  console.log('🔍 DEBUG - user:', user);
 
-    if (!tId) {
-      showSnackbarMessage('No active travel request found.', 'error');
-      return;
+  // ✅ FIX: Try multiple field names
+  const tId = activeRequest?.travelId || 
+              activeRequest?.tId || 
+              activeRequest?.TId ||
+              recentRequests[0]?.travelId || 
+              recentRequests[0]?.tId ||
+              recentRequests[0]?.TId;
+  
+  const empId = activeRequest?.employeeId || 
+                activeRequest?.empId || 
+                activeRequest?.EmpId ||
+                recentRequests[0]?.employeeId ||
+                recentRequests[0]?.empId || 
+                recentRequests[0]?.EmpId ||
+                user?.empId ||
+                user?.EmpId;
+
+  // ✅ DEBUG: Log extracted values
+  console.log('🔍 DEBUG - Extracted tId:', tId);
+  console.log('🔍 DEBUG - Extracted empId:', empId);
+
+  if (!tId) {
+    showSnackbarMessage('No active travel request found. tId is missing.', 'error');
+    console.error('❌ tId is undefined/null');
+    return;
+  }
+
+  if (!empId) {
+    showSnackbarMessage('Employee ID not found.', 'error');
+    console.error('❌ empId is undefined/null');
+    return;
+  }
+
+  setIsSubmitting(true);
+
+  try {
+    console.log('📤 Calling submitDocumentsThunk with:', { tId, empId });
+    const result = await dispatch(submitDocumentsThunk({ tId, empId })).unwrap();
+
+    if (result.success) {
+      showSnackbarMessage('Documents submitted successfully! Helpdesk will review.', 'success');
+      setTimeout(() => setShowDocumentsModal(false), 2000);
     }
-
-    setIsSubmitting(true);
-
-    try {
-      const result = await dispatch(submitDocumentsThunk({ tId, empId })).unwrap();
-
-      if (result.success) {
-        showSnackbarMessage('Documents submitted successfully!', 'success');
-        setTimeout(() => setShowDocumentsModal(false), 2000);
-      }
-    } catch (error) {
-      console.error('Submit documents error:', error);
-
-      try {
-        const response = await documentService.submitDocuments(tId, user?.empId);
-
-        if (response.status === 'Success') {
-          dispatch(updateRequestStatus({ tId, statusId: 14, empId, statusLabel: getStatusLabel(14) }));
-          showSnackbarMessage('Documents submitted successfully!', 'success');
-          setTimeout(() => {
-            setShowDocumentsModal(false);
-            dispatch(fetchDashboardData());
-          }, 1500);
-        } else {
-          throw new Error(response.result || 'Submission failed');
-        }
-      } catch (fallbackError) {
-        showSnackbarMessage(fallbackError.message || 'Failed to submit documents.', 'error');
-      }
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+  } catch (error) {
+    console.error('❌ Submit documents error:', error);
+    showSnackbarMessage(error || 'Failed to submit documents.', 'error');
+  } finally {
+    setIsSubmitting(false);
+  }
+};
 
   const onDrop = useCallback((acceptedFiles, rejectedFiles) => {
     if (rejectedFiles.length > 0) {
