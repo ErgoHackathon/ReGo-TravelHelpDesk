@@ -7,15 +7,7 @@
 import apiClient from '../api/client';
 import apiConfig, { ENDPOINTS } from '../config/apiConfig';
 import { formatDateToDateString } from '../utils/helpers';
-
-// Status labels mapping
-const TRAVEL_STATUS_LABELS = {
-  0: 'Pending',
-  1: 'Submitted',
-  2: 'Manager Approved',
-  3: 'Completed',
-  4: 'Rejected',
-};
+import { getStatusLabel } from '../utils/statusMapper';
 
 const managerService = {
   /**
@@ -152,6 +144,63 @@ const managerService = {
       ? response.data.result
       : [response.data.result];
 
+
+
+    return travels.map(travel =>
+    ({
+      id: `${travel.empId}-${travel.country}-${formatDateToDateString(travel.travelStartDate)}`,
+      travelLabel: `${travel.tId}-${travel.country}-${formatDateToDateString(travel.travelStartDate)}`,
+      empId: travel.empId,
+      country: travel.country,
+      city: travel.city,
+      destination: `${travel.city}, ${travel.country}`,
+      remark: travel.remark,
+      purpose: travel.remark,
+      suggestedDate: travel.suggestedDate,
+      travelStartDate: travel.travelStartDate,
+      travelEndDate: travel.travelEndDate,
+      departureDate: travel.travelStartDate,
+      returnDate: travel.travelEndDate,
+      status: travel.status,
+      statusLabel: getStatusLabel(travel.status),
+      rptEmpId: travel.rptEmpId
+    }));
+  },
+
+  getAvpTeamTravel: async (managerId) => {
+    if (apiConfig.USE_MOCK_API) {
+      console.log('🔵 Using MOCK API for getTeamTravel');
+      return [
+        {
+          id: 'tr-001',
+          empId: '101',
+          destination: 'Munich, Germany',
+          departureDate: '2025-12-10',
+          returnDate: '2025-12-20',
+          status: 2,
+          statusLabel: 'Manager Approved',
+          purpose: 'Project kickoff'
+        }
+      ];
+    }
+
+    console.log('🟢 Getting team travel for managerId:', managerId);
+
+    const formData = new FormData();
+    formData.append('RptAvpId', managerId.toString());
+
+    const response = await apiClient.post('/api/manager/GetAvpEmployees', formData);
+    console.log('Team travel API response:', response.data);
+
+    if (response.data?.status !== 'Success' || !response.data?.result) {
+      console.warn('No team travel data found');
+      return [];
+    }
+
+    const travels = Array.isArray(response.data.result)
+      ? response.data.result
+      : [response.data.result];
+
     return travels.map(travel => ({
       id: `${travel.empId}-${travel.country}-${formatDateToDateString(travel.travelStartDate)}`,
       travelLabel: `${travel.tId}-${travel.country}-${formatDateToDateString(travel.travelStartDate)}`,
@@ -167,7 +216,7 @@ const managerService = {
       departureDate: travel.travelStartDate,
       returnDate: travel.travelEndDate,
       status: travel.status,
-      statusLabel: TRAVEL_STATUS_LABELS[travel.status] || 'Unknown',
+      statusLabel: getStatusLabel(travel.status),
       rptEmpId: travel.rptEmpId
     }));
   },
@@ -223,7 +272,176 @@ const managerService = {
       departureDate: travel.travelStartDate,
       returnDate: travel.travelEndDate,
       status: travel.status,
-      statusLabel: TRAVEL_STATUS_LABELS[travel.status] || 'Unknown',
+      statusLabel: getStatusLabel(travel.status),
+      rptEmpId: travel.rptEmpId
+    }));
+  },
+
+  getSvpTeamTravel: async (managerId) => {
+    if (apiConfig.USE_MOCK_API) {
+      console.log('🔵 Using MOCK API for getTeamTravel');
+      return [
+        {
+          id: 'tr-001',
+          empId: '101',
+          destination: 'Munich, Germany',
+          departureDate: '2025-12-10',
+          returnDate: '2025-12-20',
+          status: 2,
+          statusLabel: 'Manager Approved',
+          purpose: 'Project kickoff'
+        }
+      ];
+    }
+
+    console.log('🟢 Getting team travel for managerId:', managerId);
+
+    const formData = new FormData();
+    formData.append('RptSvpId', managerId.toString());
+
+    const response = await apiClient.post('/api/manager/GetSvpEmployees', formData);
+    console.log('Team travel API response:', response.data);
+
+    if (response.data?.status !== 'Success' || !response.data?.result) {
+      console.warn('No team travel data found');
+      return [];
+    }
+
+    console.log("response::::::::::::: ", response)
+
+    const travels = Array.isArray(response.data.result)
+      ? response.data.result
+      : [response.data.result];
+
+
+
+    return travels.map(travel =>
+    ({
+      id: `${travel.empId}-${travel.country}-${formatDateToDateString(travel.travelStartDate)}`,
+      travelLabel: `${travel.tId}-${travel.country}-${formatDateToDateString(travel.travelStartDate)}`,
+      empId: travel.empId,
+      country: travel.country,
+      city: travel.city,
+      destination: `${travel.city}, ${travel.country}`,
+      remark: travel.remark,
+      purpose: travel.remark,
+      suggestedDate: travel.suggestedDate,
+      travelStartDate: travel.travelStartDate,
+      travelEndDate: travel.travelEndDate,
+      departureDate: travel.travelStartDate,
+      returnDate: travel.travelEndDate,
+      status: travel.status,
+      statusLabel: getStatusLabel(travel.status),
+      rptEmpId: travel.rptEmpId
+    }));
+  },
+
+  getAvpTeamTravel: async (managerId) => {
+    if (apiConfig.USE_MOCK_API) {
+      console.log('🔵 Using MOCK API for getTeamTravel');
+      return [
+        {
+          id: 'tr-001',
+          empId: '101',
+          destination: 'Munich, Germany',
+          departureDate: '2025-12-10',
+          returnDate: '2025-12-20',
+          status: 2,
+          statusLabel: 'Manager Approved',
+          purpose: 'Project kickoff'
+        }
+      ];
+    }
+
+    console.log('🟢 Getting team travel for managerId:', managerId);
+
+    const formData = new FormData();
+    formData.append('RptAvpId', managerId.toString());
+
+    const response = await apiClient.post('/api/manager/GetAvpEmployees', formData);
+    console.log('Team travel API response:', response.data);
+
+    if (response.data?.status !== 'Success' || !response.data?.result) {
+      console.warn('No team travel data found');
+      return [];
+    }
+
+    const travels = Array.isArray(response.data.result)
+      ? response.data.result
+      : [response.data.result];
+
+    return travels.map(travel => ({
+      id: `${travel.empId}-${travel.country}-${formatDateToDateString(travel.travelStartDate)}`,
+      travelLabel: `${travel.tId}-${travel.country}-${formatDateToDateString(travel.travelStartDate)}`,
+      empId: travel.empId,
+      country: travel.country,
+      city: travel.city,
+      destination: `${travel.city}, ${travel.country}`,
+      remark: travel.remark,
+      purpose: travel.remark,
+      suggestedDate: travel.suggestedDate,
+      travelStartDate: travel.travelStartDate,
+      travelEndDate: travel.travelEndDate,
+      departureDate: travel.travelStartDate,
+      returnDate: travel.travelEndDate,
+      status: travel.status,
+      statusLabel: getStatusLabel(travel.status),
+      rptEmpId: travel.rptEmpId
+    }));
+  },
+
+  getSvpTeamTravel: async (managerId) => {
+    if (apiConfig.USE_MOCK_API) {
+      console.log('🔵 Using MOCK API for getTeamTravel');
+      return [
+        {
+          id: 'tr-001',
+          empId: '101',
+          destination: 'Munich, Germany',
+          departureDate: '2025-12-10',
+          returnDate: '2025-12-20',
+          status: 2,
+          statusLabel: 'Manager Approved',
+          purpose: 'Project kickoff'
+        }
+      ];
+    }
+
+    console.log('🟢 Getting team travel for managerId:', managerId);
+
+    const formData = new FormData();
+    formData.append('RptSvpId', managerId.toString());
+
+    const response = await apiClient.post('/api/manager/GetSvpEmployees', formData);
+    console.log('Team travel API response:', response.data);
+
+    if (response.data?.status !== 'Success' || !response.data?.result) {
+      console.warn('No team travel data found');
+      return [];
+    }
+
+    console.log("response::::::::::::: ", response)
+
+    const travels = Array.isArray(response.data.result)
+      ? response.data.result
+      : [response.data.result];
+
+    return travels.map(travel => ({
+      id: `${travel.empId}-${travel.country}-${formatDateToDateString(travel.travelStartDate)}`,
+      travelLabel: `${travel.tId}-${travel.country}-${formatDateToDateString(travel.travelStartDate)}`,
+      empId: travel.empId,
+      country: travel.country,
+      city: travel.city,
+      destination: `${travel.city}, ${travel.country}`,
+      remark: travel.remark,
+      purpose: travel.remark,
+      suggestedDate: travel.suggestedDate,
+      travelStartDate: travel.travelStartDate,
+      travelEndDate: travel.travelEndDate,
+      departureDate: travel.travelStartDate,
+      returnDate: travel.travelEndDate,
+      status: travel.status,
+      statusLabel: getStatusLabel(travel.status),
       rptEmpId: travel.rptEmpId
     }));
   },

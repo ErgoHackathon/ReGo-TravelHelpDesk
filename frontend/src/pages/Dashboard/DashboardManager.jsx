@@ -56,7 +56,7 @@ import { motion } from 'framer-motion';
 // Animation variants
 const pageVariants = {
   initial: { opacity: 0 },
-  animate: { 
+  animate: {
     opacity: 1,
     transition: {
       duration: 0.4,
@@ -69,8 +69,8 @@ const pageVariants = {
 
 const cardVariants = {
   initial: { opacity: 0, y: 16 },
-  animate: { 
-    opacity: 1, 
+  animate: {
+    opacity: 1,
     y: 0,
     transition: { duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }
   },
@@ -171,7 +171,7 @@ const DashboardManager = () => {
   const navigate = useNavigate();
   const { user } = useSelector((state) => state.auth);
   const { stats, pendingApprovals, getAllDetails, allEmployees, loading } = useSelector((state) => state.dashboard);
-  
+
   const [showRaiseRequestModal, setShowRaiseRequestModal] = useState(false);
   const [checkedEmployees, setCheckedEmployees] = useState([]);
   const [dates, setDates] = useState({});
@@ -182,9 +182,13 @@ const DashboardManager = () => {
   const [requestSubmitStatus, setRequestSubmitStatus] = useState(0);
   const [filterStatus, setFilterStatus] = useState('PENDING');
 
-  const travellingEmployeeIds = new Set(getAllDetails.map(employee => employee?.empId));
-  
-  const emplyeesNotOnTravel = allEmployees.filter(employee => !travellingEmployeeIds.has(employee?.empId));
+  // ✅ STABILITY FIX: Ensure arrays exist before .map()
+  const safeGetAllDetails = getAllDetails || [];
+  const safeAllEmployees = allEmployees || [];
+
+  const travellingEmployeeIds = new Set(safeGetAllDetails.map(employee => employee?.empId));
+
+  const emplyeesNotOnTravel = safeAllEmployees.filter(employee => !travellingEmployeeIds.has(employee?.empId));
 
   useEffect(() => {
     dispatch(fetchDashboardData());
@@ -237,8 +241,8 @@ const DashboardManager = () => {
     }));
   };
 
-  const getStatusToSubmitWhileRaisingRequest = (user) =>{
-    switch(user.roleId){
+  const getStatusToSubmitWhileRaisingRequest = (user) => {
+    switch (user.roleId) {
       case 102:
         return 1
       case 104:
@@ -250,6 +254,7 @@ const DashboardManager = () => {
   }
 
   const handleSubmitRequest = async () => {
+    // console.log("user in here::::::::: ", user)
     const jsonData = checkedEmployees.map(employeeId => ({
       empId: employeeId,
       country: country,
@@ -260,7 +265,7 @@ const DashboardManager = () => {
       rptEmpId: user.empId,
       remark: remark
     }));
-    
+
     let allSuccess = true;
     for (const travelRequest of jsonData) {
       try {
@@ -279,32 +284,32 @@ const DashboardManager = () => {
     } else {
       toast.error('Request Failed');
     }
-    
+
     setShowRaiseRequestModal(false);
     setRequestSubmit(true);
   };
 
   const getFilteredApprovals = () => {
     if (filterStatus === 'ALL') {
-        return getAllDetails;
+      return safeGetAllDetails;
     }
 
     const managerStatusMap = {
-        PENDING: [7], // PENDING includes statuses 1, 2, 3
-        APPROVED: [1, 10, 17], // APPROVED includes statuses 4, 5, 6, 10, 11, 12
-        REJECTED: [100] // Assuming REJECTED is still just status 3
+      PENDING: [7], // PENDING includes statuses 1, 2, 3
+      APPROVED: [1, 5, 10, 17], // APPROVED includes statuses 4, 5, 6, 10, 11, 12
+      REJECTED: [100] // Assuming REJECTED is still just status 3
     }
 
     const avpStatusMap = {
-        PENDING: [1], // PENDING includes statuses 1, 2, 3
-        APPROVED: [2, 5, 17], // APPROVED includes statuses 4, 5, 6, 10, 11, 12
-        REJECTED: [100] // Assuming REJECTED is still just status 3
+      PENDING: [1], // PENDING includes statuses 1, 2, 3
+      APPROVED: [2, 5, 17], // APPROVED includes statuses 4, 5, 6, 10, 11, 12
+      REJECTED: [100] // Assuming REJECTED is still just status 3
     }
 
     const svpStatusMap = {
-        PENDING: [5], // PENDING includes statuses 1, 2, 3
-        APPROVED: [6, 17], // APPROVED includes statuses 4, 5, 6, 10, 11, 12
-        REJECTED: [100] // Assuming REJECTED is still just status 3
+      PENDING: [5], // PENDING includes statuses 1, 2, 3
+      APPROVED: [6, 17], // APPROVED includes statuses 4, 5, 6, 10, 11, 12
+      REJECTED: [100] // Assuming REJECTED is still just status 3
     };
 
     // const statusMap = {
@@ -315,16 +320,16 @@ const DashboardManager = () => {
 
     // const targetStatuses = user.roleId?104:statusMap[filterStatus]:user.roleId?105;
     let targetStatuses = []
-    if(user.roleId===102){
+    if (user.roleId === 102) {
       targetStatuses = managerStatusMap[filterStatus]
     }
-    else if(user.roleId===104){
+    else if (user.roleId === 104) {
       targetStatuses = avpStatusMap[filterStatus]
-    }else if(user.roleId===105){
+    } else if (user.roleId === 105) {
       targetStatuses = svpStatusMap[filterStatus]
     }
 
-    return getAllDetails.filter(req => targetStatuses.includes(req.status));
+    return safeGetAllDetails.filter(req => targetStatuses.includes(req.status));
   };
 
   const handleFilter = (value) => {
@@ -361,7 +366,7 @@ const DashboardManager = () => {
     return <LoadingSpinner />;
   }
 
-  const handleGenerateReports = ()=>{
+  const handleGenerateReports = () => {
     toast.info("Coming Soon")
   }
 
@@ -441,16 +446,16 @@ const DashboardManager = () => {
               >
                 Generate Reports
               </SharedButton>
-              
-          
+
+
             </motion.div>
-            
+
           </Box>
 
           {/* Stats */}
           <Grid container spacing={3} sx={{ mb: 4 }}>
             {displayStats.map((stat, index) => (
-              <Grid item xs={12} sm={6} md={12/stats.length} key={index}>
+              <Grid item xs={12} sm={6} md={12 / stats.length} key={index}>
                 <AnimatedStatCard stat={stat} index={index} />
               </Grid>
             ))}
@@ -463,7 +468,12 @@ const DashboardManager = () => {
             animate="animate"
             whileHover="hover"
           >
-            <SharedCard variant="dashboard">
+            <SharedCard sx={{
+              p: 3,
+              border: "1.5px solid #b91c1c",
+              borderTop: `7px solid #b91c1c`,
+              borderRadius: 2
+            }}>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3, flexWrap: 'wrap', gap: 2 }}>
                 <SharedTypography variant="cardTitle">
                   Recent Application Status
@@ -627,7 +637,7 @@ const DashboardManager = () => {
                               <TableCell>{employee?.empId}</TableCell>
                               <TableCell>{employee?.name}</TableCell>
                               <TableCell>
-                                <TextField 
+                                <TextField
                                   type="date"
                                   size="small"
                                   fullWidth

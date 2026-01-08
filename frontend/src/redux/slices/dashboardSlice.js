@@ -1,12 +1,9 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import realApi from '../../services/api/realApi';
-
 import dashboardService from '../../services/dashboardService';
 import managerService from '../../services/managerService';
 import { getStatusLabel as mapStatusLabel } from '../../utils/statusMapper';
 
-
-// Fallback stats (UNCHANGED)
 const fallbackStats = [
   { title: 'Total Requests', value: 0, iconKey: 'Flight', color: 'primary', trend: '' },
   { title: 'Pending', value: 0, iconKey: 'PendingActions', color: 'warning', trend: '' },
@@ -14,11 +11,7 @@ const fallbackStats = [
   { title: 'Rejected', value: 0, iconKey: 'Cancel', color: 'error', trend: '' }
 ];
 
-
-const getStatusLabel = (statusId) => {
-  // Use the mapper for consistency
-  return mapStatusLabel(statusId);
-};
+const getStatusLabel = (statusId) => mapStatusLabel(statusId);
 
 const formatDate = (dateString) => {
   if (!dateString || dateString === '0001-01-01T00:00:00') return 'Not Set';
@@ -61,24 +54,18 @@ export const fetchDashboardData = createAsyncThunk(
     // Get stats
     const statsData = await dashboardService.getDashboardStats(userRole, userId, userRoleID);
 
-    // Get all employees under MANAGER, AVP, SVP or CHRO
-    let allEmployees = []
+    let allEmployees = [];
     if (userRole === 'MANAGER' || userRole === 'SVP' || userRole === 'CHRO') {
-      allEmployees = await managerService.getTeam(userId)
-    }else if(userRoleID===104){
-      allEmployees = await managerService.getTeam(userId)
+      allEmployees = await managerService.getTeam(userId);
     }
 
-    // Get all the travel details
-    let getAllDetails = []
-    if (userRoleID === 102
-      // || userRole === 'CHRO'
-    ) {
-      getAllDetails = await dashboardService.getAllDetails(userId)
-    }else if(userRoleID === 104 ){
-      getAllDetails = await dashboardService.getAllAvpDetails(userId)
-    }else if(userRoleID === 105 ){
-      getAllDetails = await dashboardService.getAllSvpDetails(userId)
+    let getAllDetails = [];
+    if (userRole === 'MANAGER') {
+      getAllDetails = await dashboardService.getAllDetails(userId);
+    } else if (userRole === 'AVP') {
+      getAllDetails = await dashboardService.getAllAvpDetails(userId);
+    } else if (userRole === 'SVP') {
+      getAllDetails = await dashboardService.getAllSvpDetails(userId);
     }
 
     let pendingApprovals = [];
@@ -106,7 +93,6 @@ export const fetchTravelDeskData = createAsyncThunk(
   'traveldesk/fetch',
   async (_, { rejectWithValue }) => {
     try {
-      console.log("🚀 Using REAL Travel Desk API");
       const response = await realApi.getAllTravelDetails();
       const travels = response?.result || response?.Result || [];
 
@@ -129,22 +115,16 @@ export const fetchTravelDeskData = createAsyncThunk(
         })
       );
 
-      // ✅ Updated filtering based on new status codes
-      // Pending: Status 13-15 (documents & booking in progress)
-      // Completed: Status 16-17 (tickets uploaded & completed)
       return {
         pendingRequests: allRequests.filter(req => req.statusId < 16),
         completedRequests: allRequests.filter(req => req.statusId >= 16)
       };
-
     } catch (error) {
       console.error("Travel Desk Fetch Error:", error);
       return rejectWithValue(error.message);
     }
   }
 );
-
-// ... (keep fetchViewDetailsData unchanged) ...
 
 export const fetchViewDetailsData = createAsyncThunk(
   'traveldesk/fetchById',
@@ -192,12 +172,15 @@ export const fetchViewDetailsData = createAsyncThunk(
 
 export const processBooking = createAsyncThunk(
   'traveldesk/processBooking',
-  async ({ tId, newStatus = 16 }, { rejectWithValue, dispatch }) => {
+  async ({ tId, newStatus = 16, empId }, { rejectWithValue, dispatch }) => {
     try {
-      console.log('📊 Processing booking:', { tId, newStatus });
-      await realApi.updateTravelStatus(tId, newStatus);
+      const comment = "Status updated by Travel Desk";
+      
+      // FIX: Pass empId and comment to updateTravelStatus
+      await realApi.updateTravelStatus(tId, newStatus, empId, comment);
+      
       dispatch(fetchTravelDeskData());
-      return { success: true, tId, newStatus };
+      return { success: true, tId, newStatus, empId };
     } catch (error) {
       console.error("Process Booking Error:", error);
       return rejectWithValue(error.message);
@@ -205,21 +188,25 @@ export const processBooking = createAsyncThunk(
   }
 );
 
-// ✅ NEW: Submit Documents Thunk (Status 13 → 14)
+// Submit Documents Thunk (Status 13 → 14)
 export const submitDocumentsThunk = createAsyncThunk(
   'dashboard/submitDocuments',
   async ({ tId, empId }, { rejectWithValue, dispatch }) => {
     try {
       console.log('📄 Submitting documents:', { tId, empId });
       
-      // Status 13 → 14
-      // 13 = "Initial Document Pending" (Employee uploads)
-      // 14 = "Initial Document review and visa Pending" (Helpdesk reviews)
       const NEW_STATUS = 14;
       
-      await realApi.updateTravelStatus(tId, NEW_STATUS);
+      // Pass all required parameters including empId and comment
+      const response = await realApi.updateTravelStatus(
+        tId, 
+        NEW_STATUS, 
+        empId, 
+        'Documents submitted by employee'
+      );
       
-      // Refresh dashboard data
+      console.log('📄 Update status response:', response);
+      
       dispatch(fetchDashboardData());
       
       return { 
@@ -242,27 +229,20 @@ export const submitDocumentsThunk = createAsyncThunk(
 const dashboardSlice = createSlice({
   name: 'dashboard',
   initialState: {
-    // Employee/Manager Dashboard
     stats: fallbackStats,
     pendingApprovals: [],
     getAllDetails: [],
     allEmployees: [],
     recentRequests: [],
     activeRequest: null,
-    
-    // Travel Desk
     pendingRequests: [],
     completedRequests: [],
     viewRequestDetails: null,
-    
-    // UI State
     loading: false,
     detailsLoading: false,
     bookingInProgress: false,
-    submittingDocuments: false, // ✅ NEW
+    submittingDocuments: false,
     error: null,
-    
-    // Shared
     notifications: [
       { id: 1, message: "Welcome to Travel Management System", read: false, time: "Just now" }
     ],
@@ -271,14 +251,11 @@ const dashboardSlice = createSlice({
   reducers: {
     // ✅ ENHANCED: updateRequestStatus
     updateRequestStatus: (state, action) => {
-      const { id, tId, status, statusId, stepIndex, statusLabel } = action.payload;
+      const { id, tId, status, statusId, statusLabel } = action.payload;
       const newStatus = status || statusId;
       const newStatusLabel = statusLabel || getStatusLabel(newStatus);
       const requestId = id || tId;
-      
-      console.log('🔄 Updating request status:', { requestId, newStatus, newStatusLabel });
 
-      // Update activeRequest
       if (state.activeRequest) {
         const activeId = state.activeRequest.id || state.activeRequest.tId || state.activeRequest.travelId;
         if (activeId === requestId || state.activeRequest.travelId === requestId) {
@@ -288,7 +265,6 @@ const dashboardSlice = createSlice({
         }
       }
 
-      // Update in recentRequests
       const recentIdx = state.recentRequests.findIndex(r => 
         r.id === requestId || r.tId === requestId || r.travelId === requestId
       );
@@ -298,7 +274,6 @@ const dashboardSlice = createSlice({
         state.recentRequests[recentIdx].statusLabel = newStatusLabel;
       }
 
-      // Update in pendingApprovals
       const approvalIdx = state.pendingApprovals.findIndex(r => 
         r.id === requestId || r.tId === requestId
       );
@@ -307,7 +282,6 @@ const dashboardSlice = createSlice({
         state.pendingApprovals[approvalIdx].statusId = newStatus;
       }
 
-      // Update in pendingRequests (Travel Desk)
       const pendingIdx = state.pendingRequests.findIndex(r => 
         r.id === requestId || r.tId === requestId
       );
@@ -366,7 +340,6 @@ const dashboardSlice = createSlice({
         state.stats = fallbackStats;
       })
 
-      // TRAVEL DESK DATA
       .addCase(fetchTravelDeskData.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -382,7 +355,6 @@ const dashboardSlice = createSlice({
         state.error = action.payload || action.error.message;
       })
 
-      // VIEW DETAILS
       .addCase(fetchViewDetailsData.pending, (state) => {
         state.detailsLoading = true;
         state.viewRequestDetails = null;
@@ -397,7 +369,6 @@ const dashboardSlice = createSlice({
         state.error = action.payload || action.error.message;
       })
 
-      // PROCESS BOOKING
       .addCase(processBooking.pending, (state) => {
         state.bookingInProgress = true;
       })
@@ -409,7 +380,6 @@ const dashboardSlice = createSlice({
         state.error = action.payload || action.error.message;
       })
 
-      // ✅ SUBMIT DOCUMENTS
       .addCase(submitDocumentsThunk.pending, (state) => {
         state.submittingDocuments = true;
         state.error = null;
@@ -418,7 +388,6 @@ const dashboardSlice = createSlice({
         state.submittingDocuments = false;
         const { tId, newStatus, statusLabel } = action.payload;
         
-        // Update activeRequest
         if (state.activeRequest && 
             (state.activeRequest.tId === tId || state.activeRequest.travelId === tId)) {
           state.activeRequest.status = newStatus;
@@ -426,7 +395,6 @@ const dashboardSlice = createSlice({
           state.activeRequest.statusLabel = statusLabel;
         }
         
-        // Update in recentRequests
         const idx = state.recentRequests.findIndex(r => 
           r.tId === tId || r.travelId === tId
         );
@@ -436,7 +404,6 @@ const dashboardSlice = createSlice({
           state.recentRequests[idx].statusLabel = statusLabel;
         }
         
-        // Add notification
         state.notifications.unshift({
           id: Date.now(),
           message: "Documents submitted successfully! Helpdesk will review.",

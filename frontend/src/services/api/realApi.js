@@ -1,6 +1,7 @@
 /**
  * Real API - All actual HTTP calls
- * Complete version with SVP/AVP support
+ * Complete version with Visa OCR support
+ * UPDATED: Use employee endpoints for all document operations
  */
 
 import apiClient from '../../api/client';
@@ -38,12 +39,9 @@ const realApi = {
   },
 
   getTravelDetailByTId: async (TiD) => {
-
-    const formData = new FormData()
-    formData.append('TID', TiD)
-
-    console.log('🟢 REAL: POST /api/employee/TravelDetailByTID' + TiD);
-
+    const formData = new FormData();
+    formData.append('TID', TiD);
+    console.log('🟢 REAL: POST /api/employee/TravelDetailByTID ' + TiD);
     const response = await apiClient.post(`/api/employee/TravelDetailByTID`, formData);
     return response.data;
   },
@@ -70,7 +68,6 @@ const realApi = {
 
   insertTravelDetail: async (travelData) => {
     console.log('🟢 REAL: POST /api/manager/InsertTravelDetail');
-    // Backend expects array of TravelMaster objects
     const dataArray = Array.isArray(travelData) ? travelData : [travelData];
     const response = await apiClient.post('/api/manager/InsertTravelDetail', dataArray, {
       headers: { 'Content-Type': 'application/json' }
@@ -79,7 +76,7 @@ const realApi = {
   },
 
   // ==========================================
-  // SVP SPECIFIC
+  // SVP / AVP SPECIFIC
   // ==========================================
 
   getSvpEmployees: async (rptSvpId) => {
@@ -89,10 +86,6 @@ const realApi = {
     const response = await apiClient.post('/api/manager/GetSvpEmployees', formData);
     return response.data;
   },
-
-  // ==========================================
-  // AVP SPECIFIC
-  // ==========================================
 
   getAvpEmployees: async (rptAvpId) => {
     console.log('🟢 REAL: POST /api/manager/GetAvpEmployees');
@@ -106,11 +99,15 @@ const realApi = {
   // COMMON / UTILS
   // ==========================================
 
-  updateTravelStatus: async (tId, status) => {
-    console.log('🟢 REAL: POST /api/UpdateTravelStatus', { tId, status });
+  updateTravelStatus: async (tId, status, empId, comment = '') => {
+    console.log('🟢 REAL: POST /api/UpdateTravelStatus', { tId, status, empId, comment });
+    
     const formData = new FormData();
-    formData.append('TID', tId);
-    formData.append('Status', status);
+    formData.append('TID', String(tId));
+    formData.append('Status', String(status));
+    formData.append('EmpId', String(empId || ''));
+    formData.append('Comment', comment || 'Status updated');
+    
     const response = await apiClient.post('/api/UpdateTravelStatus', formData);
     return response.data;
   },
@@ -134,7 +131,7 @@ const realApi = {
   },
 
   // ==========================================
-  // DOCUMENT MANAGEMENT
+  // DOCUMENT MANAGEMENT (Using Employee Endpoints Only)
   // ==========================================
 
   addDocument: async (empId, documentId, document) => {
@@ -182,30 +179,121 @@ const realApi = {
   },
 
   // ==========================================
+  // PASSPORT OCR
+  // ==========================================
+
+  getPassportInfo: async (empId) => {
+    console.log('🟢 REAL: POST /api/HelpDesk/GetPassportInfo');
+    const formData = new FormData();
+    formData.append('EmpId', empId);
+    const response = await apiClient.post('/api/HelpDesk/GetPassportInfo', formData);
+    return response.data;
+  },
+
+  updatePassportInfo: async (empId, passportData) => {
+    console.log('🟢 REAL: POST /api/employee/UpdatePassportInfo', { empId });
+    const formData = new FormData();
+    
+    formData.append('EmpId', String(empId));
+    formData.append('Issuer', passportData.issuer || '');
+    formData.append('FullName', passportData.fullName || '');
+    formData.append('PassportNumber', passportData.passportNumber || '');
+    formData.append('Nationality', passportData.nationality || '');
+    
+    if (passportData.dateOfBirth) {
+      let dob = passportData.dateOfBirth;
+      if (!dob.includes('T')) {
+        dob = new Date(dob + 'T00:00:00').toISOString();
+      }
+      formData.append('DateOfBirth', dob);
+    } else {
+      formData.append('DateOfBirth', '');
+    }
+    
+    formData.append('Sex', passportData.sex || '');
+    
+    if (passportData.expiryDate) {
+      let expiry = passportData.expiryDate;
+      if (!expiry.includes('T')) {
+        expiry = new Date(expiry + 'T00:00:00').toISOString();
+      }
+      formData.append('ExpiryDate', expiry);
+    } else {
+      formData.append('ExpiryDate', '');
+    }
+    
+    formData.append('CompositeCheck', String(passportData.compositeCheck ?? true));
+    
+    const response = await apiClient.post('/api/employee/UpdatePassportInfo', formData);
+    return response.data;
+  },
+
+  // ==========================================
+  // VISA OCR
+  // ==========================================
+
+  getVisaInfo: async (empId) => {
+    console.log('🟢 REAL: POST /api/HelpDesk/GetVisaInfo');
+    const formData = new FormData();
+    formData.append('EmpId', empId);
+    
+    try {
+      const response = await apiClient.post('/api/HelpDesk/GetVisaInfo', formData);
+      return response.data;
+    } catch (error) {
+      if (error.response?.status === 404) {
+        console.log('🟡 GetVisaInfo endpoint not available');
+        return { status: 'NotFound', fallbackRequired: true };
+      }
+      throw error;
+    }
+  },
+
+  updateVisaInfo: async (empId, visaData) => {
+    console.log('🟢 REAL: POST /api/HelpDesk/UpdateVisaInfo', { empId });
+    const formData = new FormData();
+    
+    formData.append('EmpId', String(empId));
+    formData.append('Issuer', visaData.issuer || '');
+    formData.append('FullName', visaData.fullName || '');
+    formData.append('VisaNumber', visaData.visaNumber || '');
+    formData.append('Nationality', visaData.nationality || '');
+    
+    if (visaData.dateOfBirth) {
+      let dob = visaData.dateOfBirth;
+      if (!dob.includes('T')) {
+        dob = new Date(dob + 'T00:00:00').toISOString();
+      }
+      formData.append('DateOfBirth', dob);
+    } else {
+      formData.append('DateOfBirth', '');
+    }
+    
+    formData.append('Sex', visaData.sex || '');
+    
+    if (visaData.expiryDate) {
+      let expiry = visaData.expiryDate;
+      if (!expiry.includes('T')) {
+        expiry = new Date(expiry + 'T00:00:00').toISOString();
+      }
+      formData.append('ExpiryDate', expiry);
+    } else {
+      formData.append('ExpiryDate', '');
+    }
+    
+    formData.append('CompositeCheck', String(visaData.compositeCheck ?? true));
+    
+    const response = await apiClient.post('/api/HelpDesk/UpdateVisaInfo', formData);
+    return response.data;
+  },
+
+  // ==========================================
   // TRAVEL DESK / HELPDESK SPECIFIC
   // ==========================================
 
-  getEmployeeDocuments: async (empId, docId) => {
-    console.log('🟢 REAL: POST /api/HelpDesk/GetEmployeeDocuments');
-    const formData = new FormData();
-    formData.append('EmpId', empId);
-    formData.append('DocumentId', docId);
-    const response = await apiClient.post('/api/HelpDesk/GetEmployeeDocuments', formData);
-    return response.data;
-  },
-
-  getHelpDeskDocumentFile: async (empId, documentId) => {
-    console.log('🟢 REAL: POST /api/HelpDesk/GetDocumentFile');
-    const formData = new FormData();
-    formData.append('EmpId', empId);
-    formData.append('DocumentId', documentId);
-    const response = await apiClient.post('/api/HelpDesk/GetDocumentFile', formData);
-    return response.data;
-  },
-
-  getHelpDeskEmployeeDocuments: async (empId) => {
-    console.log('🟢 REAL: GET /api/HelpDesk/GetUploadedDocuments?empId=' + empId);
-    const response = await apiClient.get(`/api/HelpDesk/GetUploadedDocuments?empId=${empId}`);
+  getAllTravelDetails: async () => {
+    console.log('🟢 REAL: POST /api/HelpDesk/GetAllTravelDetails');
+    const response = await apiClient.post('/api/HelpDesk/GetAllTravelDetails');
     return response.data;
   },
 

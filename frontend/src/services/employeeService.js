@@ -4,25 +4,13 @@
  */
 
 import api from './apiService';
+import { getStatusLabel } from '../utils/statusMapper';
 
-const TRAVEL_STATUS_LABELS = {
-  0: 'Pending',
-  1: 'Submitted',
-  2: 'Approved',
-  3: 'Completed',
-  4: 'Rejected',
+// Use StatusMapper.getStatusLabel() - single source of truth
+const getTravelStatusLabel = (travelStatus) => {
+  return getStatusLabel(travelStatus);
 };
 
-const getTravelStatusLabel = (travelStatus) =>{
-  if(travelStatus===0 || travelStatus===1 ||travelStatus===2){
-    return TRAVEL_STATUS_LABELS[0]
-  }else if(travelStatus===4 || travelStatus===5 ||travelStatus===6){
-    return TRAVEL_STATUS_LABELS[2]
-  }else if(travelStatus===17){
-    return TRAVEL_STATUS_LABELS[3]
-  }
-
-}
 
 const employeeService = {
   /**
@@ -108,6 +96,7 @@ const employeeService = {
       history: travel.statusHistory,
       finalStartDate: travel.finalStartDate,
       finalEndDate: travel.finalEndDate,
+      suggestedDate: travel.suggestedDate
     }));
   },
 
@@ -133,8 +122,8 @@ const employeeService = {
     if (response.status !== 'Success') {
       throw new Error('Failed to update document');
     }
-    else{
-      
+    else {
+
     }
 
     return response.result;
