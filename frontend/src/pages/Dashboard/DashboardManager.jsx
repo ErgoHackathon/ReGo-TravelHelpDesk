@@ -241,53 +241,85 @@ const DashboardManager = () => {
     }));
   };
 
-  const getStatusToSubmitWhileRaisingRequest = (user) => {
-    switch (user.roleId) {
-      case 102:
-        return 1
-      case 104:
-        return 2
-      case 105:
-        return 3
-    }
+  
+const getStatusToSubmitWhileRaisingRequest = (user) => {
+  switch (user.roleId) {
+    case 102:  // Manager
+      return 1;
+    case 104:  // AVP
+      return 2;
+    case 105:  // SVP
+      return 3;
+    default:
+      return 1; // Default to Manager initiated
+  }
+};
 
+ const handleSubmitRequest = async () => {
+  // Get status first
+  const requestStatus = getStatusToSubmitWhileRaisingRequest(user);
+  
+  // ✅ Validate status
+  if (!requestStatus || requestStatus === 0) {
+    console.error('❌ Invalid status:', requestStatus, 'for user:', user);
+    toast.error('Unable to determine request status. Please contact admin.');
+    return;
   }
 
-  const handleSubmitRequest = async () => {
-    // console.log("user in here::::::::: ", user)
-    const jsonData = checkedEmployees.map(employeeId => ({
+  const jsonData = checkedEmployees.map(employeeId => {
+    const startDate = dates[employeeId]?.startDate;
+    const endDate = dates[employeeId]?.endDate;
+    
+    // ✅ Validate dates
+    if (!startDate || !endDate) {
+      toast.error(`Please select dates for all employees`);
+      return null;
+    }
+
+    return {
       empId: employeeId,
       country: country,
       city: city,
-      travelStartDate: dates[employeeId]?.startDate || null,
-      travelEndDate: dates[employeeId]?.endDate || null,
-      status: getStatusToSubmitWhileRaisingRequest(user),
+      travelStartDate: startDate,
+      travelEndDate: endDate,
+      status: requestStatus,
       rptEmpId: user.empId,
       remark: remark
-    }));
+    };
+  }).filter(Boolean); // Remove null entries
 
-    let allSuccess = true;
-    for (const travelRequest of jsonData) {
-      try {
-        const response = await managerService.createTravelRequest(travelRequest);
-        if (response !== 'Inserted') {
-          allSuccess = false;
-        }
-      } catch (error) {
-        // allSuccess = false;
-        console.error("Request failed:", error);
+  if (jsonData.length === 0) {
+    toast.error('No valid requests to submit');
+    return;
+  }
+
+  // Debug log
+  console.log('📤 Submitting travel requests:', jsonData);
+
+  let allSuccess = true;
+  for (const travelRequest of jsonData) {
+    try {
+      const response = await managerService.createTravelRequest(travelRequest);
+      console.log('✅ Response:', response);
+      if (response !== 'Inserted') {
+        allSuccess = false;
       }
+    } catch (error) {
+      allSuccess = false;
+      console.error("❌ Request failed:", error);
     }
+  }
 
-    if (allSuccess) {
-      toast.success('Request Submitted');
-    } else {
-      toast.error('Request Failed');
-    }
+  if (allSuccess) {
+    toast.success('Request Submitted');
+    resetFields();
+  } else {
+    toast.error('Request Failed');
+  }
 
-    setShowRaiseRequestModal(false);
-    setRequestSubmit(true);
-  };
+  setShowRaiseRequestModal(false);
+  setRequestSubmit(true);
+};
 
   const getFilteredApprovals = () => {
     if (filterStatus === 'ALL') {

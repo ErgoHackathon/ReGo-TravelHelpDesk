@@ -388,28 +388,32 @@ const ApplicationStatus = () => {
 
                             <Grid container spacing={3}>
                                 <Grid item container spacing={3}>
-                                    <Grid item xs={12} md={6}>
-                                        <Paper elevation={0} sx={{ p: 3, bgcolor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 3, height: '100%' }}>
-                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 2 }}>
-                                                <Box sx={{ p: 1, bgcolor: '#fee2e2', borderRadius: 1, color: '#b91c1c' }}>
-                                                    <Person fontSize="small" />
-                                                </Box>
-                                                <Typography variant="subtitle2" color="text.secondary" fontWeight={600}>EMPLOYEE NAME & ID</Typography>
-                                            </Box>
-                                            <Typography variant="h6" fontWeight={600} color="#1e293b">{fullTravelDeatilsByTiD[0]?.empName} - {fullTravelDeatilsByTiD[0]?.empId}</Typography>
-                                        </Paper>
-                                    </Grid>
-                                    <Grid item xs={12} md={6}>
-                                        <Paper elevation={0} sx={{ p: 3, bgcolor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 3, height: '100%' }}>
-                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 2 }}>
-                                                <Box sx={{ p: 1, bgcolor: '#fee2e2', borderRadius: 1, color: '#b91c1c' }}>
-                                                    <Assignment fontSize="small" />
-                                                </Box>
-                                                <Typography variant="subtitle2" color="text.secondary" fontWeight={600}>ASSET - ROLE</Typography>
-                                            </Box>
-                                            <Typography variant="h6" fontWeight={600} color="#1e293b">{fullTravelDeatilsByTiD[0]?.asset} - {fullTravelDeatilsByTiD[0]?.position}</Typography>
-                                        </Paper>
-                                    </Grid>
+<Grid item xs={12} md={6}>
+  <Paper elevation={0} sx={{ p: 3, bgcolor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 3, height: '100%' }}>
+    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 2 }}>
+      <Box sx={{ p: 1, bgcolor: '#fee2e2', borderRadius: 1, color: '#b91c1c' }}>
+        <Person fontSize="small" />
+      </Box>
+      <Typography variant="subtitle2" color="text.secondary" fontWeight={600}>EMPLOYEE NAME & ID</Typography>
+    </Box>
+    <Typography variant="h6" fontWeight={600} color="#1e293b">
+      {fullTravelDeatilsByTiD[0]?.empName || 'N/A'} - {fullTravelDeatilsByTiD[0]?.empId || 'N/A'}
+    </Typography>
+  </Paper>
+</Grid>
+<Grid item xs={12} md={6}>
+  <Paper elevation={0} sx={{ p: 3, bgcolor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 3, height: '100%' }}>
+    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 2 }}>
+      <Box sx={{ p: 1, bgcolor: '#fee2e2', borderRadius: 1, color: '#b91c1c' }}>
+        <Assignment fontSize="small" />
+      </Box>
+      <Typography variant="subtitle2" color="text.secondary" fontWeight={600}>ASSET - ROLE</Typography>
+    </Box>
+    <Typography variant="h6" fontWeight={600} color="#1e293b">
+      {fullTravelDeatilsByTiD[0]?.assetDisplay || fullTravelDeatilsByTiD[0]?.assetName || 'N/A'} - {fullTravelDeatilsByTiD[0]?.position || 'N/A'}
+    </Typography>
+  </Paper>
+</Grid>
                                 </Grid>
 
                                 {/* <Divider sx={{ mb: 4 }} /> */}

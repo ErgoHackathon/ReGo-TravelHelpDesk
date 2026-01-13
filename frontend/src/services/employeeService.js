@@ -87,40 +87,55 @@ getEmployeeTravel: async (empId) => {
   return mapped;
 },
 
-  getEmployeeTravelByTid: async (TiD) => {
-    if (!TiD) return [];
+getEmployeeTravelByTid: async (TiD) => {
+  if (!TiD) return [];
 
-    const response = await api.getTravelDetailByTId(TiD);
+  const response = await api.getTravelDetailByTId(TiD);
 
-    if (response.status === 'Functional Failure' || !response.result) {
-      return [];
-    }
+  if (response.status === 'Functional Failure' || !response.result) {
+    return [];
+  }
 
-    const result = response.result;
-    const travels = Array.isArray(result) ? result : [result];
+  const result = response.result;
+  const travels = Array.isArray(result) ? result : [result];
 
-    return travels.map((travel, index) => ({
-      id: `${travel.empId}-${index}`,
-      travelId: travel.tId,
-      asset: travel.asset,
-      empId: travel.empId,
-      empName: travel.empName,
-      position: travel.position,
-      country: travel.country,
-      city: travel.city,
-      destination: `${travel.city}, ${travel.country}`,
-      purpose: travel.remark,
-      departureDate: travel.travelStartDate,
-      returnDate: travel.travelEndDate,
-      status: travel.status,
-      statusLabel: getTravelStatusLabel(travel.status) || 'Unknown',
-      rptEmpId: travel.rptEmpId,
-      history: travel.statusHistory,
-      finalStartDate: travel.finalStartDate,
-      finalEndDate: travel.finalEndDate,
-      suggestedDate: travel.suggestedDate
-    }));
-  },
+  return travels.map((travel, index) => ({
+    id: `${travel.empId}-${index}`,
+    travelId: travel.tId,
+    
+    // ✅ Employee Info - directly from API
+    empId: travel.empId,
+    empName: travel.empName,  // "Abhishek kumar"
+    position: travel.position, // "Developer"
+    
+    // ✅ Asset Info - FLATTEN the object (don't keep as object!)
+    assetName: travel.asset?.assetName || '',      // "Easy"
+    tower: travel.asset?.tower || '',              // "Germany"
+    subTower: travel.asset?.subTower || '',        // "Broker & Sales"
+    
+    // ✅ Convenience display string for asset
+    assetDisplay: travel.asset?.assetName 
+      ? `${travel.asset.assetName}${travel.asset.tower ? ` (${travel.asset.tower})` : ''}`
+      : 'N/A',
+    
+    // Destination
+    country: travel.country,
+    city: travel.city,
+    destination: [travel.city, travel.country].filter(Boolean).join(', '),
+    
+    // Other fields
+    purpose: travel.remark,
+    departureDate: travel.travelStartDate,
+    returnDate: travel.travelEndDate,
+    status: travel.status,
+    statusLabel: getTravelStatusLabel(travel.status) || 'Unknown',
+    rptEmpId: travel.rptEmpId,
+    history: travel.statusHistory,
+    finalStartDate: travel.finalStartDate,
+    finalEndDate: travel.finalEndDate,
+    suggestedDate: travel.suggestedDate
+  }));
+},
 
   /**
    * Add document
