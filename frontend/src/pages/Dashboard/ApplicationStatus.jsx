@@ -45,7 +45,16 @@ import { getActiveStep } from '../../utils/getActiveStep';
 import api from '../../services/apiService';
 import apiClient from '../../api/client';
 import DateEditor from '../../components/shared/dateEditor/DateEditor';
+const normalizeRoleId = (roleId) => {
+  if (roleId >= 101 && roleId <= 105) {
+    return roleId - 100;
+  }
+  return roleId;
+};
 
+const isManager = (roleId) => normalizeRoleId(roleId) === 2;
+const isAVP = (roleId) => normalizeRoleId(roleId) === 4;
+const isSVP = (roleId) => normalizeRoleId(roleId) === 5;
 // Custom Stepper Connector
 const QontoConnector = styled(StepConnector)(({ theme }) => ({
     [`&.${stepConnectorClasses.alternativeLabel}`]: {
@@ -166,89 +175,70 @@ const ApplicationStatus = () => {
     const departurDate = formatDateToDateString(travelDetails[0]?.departureDate)
     const arrivalDate = formatDateToDateString(travelDetails[0]?.returnDate)
 
-    const handleStatusUpdate = async (actionType) => {
-        let newStatus = '';
-        let stepIndex = 0;
-        let notifMessage = '';
+ const handleStatusUpdate = async (actionType) => {
+  const currentStatus = travelDetails[0]?.status;
+  let newStatus = null;
 
-        if (actionType === 'APPROVE') {
-            if (user.roleId === 102) {
-                newStatus = 4;
-                stepIndex = 4;
-                notifMessage = `Manager approved request ${id}`;
-            }
-            else if (user.roleId === 104) { newStatus = 5; stepIndex = 5; notifMessage = `AVP approved request ${id}`; }
-            else if (user.roleId === 105) { newStatus = 6; stepIndex = 6; notifMessage = `SVP approved request ${id}`; }
-            // else if (user.role === 'CHRO') { newStatus = 'APPROVED'; stepIndex = 4; notifMessage = `CHRO final approval for request ${id}`; }
-            // else if (user.role === 'FINANCE') { newStatus = 'BUDGET_CONFIRMED'; stepIndex = 2; notifMessage = `Finance confirmed budget for ${id}`; }
-        } else if (actionType === 'REJECT') {
-            if (!comment.trim()) {
-                toast.error("Please provide a reason for rejection.");
-                return;
-            }
-            newStatus = 'REJECTED';
-            stepIndex = 0;
-            notifMessage = `Request ${id} rejected by ${user.role}`;
-        } else if (actionType === 'REQUEST_CHANGES') {
-            if (!comment.trim()) {
-                toast.error("Please provide comments for requested changes.");
-                return;
-            }
-            newStatus = 'CHANGES_REQUESTED';
-            stepIndex = 1;
-            notifMessage = `Changes requested for ${id} by ${user.role}`;
-        } else if (actionType === 'COMPLETE_BOOKING') {
-            newStatus = 'BOOKING_COMPLETED';
-            stepIndex = 5;
-            notifMessage = `Booking completed for request ${id}`;
-        }
+  const roleId = user?.roleId;
 
-        const updateData = new FormData()
-        const finalDates = new FormData()
-        if (travelDetails[0]?.status === 7) {
-            updateData.append('TID', travelId)
-            updateData.append('Status', 15)
-            updateData.append('Comment', comment)
-            updateData.append('EmpId', user?.empId)
-            finalDates.append('TId', travelId)
-            finalDates.append('FinalStartDate', editedDates.startDate)
-            finalDates.append('FinalEndDate', editedDates.endDate)
-            if (finalDates && Array.from(finalDates.entries()).length > 0) {
-                const updateResponse = await apiClient.post("/api/UpdateTravelStatus", updateData)
-                const updateDateResponse = await apiClient.post("/api/manager/UpdateFinalDates", finalDates)
-                    // (updateResponse.status === 200 && updateDateResponse === 200) ?
-                     toast.success(`Action ${actionType} completed successfully`) 
-                    //  :
-                    // toast.error(`Action ${actionType} failed`)
-            } else {
-                toast.info(`Updated dates required`)
-            }
+  // Status transition map using normalized role checking
+  const transitions = {
+    APPROVE: {},
+    REJECT: {}
+  };
 
-        } else {
-            updateData.append('TID', travelId)
-            updateData.append('Status', newStatus)
-            updateData.append('Comment', comment)
-            updateData.append('EmpId', user?.empId)
-            const updateResponse = await apiClient.post("/api/UpdateTravelStatus", updateData)
-            updateResponse.status === 200 ? toast.success(`Action ${actionType} completed successfully`) :
-                toast.error(`Action ${actionType} failed`)
-        }
+  // Manager transitions
+  if (isManager(roleId)) {
+    transitions.APPROVE = { 1: 4, 7: 10 };
+    transitions.REJECT = { 1: 18, 7: 18 };
+  }
+  // AVP transitions
+  else if (isAVP(roleId)) {
+    transitions.APPROVE = { 2: 5, 4: 5, 8: 11, 10: 11 };
+    transitions.REJECT = { 2: 19, 4: 19, 8: 19, 10: 19 };
+  }
+  // SVP transitions
+  else if (isSVP(roleId)) {
+    transitions.APPROVE = { 3: 6, 5: 6, 9: 12, 11: 12 };
+    transitions.REJECT = { 3: 20, 5: 20, 9: 20, 11: 20 };
+  }
 
-        // updateData.respo
-        dispatch(addNotification(notifMessage));
-        // dispatch(addApprovalHistory({
-        //     role: user.role,
-        //     name: `${user.firstName} ${user.lastName}`,
-        //     status: actionType,
-        //     comment: comment,
-        //     date: new Date().toLocaleString()
-        // }));
+  if (actionType === 'APPROVE') {
+    newStatus = transitions.APPROVE[currentStatus];
+  } else if (actionType === 'REJECTED' || actionType === 'REJECT') {
+    newStatus = transitions.REJECT[currentStatus];
+  }
 
+  if (!newStatus) {
+    toast.error('Invalid action for current status');
+    console.error('No transition found:', {
+      roleId,
+      normalizedRoleId: normalizeRoleId(roleId),
+      currentStatus,
+      actionType
+    });
+    return;
+  }
 
-        // toast.success(`Action ${actionType} completed successfully`) : 
-        navigate('/dashboard');
-    };
+  console.log('📤 Updating status:', { currentStatus, newStatus, actionType });
 
+  const updateData = new FormData();
+  updateData.append('TID', travelId);
+  updateData.append('Status', newStatus);
+  updateData.append('Comment', comment);
+  updateData.append('EmpId', user?.empId);
+
+  try {
+    const response = await apiClient.post("/api/UpdateTravelStatus", updateData);
+    if (response.status === 200) {
+      toast.success(`${actionType} successful!`);
+      navigate('/dashboard');
+    }
+  } catch (error) {
+    console.error('❌ Error updating status:', error);
+    toast.error('Failed to update');
+  }
+};
     // Mock data for the stepper
     const activeStep = getActiveStep(travelDetails[0]?.status)
     const steps = [
@@ -259,53 +249,58 @@ const ApplicationStatus = () => {
         { label: 'Booking Confirmed', date: '', completed: activeStep >= 16 ? true : false }
     ];
 
-    const getTravelAndForwardButtonDisability = (travelDetails) => {
-        let disableButton = true
-        // if(travelDetails[0]?.rptEmpId === user.empId)
-        if (user.roleId === 102 && comment!=='') {
-            // if(travelDetails[0]?.rptEmpId === user.empId){
-            //     disableButton = true
-            // }
-            if (travelDetails[0]?.status === 7) {
-                disableButton = false
-            }
-        }
-        else if (user.roleId === 104 && comment!=='') {
-            if (travelDetails[0]?.status === 1) {
-                disableButton = false
-            }//else if()
-        }
-        else if (user.roleId === 105 && comment!=='') {
-            if (travelDetails[0]?.status === 5) {
-                disableButton = false
-            }
-        }
-        return disableButton
-    }
+    // ✅ NEW CODE (CORRECT status checks)
+/**
+ * Determines if the Approve/Reject buttons should be disabled
+ * Returns TRUE if button should be DISABLED
+ * Returns FALSE if button should be ENABLED
+ */
+const getTravelAndForwardButtonDisability = (travelDetails) => {
+  const currentStatus = travelDetails[0]?.status;
+  const hasComment = comment.trim() !== '';
 
-    const newGetTravelAndForwardButtonDisability  = (travelDetails) => {
-        let disableButton = false
-        // if(travelDetails[0]?.rptEmpId === user.empId)
-        if (user.roleId === 102 && comment!=='') {
-            // if(travelDetails[0]?.rptEmpId === user.empId){
-            //     disableButton = true
-            // }
-            if (travelDetails[0]?.status === 7) {
-                disableButton = true
-            }
-        }
-        else if (user.roleId === 104 && comment!=='') {
-            if (travelDetails[0]?.status === 1) {
-                disableButton = true
-            }//else if()
-        }
-        else if (user.roleId === 105 && comment!=='') {
-            if (travelDetails[0]?.status === 5) {
-                disableButton = true
-            }
-        }
-        return disableButton
-    }
+  // No comment = always disabled
+  if (!hasComment) {
+    return true;
+  }
+
+  const roleId = user?.roleId;
+
+  // Define actionable statuses for each role
+  // Manager (2): Can act on status 1 (initiated), 7 (final initiated)
+  // AVP (4): Can act on status 2, 4, 8, 10
+  // SVP (5): Can act on status 3, 5, 9, 11
+
+  let actionableStatuses = [];
+
+  if (isManager(roleId)) {
+    actionableStatuses = [1, 7];
+  } else if (isAVP(roleId)) {
+    actionableStatuses = [2, 4, 8, 10];
+  } else if (isSVP(roleId)) {
+    actionableStatuses = [3, 5, 9, 11];
+  }
+
+  const canAct = actionableStatuses.includes(currentStatus);
+
+  console.log('🔍 Button Check:', {
+    roleId,
+    normalizedRoleId: normalizeRoleId(roleId),
+    currentStatus,
+    actionableStatuses,
+    canAct,
+    hasComment
+  });
+
+  return !canAct; // Return true (disabled) if cannot act
+};
+
+
+// ✅ Also update the other function if it exists
+const newGetTravelAndForwardButtonDisability = (travelDetails) => {
+  // This is the inverse - returns TRUE if button should be ENABLED
+  return !getTravelAndForwardButtonDisability(travelDetails);
+};
 
     const openDateEditor = () => {
         setIsDateEditorOpen(true);

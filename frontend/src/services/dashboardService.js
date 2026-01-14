@@ -1,71 +1,42 @@
 /**
- * Dashboard Service
+ * Dashboard Service - CORRECTED VERSION
  */
 
 import api from './apiService';
 import employeeService from './employeeService';
 import managerService from './managerService';
-import { getStatusLabel as mapStatusLabel } from '../utils/statusMapper'; // ✅ STABILITY: Use StatusMapper
+import { getStatusLabel as mapStatusLabel } from '../utils/statusMapper';
 
 const STATUS = {
-  // 
   MANAGER_INITIATED: 1,
   AVP_INITIATED: 2,
   SVP_INITIATED: 3,
-
-  // Initial Approved
   MANAGER_APPROVED: 4,
   AVP_APPROVED: 5,
   SVP_APPROVED: 6,
-
-  // Final Initiated
   MANAGER_FINAL_INITIATED: 7,
   AVP_FINAL_INITIATED: 8,
   SVP_FINAL_INITIATED: 9,
-
-  // Final Approved
   MANAGER_FINAL_APPROVED: 10,
   AVP_FINAL_APPROVED: 11,
   SVP_FINAL_APPROVED: 12,
-
-  // HelpDesk/Travel Desk statuses
   DOCUMENT_PENDING: 13,
-  DOCUMENT_REVIEW_PENDING: 14,  // HelpDesk reviews documents
-  PENDING_TICKETS: 15,          // HelpDesk books tickets
-  TICKETS_UPLOADED: 16,         // Booking completed
-  COMPLETED: 17                 // Travel completed
+  DOCUMENT_REVIEW_PENDING: 14,
+  PENDING_TICKETS: 15,
+  TICKETS_UPLOADED: 16,
+  COMPLETED: 17
 };
 
-// Status IDs that Travel Desk needs to work on
-const HELPDESK_PENDING_STATUSES = [
-  STATUS.DOCUMENT_REVIEW_PENDING,  // 14
-  STATUS.PENDING_TICKETS           // 15
-];
+const HELPDESK_PENDING_STATUSES = [STATUS.DOCUMENT_REVIEW_PENDING, STATUS.PENDING_TICKETS];
+const HELPDESK_COMPLETED_STATUSES = [STATUS.TICKETS_UPLOADED, STATUS.COMPLETED];
 
-// Status IDs for completed bookings
-const HELPDESK_COMPLETED_STATUSES = [
-  STATUS.TICKETS_UPLOADED,  // 16
-  STATUS.COMPLETED          // 17
-];
+const getStatusLabel = (statusId) => mapStatusLabel(statusId);
 
-// ============================================
-// STATUS LABEL MAPPING - Uses StatusMapper
-// ============================================
-const getStatusLabel = (statusId) => {
-  return mapStatusLabel(statusId);
-};
-
-// ============================================
-// EMPLOYEE NAME CACHE (for performance)
-// ============================================
 const employeeCache = new Map();
 
 const getEmployeeName = async (empId) => {
   if (!empId) return 'Unknown';
-
-  if (employeeCache.has(empId)) {
-    return employeeCache.get(empId);
-  }
+  if (employeeCache.has(empId)) return employeeCache.get(empId);
 
   try {
     const response = await employeeService.getEmployeeProfile(empId);
@@ -77,30 +48,41 @@ const getEmployeeName = async (empId) => {
     return `Employee ${empId}`;
   }
 };
+
 const formatDate = (dateString) => {
-  if (!dateString || dateString === '0001-01-01T00:00:00') {
-    return 'Not Set';
-  }
+  if (!dateString || dateString === '0001-01-01T00:00:00') return 'Not Set';
   try {
     return new Date(dateString).toLocaleDateString('en-IN', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric'
+      day: '2-digit', month: 'short', year: 'numeric'
     });
-  } catch {
-    return dateString;
-  }
+  } catch { return dateString; }
 };
+
+// ============================================
+// ✅ HELPER: Normalize Role ID
+// Backend returns 1-5 from GetRoleMaster
+// Some places use 101-105 convention
+// ============================================
+const normalizeRoleId = (roleId) => {
+  if (roleId >= 101 && roleId <= 105) {
+    return roleId - 100;
+  }
+  return roleId;
+};
+
+const isManager = (roleId) => normalizeRoleId(roleId) === 2;
+const isAVP = (roleId) => normalizeRoleId(roleId) === 4;
+const isSVP = (roleId) => normalizeRoleId(roleId) === 5;
 
 // ============================================
 // DASHBOARD SERVICE
 // ============================================
 const dashboardService = {
   /**
-   * Get dashboard statistics
+   * Get dashboard statistics - CORRECTED
    */
   getDashboardStats: async (role, userId, userRoleID) => {
-    console.log('🟢 Getting dashboard stats for:', { role, userId });
+    console.log('🟢 Getting dashboard stats for:', { role, userId, userRoleID });
 
     if (!userId) {
       console.warn('⚠️ No userId provided');
@@ -110,73 +92,78 @@ const dashboardService = {
     try {
       let travels = [];
 
-      // ✅ FIX: Different API based on role
       if (role === 'MANAGER' || role === 'CHRO') {
-        // Managers see team's travel requests
         travels = await managerService.getTeamTravel(userId);
-      }
-      else if (role === 'AVP') {
+      } else if (role === 'AVP') {
         travels = await managerService.getAvpTeamTravel(userId);
-      }
-      else if (role === 'SVP') {
+      } else if (role === 'SVP') {
         travels = await managerService.getSvpTeamTravel(userId);
-      }
-      else {
-        // Employees see their own travel requests
+      } else {
         travels = await employeeService.getEmployeeTravel(userId);
       }
 
-      // ✅ STABILITY FIX: Ensure travels is always an array
       if (!Array.isArray(travels)) {
         console.warn('⚠️ travels is not an array:', travels);
         travels = [];
       }
 
-      // Calculate stats
-      // const stats = {
-      //   totalRequests: travels.length,
-      //   pending: travels.filter(t => t.status === 0 || t.status === 1 || t.status === 2 || t.status === 3 || t.status === 13 || t.status === 14 || t.status === 15 || t.status === 16).length,
-      //   approved: travels.filter(t => t.status === 5 || t.status === 4 || t.status === 6).length,
-      //   // completed: travels.filter(t => t.status === 17).length,
-      //   rejected: travels.filter(t => t.status === 100).length,
-      // };
+      let stats = {};
 
-      let stats = {}
-
+      // ============================================
+      // ✅ CORRECTED: Stats calculation using normalized role check
+      // ============================================
+      
+      // Manager (roleId 2 or 102)
+      // Pending = Status 1 (own initiated), 7 (final initiated)
+      // Approved = Status 4+ (manager approved onwards)
       const statsManager = {
         totalRequests: travels.length,
-        pending: travels.filter(t => t.status === 7).length,
-        approved: travels.filter(t => t.status === 1 || t.status === 5 || t.status === 10 || t.status === 17).length,
-        // completed: travels.filter(t => t.status === 17).length,
-        rejected: travels.filter(t => t.status === 100).length,
-      }
+        pending: travels.filter(t => [1, 7].includes(t.status)).length,
+        approved: travels.filter(t => [4, 5, 6, 10, 11, 12, 13, 14, 15, 16, 17].includes(t.status)).length,
+        rejected: travels.filter(t => [18, 19, 20].includes(t.status)).length,
+      };
 
+      // AVP (roleId 4 or 104)
+      // Pending = Status 2 (own), 4 (from manager), 8, 10
+      // Approved = Status 5+ (AVP approved onwards)
       const statsAVP = {
         totalRequests: travels.length,
-        pending: travels.filter(t => t.status === 1).length,
-        approved: travels.filter(t => t.status === 2 || t.status === 5 || t.status === 17).length,
-        // completed: travels.filter(t => t.status === 17).length,
-        rejected: travels.filter(t => t.status === 100).length,
-      }
+        pending: travels.filter(t => [2, 4, 8, 10].includes(t.status)).length,
+        approved: travels.filter(t => [5, 6, 11, 12, 13, 14, 15, 16, 17].includes(t.status)).length,
+        rejected: travels.filter(t => [18, 19, 20].includes(t.status)).length,
+      };
 
+      // SVP (roleId 5 or 105)
+      // Pending = Status 3 (own), 5 (from AVP), 9, 11
+      // Approved = Status 6+ (SVP approved onwards)
       const statsSVP = {
         totalRequests: travels.length,
-        pending: travels.filter(t => t.status === 5).length,
-        approved: travels.filter(t => t.status === 1 || t.status === 6 || t.status === 10 || t.status === 17).length,
-        // completed: travels.filter(t => t.status === 17).length,
-        rejected: travels.filter(t => t.status === 100).length,
+        pending: travels.filter(t => [3, 5, 9, 11].includes(t.status)).length,
+        approved: travels.filter(t => [6, 12, 13, 14, 15, 16, 17].includes(t.status)).length,
+        rejected: travels.filter(t => [18, 19, 20].includes(t.status)).length,
+      };
+
+      // ✅ FIXED: Use normalized role checking
+      if (isManager(userRoleID)) {
+        stats = statsManager;
+        console.log('📊 Using Manager stats');
+      } else if (isAVP(userRoleID)) {
+        stats = statsAVP;
+        console.log('📊 Using AVP stats');
+      } else if (isSVP(userRoleID)) {
+        stats = statsSVP;
+        console.log('📊 Using SVP stats');
+      } else {
+        // Default fallback
+        stats = {
+          totalRequests: travels.length,
+          pending: travels.filter(t => t.status < 6).length,
+          approved: travels.filter(t => t.status >= 6 && t.status <= 17).length,
+          rejected: travels.filter(t => t.status >= 18).length,
+        };
+        console.log('📊 Using default stats (unknown role)');
       }
 
-      if (userRoleID === 102) {
-        stats = statsManager
-      }
-      else if (userRoleID === 104) {
-        stats = statsAVP
-      } else if (userRoleID === 105) {
-        stats = statsSVP
-      }
-
-      // Format for display
       const formattedStats = [
         { title: 'Total Requests', value: stats.totalRequests, iconKey: 'Flight', color: 'primary', trend: '' },
         { title: 'Pending', value: stats.pending, iconKey: 'PendingActions', color: 'warning', trend: '' },
@@ -192,16 +179,9 @@ const dashboardService = {
     }
   },
 
-  /**
-   * Get pending approvals (for managers only)
-   */
   getPendingApprovals: async (managerId) => {
     console.log('🟢 Getting pending approvals for:', managerId);
-
-    if (!managerId) {
-      console.warn('⚠️ No managerId provided');
-      return [];
-    }
+    if (!managerId) return [];
 
     try {
       const travels = await managerService.getTeamTravel(managerId);
@@ -216,203 +196,117 @@ const dashboardService = {
 
   getAllDetails: async (managerId) => {
     console.log('🟢 Getting all requests for:', managerId);
-
-    if (!managerId) {
-      console.warn('⚠️ No managerId provided');
-      return [];
-    }
+    if (!managerId) return [];
 
     try {
       const travels = await managerService.getTeamTravel(managerId);
-      // const pending = travels.filter(t => t.status === 0 || t.status === 1);
-      // console.log('📊 Pending approvals:', pending.length);
-      // travels?.forEach(async travel => {
-      //   const employeeDetails = await employeeService.getEmployeeProfile(travel.empId)
-      //   console.log("employeeDetails:::::::::: ", employeeDetails)
-      //   {...travel, }
-      // });
-
       const travelsWithEmployeeDetails = await Promise.all(travels.map(async travel => {
         const employeeDetails = await employeeService.getEmployeeProfile(travel?.empId);
-        // Return a new object that combines travel and employeeDetails
-        return {
-          ...travel, // Spread the existing travel properties
-          employeeDetails // Add the employee details
-        };
+        return { ...travel, employeeDetails };
       }));
-
       return travelsWithEmployeeDetails;
     } catch (error) {
-      console.error('❌ Error getting pending approvals:', error);
+      console.error('❌ Error getting all details:', error);
       return [];
     }
   },
 
   getAllAvpDetails: async (managerId) => {
     console.log('🟢 Getting all requests for AVP:', managerId);
-
-    if (!managerId) {
-      console.warn('⚠️ No managerId provided');
-      return [];
-    }
+    if (!managerId) return [];
 
     try {
       const travels = await managerService.getAvpTeamTravel(managerId);
-      // const pending = travels.filter(t => t.status === 0 || t.status === 1);
-      // console.log('📊 Pending approvals:', pending.length);
-      // travels?.forEach(async travel => {
-      //   const employeeDetails = await employeeService.getEmployeeProfile(travel.empId)
-      //   console.log("employeeDetails:::::::::: ", employeeDetails)
-      //   {...travel, }
-      // });
-
       const travelsWithEmployeeDetails = await Promise.all(travels.map(async travel => {
         const employeeDetails = await employeeService.getEmployeeProfile(travel?.empId);
-        // Return a new object that combines travel and employeeDetails
-        return {
-          ...travel, // Spread the existing travel properties
-          employeeDetails // Add the employee details
-        };
+        return { ...travel, employeeDetails };
       }));
-
       return travelsWithEmployeeDetails;
     } catch (error) {
-      console.error('❌ Error getting pending approvals:', error);
+      console.error('❌ Error getting AVP details:', error);
       return [];
     }
   },
 
   getAllSvpDetails: async (managerId) => {
-    console.log('🟢 Getting all requests for AVP:', managerId);
-
-    if (!managerId) {
-      console.warn('⚠️ No managerId provided');
-      return [];
-    }
+    console.log('🟢 Getting all requests for SVP:', managerId);
+    if (!managerId) return [];
 
     try {
       const travels = await managerService.getSvpTeamTravel(managerId);
-      // const pending = travels.filter(t => t.status === 0 || t.status === 1);
-      // console.log('📊 Pending approvals:', pending.length);
-      // travels?.forEach(async travel => {
-      //   const employeeDetails = await employeeService.getEmployeeProfile(travel.empId)
-      //   console.log("employeeDetails:::::::::: ", employeeDetails)
-      //   {...travel, }
-      // });
-
       const travelsWithEmployeeDetails = await Promise.all(travels.map(async travel => {
         const employeeDetails = await employeeService.getEmployeeProfile(travel?.empId);
-
-        // Return a new object that combines travel and employeeDetails
-        return {
-          ...travel, // Spread the existing travel properties
-          employeeDetails // Add the employee details
-        };
+        return { ...travel, employeeDetails };
       }));
-
       return travelsWithEmployeeDetails;
     } catch (error) {
-      console.error('❌ Error getting pending approvals:', error);
+      console.error('❌ Error getting SVP details:', error);
       return [];
     }
   },
 
-  /**
-   * Get recent travel requests
-   */
-// dashboardService.js - getRecentRequests function (around line 320)
+  getRecentRequests: async (empId, role) => {
+    console.log('🟢 Getting recent requests for:', { empId, role });
+    if (!empId) return [];
 
-getRecentRequests: async (empId, role) => {
-  console.log('🟢 Getting recent requests for:', { empId, role });
+    try {
+      let travels = [];
 
-  if (!empId) return [];
+      if (role === 'MANAGER' || role === 'AVP' || role === 'SVP' || role === 'CHRO') {
+        travels = await managerService.getTeamTravel(empId);
+      } else {
+        travels = await employeeService.getEmployeeTravel(empId);
+      }
 
-  try {
-    let travels = [];
+      console.log('🔍 DEBUG - Raw travels data:', travels);
+      console.log('🔍 DEBUG - First travel item:', travels[0]);
 
-    if (role === 'MANAGER' || role === 'AVP' || role === 'SVP' || role === 'CHRO') {
-      travels = await managerService.getTeamTravel(empId);
-    } else {
-      travels = await employeeService.getEmployeeTravel(empId);
+      return travels.slice(0, 5);
+    } catch (error) {
+      console.error('❌ Error getting recent requests:', error);
+      return [];
     }
+  },
 
-    // ✅ ADD THIS DEBUG LOG
-    console.log('🔍 DEBUG - Raw travels data:', travels);
-    console.log('🔍 DEBUG - First travel item:', travels[0]);
-
-    return travels.slice(0, 5);
-  } catch (error) {
-    console.error('❌ Error getting recent requests:', error);
-    return [];
-  }
-},
   updateRequestStatus: async (travelId, status) => {
     await api.updateTravelStatus(travelId, status);
   },
 
-  /**
-   * Get all travel details (for Travel Desk)
-   */
   getAllTravelDetails: async () => {
     try {
       console.log('📊 Fetching all travel details for Travel Desk...');
-
-      // Use api service which respects mock/real toggle
       const response = await api.getAllTravelDetails();
-
       console.log('📊 GetAllTravelDetails response:', response);
 
-      if (!response || response.status === 'Functional Failure') {
-        return [];
-      }
-
-      const travels = response.result || response.Result || [];
-      return travels;
-
+      if (!response || response.status === 'Functional Failure') return [];
+      return response.result || response.Result || [];
     } catch (error) {
       console.error('❌ Error fetching all travel details:', error);
       throw error;
     }
   },
 
-  /**
-   * Get pending requests for Travel Desk
-   */
   getPendingRequests: async () => {
     console.log('🟢 Getting pending requests for Travel Desk');
 
     try {
       const response = await dashboardService.getAllTravelDetails();
-      console.log('📊 GetAllTravelDetails response:', response);
-
       const travels = response?.result || response?.Result || [];
-
-      // ✅ DEBUG: Log actual status values
-      console.log('📊 All travels with status:', travels.map(t => ({
-        tId: t.tId,
-        empId: t.empId,
-        status: t.status,
-        city: t.city,
-        country: t.country
-      })));
 
       if (travels.length === 0) {
         console.log('📊 No travel details found');
         return [];
       }
 
-      // Filter for pending HelpDesk statuses (14, 15)
       const pendingBookings = travels.filter(travel =>
         HELPDESK_PENDING_STATUSES.includes(travel.status)
       );
 
       console.log('📊 Filtered pending bookings:', pendingBookings.length);
 
-      // Transform to match frontend expected format
       const transformedData = await Promise.all(
         pendingBookings.map(async (item) => {
           const employeeName = await getEmployeeName(item.empId);
-
           return {
             id: item.tId,
             tId: item.tId,
@@ -435,19 +329,13 @@ getRecentRequests: async (empId, role) => {
         })
       );
 
-      console.log('📊 Transformed pending requests:', transformedData);
       return transformedData;
-
     } catch (error) {
       console.error('❌ Error fetching pending requests:', error);
       return [];
     }
   },
 
-  /**
-   * Get completed bookings for Travel Desk
-   * Filters: Status 16 (Tickets Uploaded) and 17 (Completed)
-   */
   getCompletedBookings: async () => {
     console.log('🟢 Getting completed bookings for Travel Desk');
 
@@ -455,24 +343,15 @@ getRecentRequests: async (empId, role) => {
       const response = await dashboardService.getAllTravelDetails();
       const travels = response?.result || response?.Result || [];
 
-      // ✅ STABILITY FIX: Ensure travels is always an array
-      if (!Array.isArray(travels)) {
-        console.warn('⚠️ travels is not an array:', travels);
-        return [];
-      }
+      if (!Array.isArray(travels)) return [];
 
-      // Filter for completed statuses (16, 17)
       const completed = travels.filter(travel =>
         HELPDESK_COMPLETED_STATUSES.includes(travel.status)
       );
 
-      console.log('📊 Completed bookings:', completed.length);
-
-      // Transform data
       const transformedData = await Promise.all(
         completed.map(async (item) => {
           const employeeName = await getEmployeeName(item.empId);
-
           return {
             id: item.tId,
             tId: item.tId,
@@ -492,21 +371,14 @@ getRecentRequests: async (empId, role) => {
       );
 
       return transformedData;
-
     } catch (error) {
       console.error('❌ Error fetching completed bookings:', error);
       return [];
     }
   },
 
-  /**
-   * Process booking - Update status to 16 (Tickets Uploaded)
-   * @param {number} travelId - Travel ID
-   * @returns {Promise<object>} - API response
-   */
   processBooking: async (travelId) => {
     console.log('🟢 Processing booking for travel:', travelId);
-
     try {
       const response = await api.updateTravelStatus(travelId, STATUS.TICKETS_UPLOADED);
       console.log('📊 Process booking response:', response);
@@ -517,14 +389,8 @@ getRecentRequests: async (empId, role) => {
     }
   },
 
-  /**
-   * Mark travel as completed - Update status to 17
-   * @param {number} travelId - Travel ID
-   * @returns {Promise<object>} - API response
-   */
   markAsCompleted: async (travelId) => {
     console.log('🟢 Marking travel as completed:', travelId);
-
     try {
       const response = await api.updateTravelStatus(travelId, STATUS.COMPLETED);
       console.log('📊 Mark completed response:', response);
@@ -535,36 +401,20 @@ getRecentRequests: async (empId, role) => {
     }
   },
 
-  /**
-   * Get employee passport info (for Travel Desk)
-   * @param {string} empId - Employee ID
-   * @returns {Promise<object>} - Passport info
-   */
   getPassportInfo: async (empId) => {
     console.log('🟢 Getting passport info for:', empId);
-
     try {
-      const response = await api.getPassportInfo(empId);
-      return response;
+      return await api.getPassportInfo(empId);
     } catch (error) {
       console.error('❌ Error fetching passport info:', error);
       throw error;
     }
   },
 
-
-  /**
-   * Get employee documents (for Travel Desk review)
-   * @param {string} empId - Employee ID
-   * @param {number} documentId - Document ID
-   * @returns {Promise<object>} - Document data
-   */
   getEmployeeDocuments: async (empId, documentId) => {
     console.log('🟢 Getting employee documents:', { empId, documentId });
-
     try {
-      const response = await api.getEmployeeDocuments(empId, documentId);
-      return response;
+      return await api.getEmployeeDocuments(empId, documentId);
     } catch (error) {
       console.error('❌ Error fetching employee documents:', error);
       throw error;
@@ -572,7 +422,6 @@ getRecentRequests: async (empId, role) => {
   }
 };
 
-// Helper
 const getEmptyStats = () => ({
   totalRequests: 0,
   pending: 0,

@@ -1,5 +1,5 @@
 // pages/dashboard/DashboardManager.jsx - COMPLETE CORRECTED CODE
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -166,6 +166,44 @@ const AnimatedStatCard = ({ stat, index }) => {
   );
 };
 
+// ============================================
+// ✅ HELPER: Normalize Role ID
+// Backend returns 1-5, some code expects 101-105
+// This function handles BOTH formats
+// ============================================
+const normalizeRoleId = (roleId) => {
+  // If roleId is 1-5, return as is
+  // If roleId is 101-105, convert to 1-5 format
+  if (roleId >= 101 && roleId <= 105) {
+    return roleId - 100; // 102 → 2, 104 → 4, etc.
+  }
+  return roleId; // Already 1-5 format
+};
+
+// ============================================
+// ✅ Check if user is Manager (roleId 2 or 102)
+// ============================================
+const isManager = (roleId) => {
+  const normalized = normalizeRoleId(roleId);
+  return normalized === 2;
+};
+
+// ============================================
+// ✅ Check if user is AVP (roleId 4 or 104)
+// ============================================
+const isAVP = (roleId) => {
+  const normalized = normalizeRoleId(roleId);
+  return normalized === 4;
+};
+
+// ============================================
+// ✅ Check if user is SVP (roleId 5 or 105)
+// ============================================
+const isSVP = (roleId) => {
+  const normalized = normalizeRoleId(roleId);
+  return normalized === 5;
+};
+
 const DashboardManager = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -189,6 +227,23 @@ const DashboardManager = () => {
   const travellingEmployeeIds = new Set(safeGetAllDetails.map(employee => employee?.empId));
 
   const emplyeesNotOnTravel = safeAllEmployees.filter(employee => !travellingEmployeeIds.has(employee?.empId));
+
+  // Add inside the component, after safeGetAllDetails is defined
+  useEffect(() => {
+    if (safeGetAllDetails.length > 0) {
+      console.log('📊 Dashboard Debug:', {
+        userRole: user?.role,
+        userRoleId: user?.roleId,
+        normalizedRoleId: normalizeRoleId(user?.roleId),
+        totalRequests: safeGetAllDetails.length,
+        allStatuses: safeGetAllDetails.map(r => ({
+          id: r.travelLabel || r.id,
+          status: r.status,
+          empName: r.employeeDetails?.empName
+        }))
+      });
+    }
+  }, [safeGetAllDetails, user]);
 
   useEffect(() => {
     dispatch(fetchDashboardData());
@@ -241,134 +296,177 @@ const DashboardManager = () => {
     }));
   };
 
-  
-const getStatusToSubmitWhileRaisingRequest = (user) => {
-  switch (user.roleId) {
-    case 102:  // Manager
-      return 1;
-    case 104:  // AVP
-      return 2;
-    case 105:  // SVP
-      return 3;
-    default:
-      return 1; // Default to Manager initiated
-  }
-};
-
- const handleSubmitRequest = async () => {
-  // Get status first
-  const requestStatus = getStatusToSubmitWhileRaisingRequest(user);
-  
-  // ✅ Validate status
-  if (!requestStatus || requestStatus === 0) {
-    console.error('❌ Invalid status:', requestStatus, 'for user:', user);
-    toast.error('Unable to determine request status. Please contact admin.');
-    return;
-  }
-
-  const jsonData = checkedEmployees.map(employeeId => {
-    const startDate = dates[employeeId]?.startDate;
-    const endDate = dates[employeeId]?.endDate;
+  // ✅ FIXED: Use normalized role check
+  const getStatusToSubmitWhileRaisingRequest = (user) => {
+    const roleId = user?.roleId;
     
-    // ✅ Validate dates
-    if (!startDate || !endDate) {
-      toast.error(`Please select dates for all employees`);
-      return null;
+    if (isManager(roleId)) return 1;  // Manager initiated
+    if (isAVP(roleId)) return 2;      // AVP initiated
+    if (isSVP(roleId)) return 3;      // SVP initiated
+    
+    return 1; // Default to Manager initiated
+  };
+
+  const handleSubmitRequest = async () => {
+    // Get status first
+    const requestStatus = getStatusToSubmitWhileRaisingRequest(user);
+
+    // ✅ Validate status
+    if (!requestStatus || requestStatus === 0) {
+      console.error('❌ Invalid status:', requestStatus, 'for user:', user);
+      toast.error('Unable to determine request status. Please contact admin.');
+      return;
     }
 
-    return {
-      empId: employeeId,
-      country: country,
-      city: city,
-      travelStartDate: startDate,
-      travelEndDate: endDate,
-      status: requestStatus,
-      rptEmpId: user.empId,
-      remark: remark
-    };
-  }).filter(Boolean); // Remove null entries
+    const jsonData = checkedEmployees.map(employeeId => {
+      const startDate = dates[employeeId]?.startDate;
+      const endDate = dates[employeeId]?.endDate;
 
-  if (jsonData.length === 0) {
-    toast.error('No valid requests to submit');
-    return;
-  }
-
-  // Debug log
-  console.log('📤 Submitting travel requests:', jsonData);
-
-  let allSuccess = true;
-  for (const travelRequest of jsonData) {
-    try {
-      const response = await managerService.createTravelRequest(travelRequest);
-      console.log('✅ Response:', response);
-      if (response !== 'Inserted') {
-        allSuccess = false;
+      // ✅ Validate dates
+      if (!startDate || !endDate) {
+        toast.error(`Please select dates for all employees`);
+        return null;
       }
-    } catch (error) {
-      allSuccess = false;
-      console.error("❌ Request failed:", error);
+
+      return {
+        empId: employeeId,
+        country: country,
+        city: city,
+        travelStartDate: startDate,
+        travelEndDate: endDate,
+        status: requestStatus,
+        rptEmpId: user.empId,
+        remark: remark
+      };
+    }).filter(Boolean); // Remove null entries
+
+    if (jsonData.length === 0) {
+      toast.error('No valid requests to submit');
+      return;
     }
-  }
 
-  if (allSuccess) {
-    toast.success('Request Submitted');
-    resetFields();
-  } else {
-    toast.error('Request Failed');
-  }
+    // Debug log
+    console.log('📤 Submitting travel requests:', jsonData);
 
-  setShowRaiseRequestModal(false);
-  setRequestSubmit(true);
-};
+    let allSuccess = true;
+    for (const travelRequest of jsonData) {
+      try {
+        const response = await managerService.createTravelRequest(travelRequest);
+        console.log('✅ Response:', response);
+        if (response !== 'Inserted') {
+          allSuccess = false;
+        }
+      } catch (error) {
+        allSuccess = false;
+        console.error("❌ Request failed:", error);
+      }
+    }
 
-  const getFilteredApprovals = () => {
+    if (allSuccess) {
+      toast.success('Request Submitted');
+      resetFields();
+    } else {
+      toast.error('Request Failed');
+    }
+
+    setShowRaiseRequestModal(false);
+    setRequestSubmit(true);
+  };
+
+  // ============================================
+  // ✅ COMPLETELY FIXED: getFilteredApprovals
+  // Now uses normalized roleId checking
+  // ============================================
+  const getFilteredApprovals = useMemo(() => {
+    // ✅ DEBUG: Log everything
+    console.log('🔍 FILTER DEBUG START ============');
+    console.log('🔍 filterStatus:', filterStatus);
+    console.log('🔍 user.roleId:', user?.roleId);
+    console.log('🔍 normalized roleId:', normalizeRoleId(user?.roleId));
+    console.log('🔍 safeGetAllDetails:', safeGetAllDetails);
+    console.log('🔍 safeGetAllDetails.length:', safeGetAllDetails?.length);
+
+    if (safeGetAllDetails?.length > 0) {
+      console.log('🔍 First item:', safeGetAllDetails[0]);
+      console.log('🔍 All statuses:', safeGetAllDetails.map(r => ({
+        id: r.travelLabel || r.id,
+        status: r.status,
+        statusType: typeof r.status
+      })));
+    }
+
     if (filterStatus === 'ALL') {
+      console.log('🔍 Returning ALL:', safeGetAllDetails.length);
       return safeGetAllDetails;
     }
 
+    // ============================================
+    // ✅ STATUS MAPS BASED ON ROLE
+    // ============================================
+    
+    // Manager (roleId 2 or 102):
+    // PENDING = Status 1 (Manager initiated - needs to approve), 7 (Final initiated)
+    // APPROVED = Status 4+ (everything after manager approved)
     const managerStatusMap = {
-      PENDING: [7], // PENDING includes statuses 1, 2, 3
-      APPROVED: [1, 5, 10, 17], // APPROVED includes statuses 4, 5, 6, 10, 11, 12
-      REJECTED: [100] // Assuming REJECTED is still just status 3
-    }
-
-    const avpStatusMap = {
-      PENDING: [1], // PENDING includes statuses 1, 2, 3
-      APPROVED: [2, 5, 17], // APPROVED includes statuses 4, 5, 6, 10, 11, 12
-      REJECTED: [100] // Assuming REJECTED is still just status 3
-    }
-
-    const svpStatusMap = {
-      PENDING: [5], // PENDING includes statuses 1, 2, 3
-      APPROVED: [6, 17], // APPROVED includes statuses 4, 5, 6, 10, 11, 12
-      REJECTED: [100] // Assuming REJECTED is still just status 3
+      PENDING: [1, 7],
+      APPROVED: [4, 5, 6, 10, 11, 12, 13, 14, 15, 16, 17],
+      REJECTED: [18, 19, 20]
     };
 
-    // const statusMap = {
-    //     PENDING: [1, 2, 3], // PENDING includes statuses 1, 2, 3
-    //     APPROVED: [4, 5, 6, 10, 11, 12], // APPROVED includes statuses 4, 5, 6, 10, 11, 12
-    //     REJECTED: [100] // Assuming REJECTED is still just status 3
-    // };
+    // AVP (roleId 4 or 104):
+    // PENDING = Status 2 (AVP initiated), 4 (Manager approved - waiting for AVP), 8, 10
+    // APPROVED = Status 5+ (AVP approved and beyond)
+    const avpStatusMap = {
+      PENDING: [2, 4, 8, 10],
+      APPROVED: [5, 6, 11, 12, 13, 14, 15, 16, 17],
+      REJECTED: [18, 19, 20]
+    };
 
-    // const targetStatuses = user.roleId?104:statusMap[filterStatus]:user.roleId?105;
-    let targetStatuses = []
-    if (user.roleId === 102) {
-      targetStatuses = managerStatusMap[filterStatus]
-    }
-    else if (user.roleId === 104) {
-      targetStatuses = avpStatusMap[filterStatus]
-    } else if (user.roleId === 105) {
-      targetStatuses = svpStatusMap[filterStatus]
+    // SVP (roleId 5 or 105):
+    // PENDING = Status 3 (SVP initiated), 5 (AVP approved - waiting for SVP), 9, 11
+    // APPROVED = Status 6+ (SVP approved and beyond)
+    const svpStatusMap = {
+      PENDING: [3, 5, 9, 11],
+      APPROVED: [6, 12, 13, 14, 15, 16, 17],
+      REJECTED: [18, 19, 20]
+    };
+
+    let targetStatuses = [];
+    const roleId = user?.roleId;
+
+    // ✅ FIXED: Use normalized role checking
+    if (isManager(roleId)) {
+      targetStatuses = managerStatusMap[filterStatus] || [];
+      console.log('🔍 Using MANAGER status map');
+    } else if (isAVP(roleId)) {
+      targetStatuses = avpStatusMap[filterStatus] || [];
+      console.log('🔍 Using AVP status map');
+    } else if (isSVP(roleId)) {
+      targetStatuses = svpStatusMap[filterStatus] || [];
+      console.log('🔍 Using SVP status map');
+    } else {
+      console.log('🔍 Unknown role, using empty targetStatuses');
     }
 
-    return safeGetAllDetails.filter(req => targetStatuses.includes(req.status));
-  };
+    console.log('🔍 targetStatuses for', filterStatus, ':', targetStatuses);
+
+    const filtered = safeGetAllDetails.filter(req => {
+      const reqStatus = Number(req.status);
+      const isMatch = targetStatuses.includes(reqStatus);
+      console.log(`🔍 Checking request ${req.travelLabel}: status=${reqStatus}, isMatch=${isMatch}`);
+      return isMatch;
+    });
+
+    console.log('🔍 Filtered result:', filtered.length, 'items');
+    console.log('🔍 FILTER DEBUG END ============');
+
+    return filtered;
+
+  }, [filterStatus, safeGetAllDetails, user?.roleId]);
 
   const handleFilter = (value) => {
     setFilterStatus(value);
   };
-
-  const filteredApprovals = getFilteredApprovals();
 
   // ✅ FIXED FilterButton Component
   const FilterButton = ({ label, value }) => (
@@ -402,9 +500,8 @@ const getStatusToSubmitWhileRaisingRequest = (user) => {
     toast.info("Coming Soon")
   }
 
-  const firstName = user?.name.split(" ")[0];
-  const lastName = user?.name.split(" ")[1] || "";
-
+  const firstName = user?.name?.split(" ")[0] || '';
+  const lastName = user?.name?.split(" ")[1] || "";
 
   const displayStats = stats && stats.length > 0 ? stats : [
     { title: 'Requests Raised', value: 24, iconKey: 'FlightTakeoff' },
@@ -430,7 +527,7 @@ const getStatusToSubmitWhileRaisingRequest = (user) => {
                 {user?.role === 'MANAGER' ? 'Manager Dashboard' : `${user?.role} Dashboard`}
               </SharedTypography>
               <StatusChip
-                label={`${user?.role} - ${user?.department}`}
+                label={`${user?.role} - ${user?.department || 'Department'}`}
                 variant="default"
               />
             </Box>
@@ -443,7 +540,6 @@ const getStatusToSubmitWhileRaisingRequest = (user) => {
               whileHover="hover"
               whileTap="tap"
             >
-
               <SharedButton
                 variant="contained"
                 startIcon={<FlightTakeoff />}
@@ -456,16 +552,13 @@ const getStatusToSubmitWhileRaisingRequest = (user) => {
               >
                 Raise Travel Request
               </SharedButton>
-
             </motion.div>
-
 
             <motion.div
               variants={buttonVariants}
               whileHover="hover"
               whileTap="tap"
             >
-
               <SharedButton
                 variant="contained"
                 startIcon={<Summarize />}
@@ -478,10 +571,7 @@ const getStatusToSubmitWhileRaisingRequest = (user) => {
               >
                 Generate Reports
               </SharedButton>
-
-
             </motion.div>
-
           </Box>
 
           {/* Stats */}
@@ -517,10 +607,6 @@ const getStatusToSubmitWhileRaisingRequest = (user) => {
                   <FilterButton label="Pending" value="PENDING" />
                   <FilterButton label="Approved" value="APPROVED" />
                   <FilterButton label="Rejected" value="REJECTED" />
-                  {/* <FilterButton label="Manager Review" value="MANAGER_REVIEW" />
-                  {(user?.role === 'AVP' || user?.role === 'SVP') && (
-                    <FilterButton label="Travel Desk" value="TRAVEL_DESK_REVIEW" />
-                  )} */}
                 </Stack>
               </Box>
 
@@ -531,21 +617,17 @@ const getStatusToSubmitWhileRaisingRequest = (user) => {
                     { id: 'empid', label: 'Employee ID' },
                     { id: 'employee', label: 'Employee Name' },
                     { id: 'destination', label: 'Destination' },
-                    // { id: 'status', label: 'Status' },
                     { id: 'actions', label: 'Action' }
                   ]}
                 />
 
                 <TableBody>
-                  {filteredApprovals.length > 0 ? filteredApprovals.map((request) => (
+                  {getFilteredApprovals.length > 0 ? getFilteredApprovals.map((request) => (
                     <TableRow key={request.id}>
                       <TableCell>{request.travelLabel}</TableCell>
                       <TableCell>{request.employeeDetails?.empId}</TableCell>
                       <TableCell>{request.employeeDetails?.empName}</TableCell>
                       <TableCell>{request.destination}</TableCell>
-                      {/* <TableCell>
-                        <StatusChip label={request.status} />
-                      </TableCell> */}
                       <TableCell>
                         <SharedButton
                           variant="outlined"
@@ -700,7 +782,7 @@ const getStatusToSubmitWhileRaisingRequest = (user) => {
                           );
                         }) : (
                           <TableRow>
-                            <TableCell colSpan={4} align="center" sx={{ py: 4, color: '#64748b' }}>
+                            <TableCell colSpan={5} align="center" sx={{ py: 4, color: '#64748b' }}>
                               No available employees
                             </TableCell>
                           </TableRow>
